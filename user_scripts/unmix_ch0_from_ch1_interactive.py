@@ -29,7 +29,7 @@ OUTPUT_PER_T        = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_per_t.tif"
 fixed_report = unmix_ch0_from_ch1(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
-    alpha=0.12,
+    alpha=0.72,
     alpha_mode="fixed",)
 print(json.dumps(fixed_report, indent=2))
 # %% REFERENCE-TIME-POINT ALPHA EXAMPLE
