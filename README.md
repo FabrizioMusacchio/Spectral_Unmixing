@@ -1,4 +1,4 @@
-# Simple spectral-unmixing fpr microscopy image stacks
+# Simple spectral-unmixing for microscopy image stacks
 
 `spectral-unmixing` provides a small, reusable Python package for bleed-through
 correction in multi-dimensional microscopy stacks that follow OMIO's canonical
@@ -30,9 +30,9 @@ This project depends on:
 ## Quick Start
 
 ```python
-from spectral_unmixing import unmix_ch0_from_ch1
+from spectral_unmixing import unmix
 
-report = unmix_ch0_from_ch1(
+output_path = unmix(
     input_path="input.tif",
     output_path="unmixed/input_unmixed_reference_t0.tif",
     alpha_mode="reference_t",
@@ -40,6 +40,11 @@ report = unmix_ch0_from_ch1(
     signal_percentile=99.0,
 )
 ```
+
+Each run writes a JSON sidecar report next to the output TIFF, for example
+`input_unmixed_reference_t0.tif.json`, so the exact settings remain reproducible.
+Terminal progress output is enabled by default and can be disabled with
+`verbose=False`.
 
 ## Scientific Note
 

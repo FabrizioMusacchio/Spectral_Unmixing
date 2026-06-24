@@ -115,6 +115,7 @@ def write_stack_with_omio(
     om = import_omio()
     metadata_to_write = update_metadata_shape(metadata, tuple(np.shape(stack)))
     metadata_to_write["original_filename"] = output_path.name
+    existing_files = {path.resolve() for path in output_path.parent.glob("*")}
 
     written_paths = om.imwrite(
         str(output_path),
@@ -126,9 +127,48 @@ def write_stack_with_omio(
     )
 
     actual_path = Path(written_paths[0])
-    if actual_path.resolve() != output_path.resolve():
-        if output_path.exists():
-            output_path.unlink()
-        shutil.move(str(actual_path), str(output_path))
+    final_path: Path | None = None
 
-    return output_path
+    if output_path.exists():
+        final_path = output_path
+    elif actual_path.exists():
+        if actual_path.resolve() != output_path.resolve():
+            if output_path.exists():
+                output_path.unlink()
+            shutil.move(str(actual_path), str(output_path))
+            final_path = output_path
+        else:
+            final_path = actual_path
+    else:
+        current_files = {path.resolve() for path in output_path.parent.glob("*")}
+        new_files = current_files - existing_files
+        tif_candidates = [
+            Path(path)
+            for path in new_files
+            if Path(path).is_file()
+            and Path(path).suffix.lower() in {".tif", ".tiff"}
+        ]
+        if len(tif_candidates) == 1:
+            candidate = tif_candidates[0]
+            if candidate.resolve() != output_path.resolve():
+                shutil.move(str(candidate), str(output_path))
+                final_path = output_path
+            else:
+                final_path = candidate
+
+    if final_path is None:
+        raise FileNotFoundError(
+            "OMIO reported a written output path that does not exist, and the requested "
+            f"output path was not created either. Requested: {output_path!s}, reported: {actual_path!s}"
+        )
+
+    current_files = {path.resolve() for path in output_path.parent.glob("*")}
+    new_files = current_files - existing_files
+    for new_file_resolved in new_files:
+        new_file = Path(new_file_resolved)
+        if new_file.resolve() == final_path.resolve():
+            continue
+        if new_file.suffixes[-2:] == [".ome", ".tif"]:
+            new_file.unlink(missing_ok=True)
+
+    return final_path

@@ -8,9 +8,8 @@ Date: June 2026
 from __future__ import annotations
 
 import argparse
-import json
 
-from .unmixing import unmix_ch0_from_ch1
+from .unmixing import unmix
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -73,6 +72,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="float32",
         help="Output dtype used when saving the corrected stack.",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress terminal progress output.",
+    )
     return parser
 
 
@@ -81,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
-    report = unmix_ch0_from_ch1(
+    unmix(
         input_path=args.input_path,
         output_path=args.output_path,
         alpha=args.alpha,
@@ -93,6 +97,6 @@ def main(argv: list[str] | None = None) -> int:
         background_percentile=args.background_percentile,
         clip_negative=not args.no_clip_negative,
         output_dtype=args.output_dtype,
+        verbose=not args.quiet,
     )
-    print(json.dumps(report, indent=2))
     return 0
