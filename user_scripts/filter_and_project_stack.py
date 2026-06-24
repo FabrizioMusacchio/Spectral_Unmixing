@@ -41,7 +41,7 @@ filtered_stack = apply_filters(
 print(f"Filtered stack: {filtered_stack.shape}")
 
 om.open_in_napari(filtered_stack, metadata, "Filtered |")
-# %% MAX-Z-PROJECT WHILE KEEPING T AND C
+# %% MAX-Z-PROJECT
 projected_stack = max_z_project(filtered_stack)
 print(f"Projected stack: {projected_stack.shape}")
 
