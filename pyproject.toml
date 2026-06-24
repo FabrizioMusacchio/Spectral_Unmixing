@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectral-unmixing"
+version = "0.1.0"
+description = "Spectral bleed-through correction utilities for TZCYX microscopy stacks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Fabrizio Musacchio" }
+]
+keywords = ["microscopy", "spectral unmixing", "ome-tiff", "omio", "image analysis"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+  "numpy>=2.0",
+  "omio-microscopy>=0.2.2",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[project.scripts]
+spectral-unmix = "spectral_unmixing.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["spectral_unmixing*"]
+
+[tool.setuptools.package-data]
+spectral_unmixing = ["py.typed"]
