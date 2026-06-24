@@ -60,6 +60,35 @@ def _restore_original_shape(filtered_stack: np.ndarray, original_ndim: int) -> n
     return filtered_stack
 
 
+def _normalize_zrange(
+    zrange: tuple[int, int] | Sequence[int] | None,
+    z_count: int,
+) -> tuple[int, int]:
+    if zrange is None:
+        return 0, z_count
+
+    if len(zrange) != 2:
+        raise ValueError("zrange must be None or a tuple/list with exactly two integers.")
+
+    start = int(zrange[0])
+    stop = int(zrange[1])
+
+    start = max(0, min(start, z_count))
+    stop = max(0, min(stop, z_count))
+
+    if stop < start:
+        start, stop = stop, start
+
+    if start == stop:
+        if start >= z_count:
+            start = max(0, z_count - 1)
+            stop = z_count
+        else:
+            stop = min(z_count, start + 1)
+
+    return start, stop
+
+
 def _apply_single_filter_tzcyx(
     stack: np.ndarray,
     *,
@@ -151,15 +180,32 @@ def apply_filters(
     return _restore_original_shape(working_stack, original_ndim)
 
 
-def max_z_project(stack) -> np.ndarray:
+def max_z_project(
+    stack,
+    *,
+    zrange: tuple[int, int] | Sequence[int] | None = None,
+) -> np.ndarray:
     """
     Compute a maximum-intensity projection over the Z axis while preserving ``T`` and ``C``.
 
-    The returned stack stays in canonical ``TZCYX`` order with a singleton Z dimension.
+    Parameters
+    ----------
+    stack : array-like
+        Input stack in canonical ``TZCYX`` order, or a simpler ``ZYX`` / ``YX`` array.
+    zrange : tuple[int, int] or None, optional
+        Optional half-open Z range ``(start, stop)`` used for the projection. If
+        the provided bounds fall outside the stack, they are clamped to the valid
+        Z extent. If ``None``, the full Z range is used.
+
+    Returns
+    -------
+    np.ndarray
+        The returned stack stays in canonical ``TZCYX`` order with a singleton Z dimension.
     """
 
     stack_tzcyx = _ensure_tzcyx_stack(stack)
-    projected = np.max(stack_tzcyx, axis=1, keepdims=True)
+    z_start, z_stop = _normalize_zrange(zrange, stack_tzcyx.shape[1])
+    projected = np.max(stack_tzcyx[:, z_start:z_stop, :, :, :], axis=1, keepdims=True)
     return projected
 
 
