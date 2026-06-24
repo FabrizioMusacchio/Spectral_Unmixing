@@ -35,7 +35,7 @@ print(f"Loaded stack: {stack.shape}, axes={metadata.get('axes')}")
 z_corrected_stack = correct_intra_stack_z_drift(
     stack,
     registration_channel=0,  # can also be 1 if channel 1 is the more stable structure
-    method="phase_cross_correlation",  # or "pystackreg"
+    method="pystackreg",  # "phase_cross_correlation" "pystackreg" 
     reference_mode="neighbor",  # or "full_projection"
     neighbor_window_size=3,  # 3 -> z-1, z, z+1; 5 -> z-2 ... z+2
     pre_median_filter=True,
@@ -65,9 +65,6 @@ matched_registered_stack = match_histograms_across_time(registered_stack, refere
 print(f"Histogram matched stack: {matched_registered_stack.shape}")
 matched_registered_metadata = om.update_metadata_from_image(metadata, matched_registered_stack)
 om.open_in_napari(matched_registered_stack, matched_registered_metadata, "Registered + hist matched |")
-
-#saved_output = write_stack_with_omio(OUTPUT_PATH, matched_registered_stack, metadata)
-#print(saved_output)
 # %% FILTER REGISTERED STACK
 filtered_stack = apply_filters(
     matched_registered_stack,
@@ -77,8 +74,6 @@ filtered_stack = apply_filters(
     apply_3d=False)
 print(f"Filtered stack: {filtered_stack.shape}")
 filtered_metadata = om.update_metadata_from_image(metadata, filtered_stack)
-#temp_filtered_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_registered_histmatched_filtered_tmp.tif"
-#temp_filtered_saved = write_stack_with_omio(temp_filtered_path, filtered_stack, metadata)
 om.open_in_napari(filtered_stack, filtered_metadata, "Filtered |")
 # %% MAX-Z-PROJECT
 projected_stack = max_z_project(filtered_stack)
