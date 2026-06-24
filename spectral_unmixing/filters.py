@@ -11,6 +11,7 @@ from collections.abc import Sequence
 
 import numpy as np
 from scipy.ndimage import gaussian_filter, median_filter
+from skimage.exposure import match_histograms
 
 from .io import CANONICAL_AXIS_ORDER
 
@@ -162,9 +163,61 @@ def max_z_project(stack) -> np.ndarray:
     return projected
 
 
+def match_histograms_across_time(
+    stack,
+    *,
+    reference_t: int = 0,
+) -> np.ndarray:
+    """
+    Match each time point to a reference time point using per-channel histogram matching.
+
+    Parameters
+    ----------
+    stack : array-like
+        Input stack in canonical ``TZCYX`` order.
+    reference_t : int, optional
+        Reference time point used for histogram matching. Default is ``0``.
+
+    Returns
+    -------
+    np.ndarray
+        Histogram-matched stack with the same ``TZCYX`` shape as the input.
+    """
+
+    stack_tzcyx = _ensure_tzcyx_stack(stack)
+    if stack_tzcyx.ndim != 5:
+        raise ValueError(
+            f"Expected a {CANONICAL_AXIS_ORDER} stack. Got shape {stack_tzcyx.shape!r}."
+        )
+    if stack_tzcyx.shape[0] <= 1:
+        raise ValueError("Histogram matching across time requires T > 1.")
+    if not 0 <= int(reference_t) < stack_tzcyx.shape[0]:
+        raise ValueError(
+            f"reference_t must be between 0 and {stack_tzcyx.shape[0] - 1}. Got {reference_t!r}."
+        )
+
+    matched = stack_tzcyx.astype(np.float32, copy=True)
+    reference_t = int(reference_t)
+
+    for c in range(stack_tzcyx.shape[2]):
+        reference_volume = np.asarray(stack_tzcyx[reference_t, :, c, :, :], dtype=np.float32)
+        for t in range(stack_tzcyx.shape[0]):
+            if t == reference_t:
+                continue
+            moving_volume = np.asarray(stack_tzcyx[t, :, c, :, :], dtype=np.float32)
+            matched[t, :, c, :, :] = match_histograms(
+                moving_volume,
+                reference_volume,
+                channel_axis=None,
+            ).astype(np.float32, copy=False)
+
+    return matched
+
+
 __all__ = [
     "CANONICAL_AXIS_ORDER",
     "SUPPORTED_FILTERS",
     "apply_filters",
+    "match_histograms_across_time",
     "max_z_project",
 ]
