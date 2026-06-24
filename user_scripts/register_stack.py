@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing.io import load_stack_with_omio, write_stack_with_omio
-from spectral_unmixing.registration import register_stack
+from spectral_unmixing.registration import correct_intra_stack_z_drift, register_stack
 from spectral_unmixing.filters import (
     apply_filters,
     match_histograms_across_time,
@@ -31,9 +31,24 @@ OUTPUT_PATH = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_registered.tif"
 # %% LOAD STACK WITH OMIO
 stack, metadata = load_stack_with_omio(INPUT_PATH)
 print(f"Loaded stack: {stack.shape}, axes={metadata.get('axes')}")
-# %% REGISTER STACK
-registered_stack = register_stack(
+# %% CORRECT INTRA-STACK Z-DRIFT
+z_corrected_stack = correct_intra_stack_z_drift(
     stack,
+    registration_channel=0,  # can also be 1 if channel 1 is the more stable structure
+    method="phase_cross_correlation",  # or "pystackreg"
+    reference_mode="neighbor",  # or "full_projection"
+    neighbor_window_size=3,  # 3 -> z-1, z, z+1; 5 -> z-2 ... z+2
+    pre_median_filter=True,
+    post_median_filter=False,
+    median_kernel_size=3,
+    verbose=True)
+print(f"Z-corrected stack: {z_corrected_stack.shape}")
+z_corrected_metadata = om.update_metadata_from_image(metadata, z_corrected_stack)
+om.open_in_napari(stack, metadata, "Unregistered |")
+om.open_in_napari(z_corrected_stack, z_corrected_metadata, "Z-corrected |")
+# %% REGISTER STACK ACROSS TIME
+registered_stack = register_stack(
+    z_corrected_stack,
     registration_channel=0,
     method="pystackreg", # phase_cross_correlation or pystackreg
     zrange=None,
@@ -43,7 +58,6 @@ registered_stack = register_stack(
 print(f"Registered stack: {registered_stack.shape}")
 registered_metadata = om.update_metadata_from_image(metadata, registered_stack)
 om.open_in_napari(registered_stack, registered_metadata, "Registered |")
-#om.open_in_napari(stack, metadata, "Unregistered |")
 # %% HISTOGRAM MATCH ACROSS TIME
 # Recommendation: do this after registration and before Z projection so that
 # geometry is already aligned, but the full 3D time stacks are still available.
