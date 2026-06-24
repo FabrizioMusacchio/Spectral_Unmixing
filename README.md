@@ -1,7 +1,4 @@
-# spectral-unmixing
-
-Author: Fabrizio Musacchio  
-Date: June 2026
+# Simple spectral-unmixing fpr microscopy image stacks
 
 `spectral-unmixing` provides a small, reusable Python package for bleed-through
 correction in multi-dimensional microscopy stacks that follow OMIO's canonical
