@@ -91,7 +91,6 @@ filtered_projected_stack = apply_filters(
     apply_3d=False)
 print(f"Filtered projected stack: {filtered_projected_stack.shape}")
 filtered_projected_metadata = om.update_metadata_from_image(metadata, filtered_projected_stack)
-
 om.open_in_napari(filtered_projected_stack, filtered_projected_metadata, "Filtered Projected |")
 # %% SAVE FILTERED PROJECTED STACK WITH OMIO
 filtered_projected_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_registered_histmatched_filtered_projected_tmp.tif"
