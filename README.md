@@ -1,20 +1,8 @@
-# Simple spectral-unmixing for microscopy image stacks
+# Spectral unmixing for microscopy image stacks
 
-`spectral-unmixing` provides a small, reusable Python package for bleed-through
-correction in multi-dimensional microscopy stacks that follow OMIO's canonical
-axis order `TZCYX`.
+`spectral-unmixing` is a small Python package focused on spectral bleed-through correction in microscopy TIFF stacks read with OMIO. The package assumes OMIO's canonical axis order `TZCYX`, so downstream code can safely address time, z, channel, and spatial axes in a predictable way.
 
-## Features
-
-- OMIO-based reading and writing of microscopy TIFF stacks
-- Validation that incoming data are in canonical `TZCYX` order
-- Spectral bleed-through correction from one source channel into one target channel
-- Three alpha modes:
-  - fixed alpha
-  - alpha estimated once from a reference time point
-  - alpha estimated independently for each time point
-- Small command-line interface for batch-friendly use
-- Cell-structured user script for VS Code Interactive Window workflows
+The main goal of the project is reproducible spectral unmixing. Additional modules for filtering, registration, and projection are included as optional helpers for further image processing, but they are intentionally secondary to the unmixing workflow.
 
 ## Installation
 
@@ -22,12 +10,31 @@ axis order `TZCYX`.
 pip install -e .
 ```
 
-This project depends on:
+Core dependencies include:
 
 - `numpy`
 - `omio-microscopy`
+- `scipy`
+- `scikit-image`
+- `pystackreg`
 
-## Quick Start
+## Spectral unmixing model
+The implemented correction assumes that one channel contributes linearly to
+another channel:
+
+$$I_{\text{source}} \approx \text{true source signal}$$
+$$I_{\text{target}} \approx \text{true target signal} + \alpha \cdot I_{\text{source}}$$
+
+The corrected target channel is computed as:
+
+$$I_{\text{target,corrected}} = I_{\text{target}} - \alpha \cdot I_{\text{source}}$$
+$$I_{\text{target,corrected}} = \max(I_{\text{target}} - \alpha \cdot I_{\text{source}}, 0)$$
+
+Only the chosen target channel is corrected. The source channel is left
+unchanged.
+
+## Core unmixing function
+The main entry point is `spectral_unmixing.unmix(...)`.
 
 ```python
 from spectral_unmixing import unmix
@@ -37,18 +44,83 @@ output_path = unmix(
     output_path="unmixed/input_unmixed_reference_t0.tif",
     alpha_mode="reference_t",
     alpha_reference_t=0,
+    source_channel=0,
+    target_channel=1,
     signal_percentile=99.0,
 )
 ```
 
-Each run writes a JSON sidecar report next to the output TIFF, for example
-`input_unmixed_reference_t0.tif.json`, so the exact settings remain reproducible.
+`unmix(...)` performs the following steps:
+
+- reads the input stack with OMIO
+- validates that the image is in canonical `TZCYX` order
+- obtains `alpha` either as a fixed value or by estimation from the data
+- applies the correction to the target channel over all `T` and `Z`
+- clips negative corrected values to zero if requested
+- writes the corrected TIFF stack
+- writes a JSON sidecar report next to the output TIFF for reproducibility
+
+The function returns the path to the written TIFF file.
+
+### Alpha modes
+Three `alpha_mode` values are available:
+
+- `fixed`
+  Use a user-provided scalar `alpha` for the full stack.
+- `reference_t`
+  Estimate one scalar `alpha` from a chosen reference time point, using all
+  z-slices at that time point.
+- `per_t`
+  Estimate one `alpha` value per time point, again using all z-slices for each
+  time point.
+
+The helper `spectral_unmixing.estimate_alpha_from_volume(...)` implements the
+actual estimation on matching source and target volumes. It:
+
+- converts inputs to `float32`
+- subtracts a low-percentile background estimate from both channels
+- clips negative values to zero
+- creates a source-signal mask from bright source voxels
+- estimates `alpha` from the ratio of masked mean target and source intensities
+
+### Output and reproducibility
+Each unmixing run writes a JSON sidecar report next to the output TIFF, for
+example:
+
+```text
+input_unmixed_reference_t0.tif.json
+```
+
+This report stores the main processing settings such as alpha mode, estimated
+alpha values, source and target channels, axis order, and output dtype.
+
 Terminal progress output is enabled by default and can be disabled with
 `verbose=False`.
 
-## Scientific Note
+### Scientific Note
+A fixed `alpha` measured from a proper single-label control recording is scientifically preferable.
 
-A fixed alpha measured from a proper single-label control recording is
-scientifically preferable. Estimating alpha from the mixed experimental stack is
-provided as a pragmatic first-pass workflow and can be biased when biological
-signals overlap spatially.
+Estimating `alpha` from the mixed experimental stack is available as a pragmatic first-pass workflow, but it can be biased when source and target biology overlap spatially.
+
+`alpha_mode="reference_t"` assumes that the bleed-through factor is stable across time.
+
+`alpha_mode="per_t"` can compensate for slow intensity changes, but may also introduce time-dependent artifacts when biology changes over time.
+
+## Add-ons: Filtering, registration, and projection
+In addition to spectral unmixing, the package also includes optional helper
+functions for:
+
+- filtering: `apply_filters(...)`
+- time-wise histogram matching: `match_histograms_across_time(...)`
+- max-z projection: `max_z_project(...)`
+- intra-stack z-drift correction: `correct_intra_stack_z_drift(...)`
+- time registration: `register_stack(...)`
+
+These helper modules are meant to support follow-up image processing after unmixing. They are not the primary focus of the project, and their full documentation will be expanded later in Read the Docs.
+
+For now, see the tutorial-style user scripts:
+
+- [user_scripts/unmix_ch0_from_ch1_interactive.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_ch0_from_ch1_interactive.py)
+- [user_scripts/filter_and_project_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_project_stack.py)
+- [user_scripts/filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_register_stack.py)
+- [user_scripts/fine_filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/fine_filter_and_register_stack.py)
