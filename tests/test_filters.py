@@ -54,6 +54,52 @@ class FilterTests(unittest.TestCase):
         self.assertEqual(filtered.shape, image.shape)
         self.assertGreater(float(filtered[2, 2]), 0.0)
 
+    def test_apply_filters_supports_second_channel_override(self) -> None:
+        stack = np.zeros((1, 1, 2, 7, 7), dtype=np.float32)
+        stack[0, 0, 0, 3, 3] = 10.0
+        stack[0, 0, 1, 3, 3] = 10.0
+
+        filtered = apply_filters(
+            stack,
+            filters="median",
+            filters_channel2="gaussian",
+            median_size=3,
+            gaussian_sigma=1.0,
+            apply_3d=False,
+        )
+
+        self.assertEqual(float(filtered[0, 0, 0, 3, 3]), 0.0)
+        self.assertGreater(float(filtered[0, 0, 1, 3, 3]), 0.0)
+
+    def test_apply_filters_supports_per_time_filter_parameters(self) -> None:
+        stack = np.zeros((3, 1, 1, 9, 9), dtype=np.float32)
+        stack[:, 0, 0, 4, 4] = 10.0
+
+        filtered = apply_filters(
+            stack,
+            filters="gaussian",
+            gaussian_sigma=[0.5, 1.0, 2.0],
+            apply_3d=False,
+        )
+
+        center_values = filtered[:, 0, 0, 4, 4]
+        self.assertGreater(float(center_values[0]), float(center_values[1]))
+        self.assertGreater(float(center_values[1]), float(center_values[2]))
+
+    def test_apply_filters_uses_first_list_value_when_time_list_length_mismatches(self) -> None:
+        stack = np.zeros((3, 1, 1, 9, 9), dtype=np.float32)
+        stack[:, 0, 0, 4, 4] = 10.0
+
+        filtered = apply_filters(
+            stack,
+            filters="gaussian",
+            gaussian_sigma=[0.75, 2.0],
+            apply_3d=False,
+        )
+
+        np.testing.assert_allclose(filtered[0], filtered[1], atol=1e-6)
+        np.testing.assert_allclose(filtered[1], filtered[2], atol=1e-6)
+
     def test_max_z_project_keeps_t_and_c_with_singleton_z(self) -> None:
         stack = np.zeros((2, 3, 2, 4, 4), dtype=np.float32)
         stack[:, 0, :, :, :] = 1.0
