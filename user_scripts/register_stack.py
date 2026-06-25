@@ -77,7 +77,8 @@ print(f"Filtered stack: {filtered_stack.shape}")
 filtered_metadata = om.update_metadata_from_image(metadata, filtered_stack)
 om.open_in_napari(filtered_stack, filtered_metadata, "Filtered |")
 # %% MAX-Z-PROJECT
-projected_stack = max_z_project(filtered_stack)
+zrange=(10,19)
+projected_stack = max_z_project(filtered_stack, zrange=zrange)
 print(f"Projected stack: {projected_stack.shape}")
 projected_metadata = om.update_metadata_from_image(metadata, projected_stack)
 # temp_projected_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_registered_histmatched_projected_tmp.tif"
@@ -94,6 +95,6 @@ print(f"Filtered projected stack: {filtered_projected_stack.shape}")
 filtered_projected_metadata = om.update_metadata_from_image(metadata, filtered_projected_stack)
 om.open_in_napari(filtered_projected_stack, filtered_projected_metadata, "Filtered Projected |")
 # %% SAVE FILTERED PROJECTED STACK WITH OMIO
-filtered_projected_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_registered_histmatched_filtered_projected_tmp.tif"
+filtered_projected_path = OUTPUT_DIR / f"ID14135_TP0_d2_unmixed_fixed_alpha_registered_histmatched_filtered_projected_z{zrange[0]}_to_{zrange[1]}.tif"
 filtered_projected_saved = write_stack_with_omio(filtered_projected_path, filtered_projected_stack, metadata)
 # %% END
