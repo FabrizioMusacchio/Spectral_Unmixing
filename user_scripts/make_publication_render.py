@@ -46,27 +46,27 @@ REGISTRATION_CHANNEL = 0
 INTRA_STACK_METHOD = "pystackreg"  # "phase_cross_correlation" or "pystackreg"
 TEMPORAL_REGISTRATION_METHOD = "pystackreg"  # "phase_cross_correlation" or "pystackreg"
 NEIGHBOR_WINDOW_SIZE = 3  # 3 -> z-1, z, z+1; 5 -> z-2 ... z+2
-PROJECTION_ZRANGE =  (7, 13)  # None or e.g. (6, 14) to use only a focused subset of slices
+PROJECTION_ZRANGE = (8, 12)  # None or e.g. (6, 14) to use only a focused subset of slices
 MATCH_HISTOGRAMS = True
 # %% PUBLICATION RENDER SETTINGS
 # Channel 0 is typically dendrite/spines and channel 1 microglia.
 BACKGROUND_METHOD = "gaussian"  # "gaussian", "white_tophat", or "none"
-BACKGROUND_GAUSSIAN_SIGMA = (12.0, 8.0)
+BACKGROUND_GAUSSIAN_SIGMA = (16.0, 14.0)
 BACKGROUND_WHITE_TOPHAT_RADIUS = (9, 7)
 
-DENOISE_METHOD = "bilateral"  # "bilateral", "median", or "none"
+DENOISE_METHOD = "median"  # "bilateral", "median", or "none"
 BILATERAL_SIGMA_COLOR = (0.06, 0.05)
 BILATERAL_SIGMA_SPATIAL = (1.5, 1.5)
 
-MEDIAN_SIZE = (3, 3)
+MEDIAN_SIZE = (1, 5)
 
-APPLY_UNSHARP_MASK = True
+APPLY_UNSHARP_MASK = False
 UNSHARP_RADIUS = (0.8, 0.6)
 UNSHARP_AMOUNT = (0.45, 0.20)
 
-LOWER_PERCENTILE = (2.0, 2.0)
-UPPER_PERCENTILE = (99.6, 99.3)
-GAMMA = (0.78, 0.92)
+LOWER_PERCENTILE = (6.0, 30.0)
+UPPER_PERCENTILE = (99.85, 99.82)
+GAMMA = (0.86, 1.12)
 
 PRE_PROJECTION_MEDIAN_FILTER = False
 POST_PROJECTION_MEDIAN_FILTER = False
@@ -182,18 +182,24 @@ if SHOW_INTERMEDIATE_RESULTS_IN_NAPARI:
 saved_output = write_stack_with_omio(OUTPUT_PATH, publication_render_stack, publication_render_metadata)
 print(saved_output)
 
-# also save first T-slice as a single image for figure panels as png using matplotlib:
+# also save first T-slice as a single image for figure panels as png:
 first_t_slice = publication_render_stack[0]
-plt.imshow(first_t_slice[0,0,:,:], cmap="gray", vmin=0, vmax=1)
-plt.axis("off")
 png_output_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_publication_render_first_t_slice_channel_0.png"
-plt.savefig(png_output_path, dpi=300, bbox_inches="tight", pad_inches=0)
+plt.imsave(
+    png_output_path,
+    first_t_slice[0, 0, :, :],
+    cmap="gray",
+    vmin=0,
+    vmax=1,
+)
 print(f"Saved first T-slice as PNG: {png_output_path}")
-plt.close()
-plt.imshow(first_t_slice[0,1,:,:], cmap="gray", vmin=0, vmax=1)
-plt.axis("off")
 png_output_path = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha_publication_render_first_t_slice_channel_1.png"
-plt.savefig(png_output_path, dpi=300, bbox_inches="tight", pad_inches=0)
+plt.imsave(
+    png_output_path,
+    first_t_slice[0, 1, :, :],
+    cmap="gray",
+    vmin=0,
+    vmax=1,
+)
 print(f"Saved first T-slice as PNG: {png_output_path}")
-plt.close()
 # %% END
