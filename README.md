@@ -19,16 +19,53 @@ Core dependencies include:
 - `pystackreg`
 
 ## Spectral unmixing model
-The implemented correction assumes that one channel contributes linearly to
-another channel:
+The implemented correction assumes that one channel contributes linearly to another channel:
 
-$$I_{\text{source}} \approx \text{true source signal}$$
-$$I_{\text{target}} \approx \text{true target signal} + \alpha \cdot I_{\text{source}}$$
+$$
+I_{\text{source}} \approx S
+$$
 
-The corrected target channel is computed as:
+$$
+I_{\text{target}} \approx T + \alpha \, S
+$$
 
-$$I_{\text{target,corrected}} = I_{\text{target}} - \alpha \cdot I_{\text{source}}$$
-$$I_{\text{target,corrected}} = \max(I_{\text{target}} - \alpha \cdot I_{\text{source}}, 0)$$
+Here,
+
+- $I_{\text{source}}$ is the measured intensity in the source channel
+- $I_{\text{target}}$ is the measured intensity in the target channel
+- $S$ is the true source-channel signal
+- $T$ is the true target-channel signal
+- $\alpha$ is the bleed-through coefficient from source into target
+
+Under this model, the source channel contaminates the target channel linearly.
+The actual unmixing step therefore subtracts the estimated source contribution
+from the measured target signal:
+
+$$
+I_{\text{target, corrected}}^{\ast}
+= I_{\text{target}} - \alpha \, I_{\text{source}}
+$$
+
+This is the core linear spectral unmixing equation.
+
+In practice, the subtraction can produce negative values in pixels or voxels
+where the estimated bleed-through contribution is slightly larger than the
+measured target intensity. Since negative intensities are not physically
+meaningful for the final corrected image, the pipeline can optionally apply a
+second, purely post-processing step:
+
+$$
+I_{\text{target, corrected}}
+= \max\!\left(
+I_{\text{target}} - \alpha \, I_{\text{source}},
+0
+\right)
+$$
+
+So these are not two different models. They are two consecutive steps:
+
+1. linear unmixing by subtraction
+2. optional clipping of negative values to zero
 
 Only the chosen target channel is corrected. The source channel is left
 unchanged.
