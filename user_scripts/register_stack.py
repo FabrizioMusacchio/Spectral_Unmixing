@@ -42,6 +42,7 @@ z_corrected_stack = correct_intra_stack_z_drift(
     post_median_filter=False,
     median_kernel_size=3,
     verbose=True)
+
 print(f"Z-corrected stack: {z_corrected_stack.shape}")
 z_corrected_metadata = om.update_metadata_from_image(metadata, z_corrected_stack)
 om.open_in_napari(stack, metadata, "Unregistered |")
