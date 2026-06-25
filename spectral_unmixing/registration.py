@@ -245,15 +245,6 @@ def correct_intra_stack_z_drift(
 
     corrected = stack.copy()
 
-    _print_verbose(
-        verbose,
-        (
-            "Correcting intra-stack Z drift with method="
-            f"'{method}', registration_channel={int(registration_channel)}, "
-            f"reference_mode='{reference_mode}', neighbor_window_size={neighbor_window_size}"
-        ),
-    )
-
     for t in range(stack.shape[0]):
         volume_zyx = np.asarray(stack[t, :, int(registration_channel), :, :], dtype=np.float32)
         working_volume = volume_zyx.copy()
@@ -284,11 +275,6 @@ def correct_intra_stack_z_drift(
                 shift_yx = _phase_cross_correlation_shift(reference_image, moving_image)
             else:
                 shift_yx = _pystackreg_shift(reference_image, moving_image)
-
-            _print_verbose(
-                verbose,
-                f"t={t} z={z} shift_y={float(shift_yx[0]):.3f} shift_x={float(shift_yx[1]):.3f}",
-            )
 
             corrected[t, z, :, :, :] = _apply_translation_to_cyx(
                 stack[t, z, :, :, :],
