@@ -97,12 +97,10 @@ where
 
 This can be written in matrix form as
 
-$$
-\begin{pmatrix}
+$$\begin{pmatrix}
 I_0 \\
 I_1
-\end{pmatrix}
-=
+\end{pmatrix} =
 \begin{pmatrix}
 1 & \alpha_{10} \\
 \alpha_{01} & 1
@@ -110,8 +108,7 @@ I_1
 \begin{pmatrix}
 S_0 \\
 S_1
-\end{pmatrix}.
-$$
+\end{pmatrix}.$$
 
 The unmixed signals are then obtained by inverting this 2x2 mixing matrix:
 
