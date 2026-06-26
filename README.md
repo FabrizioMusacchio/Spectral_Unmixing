@@ -259,9 +259,7 @@ $$b_X = \operatorname{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})$$
 
 and
 
-$$
-b_Y = \operatorname{percentile}(Y_{\mathrm{raw}}, p_{\mathrm{bg}})
-$$
+$$b_Y = \operatorname{percentile}(Y_{\mathrm{raw}}, p_{\mathrm{bg}})$$
 
 and then forms
 
@@ -285,30 +283,20 @@ for alpha estimation.
 
 By default, the mask is defined from bright source voxels:
 
-$$
-\mathcal{M}
-=
-\left\{
+$$\mathcal{M}= \left\{
 i \;\middle|\; X_i \ge
 \operatorname{percentile}(X, p_{\mathrm{sig}})
-\right\}
-$$
+\right\}$$
 
 where $p_{\mathrm{sig}}$ is `signal_percentile`.
 
 Optionally, the mask can be restricted further to voxels with comparatively low
 target intensity:
 
-$$
-\mathcal{M}
-=
-\mathcal{M}
-\cap
-\left\{
+$$\mathcal{M} = \mathcal{M} \cap \left\{
 i \;\middle|\; Y_i \le
 \operatorname{percentile}(Y, p_{\mathrm{target,low}})
-\right\}
-$$
+\right\}$$
 
 where $p_{\mathrm{target,low}}$ is `target_low_percentile`.
 
@@ -355,12 +343,7 @@ $$
 
 Then the estimate is
 
-$$
-\hat{\alpha}_{\mathrm{mean\_ratio}}
-=
-\frac{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} y_i}
-{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} x_i}.
-$$
+$$\hat{\alpha}_{\mathrm{mean\_ratio}} = \frac{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} y_i} {\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} x_i}.$$
 
 This estimator is simple and often stable, but it is not identical to a
 least-squares fit.
@@ -369,18 +352,12 @@ least-squares fit.
 This method performs masked least-squares fitting **without intercept**:
 
 $$
-y_i \approx \alpha x_i
-\qquad \text{for } i \in \mathcal{M}.
+y_i \approx \alpha x_i \quad \text{for } i \in \mathcal{M}.
 $$
 
 The resulting estimator is
 
-$$
-\hat{\alpha}_{\mathrm{linear\_fit}}
-=
-\frac{\sum_{i \in \mathcal{M}} x_i y_i}
-{\sum_{i \in \mathcal{M}} x_i^2}.
-$$
+$$\hat{\alpha}_{\mathrm{linear\_fit}} = \frac{\sum_{i \in \mathcal{M}} x_i y_i} {\sum_{i \in \mathcal{M}} x_i^2}.$$
 
 No intercept is fitted, because the optional background subtraction is already
 handled during preprocessing and because an intercept would blur the
@@ -396,12 +373,7 @@ $$
 
 The estimate is obtained by solving
 
-$$
-\hat{\alpha}_{\mathrm{corr\_min}}
-=
-\arg\min_{0 \le \alpha \le \alpha_{\max}}
-\operatorname{corr}(X, Y^{(\alpha)})^2.
-$$
+$$\hat{\alpha}_{\mathrm{corr\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{corr}(X, Y^{(\alpha)})^2.$$
 
 In practice, the implementation uses Pearson correlation and bounded scalar
 optimization on the interval $[0, \alpha_{\max}]$.
@@ -422,12 +394,7 @@ $$
 
 Then the estimate is obtained from
 
-$$
-\hat{\alpha}_{\mathrm{mi\_min}}
-=
-\arg\min_{0 \le \alpha \le \alpha_{\max}}
-\operatorname{MI}(X, Y^{(\alpha)}),
-$$
+$$\hat{\alpha}_{\mathrm{mi\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{MI}(X, Y^{(\alpha)}),$$
 
 where $\operatorname{MI}$ denotes mutual information. The current
 implementation uses a histogram-based mutual-information estimate with a user
@@ -502,19 +469,11 @@ For each ordered channel pair $(i, j)$, the MATLAB-style routine estimates a
 scalar $\alpha_{ij}$ by minimizing histogram-based mutual information after
 subtracting one channel from the other:
 
-$$
-\alpha_{ij}
-=
-\arg\min_{\alpha}
-\operatorname{MI}\!\left(v_i - \alpha v_j,\; v_j\right).
-$$
+$$\alpha_{ij}= \arg\min_{\alpha} \operatorname{MI}\!\left(v_i - \alpha v_j,\; v_j\right).$$
 
 The off-diagonal entries of $A^{(k)}$ are then
 
-$$
-A^{(k)}_{ij} = -\alpha_{ij}
-\qquad (i \neq j).
-$$
+$$A^{(k)}_{ij} = -\alpha_{ij} \quad (i \neq j).$$
 
 The Python port follows the MATLAB routine closely, including:
 
@@ -528,11 +487,7 @@ The Python port follows the MATLAB routine closely, including:
 The `matlab_n` mode keeps the same pairwise-update idea, but extends it from
 three channels to $N$ selected channels:
 
-$$
-\mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)},
-\qquad
-C^{(k)} = I + s A^{(k)},
-$$
+$$\mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)}, \quad C^{(k)} = I + s A^{(k)},$$
 
 with pairwise coefficients estimated for all ordered channel pairs
 $(i, j)$, $i \neq j$.
@@ -545,11 +500,7 @@ because the published MATLAB code itself is specialized to three channels.
 The `source_sink_n` mode uses a more direct formulation. For each sink channel
 $j$, the corrected sink is modeled as
 
-$$
-\tilde{I}_j
-=
-I_j - \sum_{i \in \mathcal{S}_j} \alpha_{ij} \, S_i,
-$$
+$$\tilde{I}_j = I_j - \sum_{i \in \mathcal{S}_j} \alpha_{ij} \, S_i,$$
 
 where:
 
@@ -573,10 +524,7 @@ bleed into all specified sink channels except into themselves.
 Each coefficient is estimated by minimizing mutual information:
 
 $$
-\alpha_{ij}
-=
-\arg\min_{0 \le \alpha \le \alpha_{\max}}
-\operatorname{MI}\!\left(S_i,\; I_j - \alpha S_i\right).
+\alpha_{ij} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{MI}\!\left(S_i,\; I_j - \alpha S_i\right).
 $$
 
 This mode is inspired by the napari plugin's source-sink viewpoint, but it is
