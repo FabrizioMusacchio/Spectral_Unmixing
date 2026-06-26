@@ -445,20 +445,20 @@ controlled number of bins `mi_bins`.
 The two-channel `mi_min` method is inspired by the PICASSO criterion, but it is
 **not** the full multi-channel PICASSO algorithm.
 
-### Multi-channel PICASSO-like blind unmixing
+### Multi-channel PICASSO-family blind unmixing
 The package additionally provides a separate function:
 
 ```python
 from spectral_unmixing import unmix_picasso
 ```
 
-This implements an iterative multi-channel blind-unmixing workflow under the
-assumption that:
+This function is separate from the simpler two-channel `unmix(...)` workflow
+and is meant for blind multi-channel unmixing under the assumption that:
 
 - the number of measured channels equals the number of fluorophores
 - the mixture is approximately linear
-- one wants to reduce pairwise statistical dependence between reconstructed
-  channels
+- one wants to reduce cross-channel dependence without supplying an external
+  reference spectrum matrix
 
 The underlying linear model is
 
@@ -470,30 +470,140 @@ where
 
 - \(I\) is the vector of measured channels
 - \(F\) is the vector of latent fluorophore signals
-- \(M\) is an unknown mixing matrix
+- \(M\) is an unknown mixing matrix.
 
-The iterative PICASSO-like implementation starts from the measured channels and
-repeatedly updates channel pairs using
+`unmix_picasso(...)` now supports three implementation modes:
+
+- `implementation="matlab_3c"`:
+  Default. A close Python port of the original MATLAB PICASSO 3-channel code.
+  This mode intentionally requires exactly three selected channels.
+- `implementation="matlab_n"`:
+  An explicit N-channel generalization of the MATLAB 3-channel workflow. It
+  keeps the same iterative logic, but applies it to an arbitrary number of
+  selected channels.
+- `implementation="source_sink_n"`:
+  A source-sink N-channel workflow inspired by the napari PICASSO plugin. This
+  mode lets the user specify which channels can bleed into which sinks through a
+  `source_sink_matrix`, or more simply through `sink_channels` and
+  `neutral_channels`.
+
+#### `matlab_3c`: close port of the original MATLAB algorithm
+In the original MATLAB-style workflow, the current channel vector
+\(\mathbf{v}^{(k)}\) is updated iteratively:
 
 $$
-F_j \leftarrow F_j - a_{ij} F_i
+\mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)},
 $$
 
-with
+where the incremental update matrix is
 
 $$
-a_{ij}
+C^{(k)} = I + s A^{(k)}.
+$$
+
+Here:
+
+- \(I\) is the identity matrix
+- \(s\) is the user-controlled `step_size`
+- \(A^{(k)}\) is a matrix of pairwise subtraction coefficients
+
+For each ordered channel pair \((i, j)\), the MATLAB-style routine estimates a
+scalar \(\alpha_{ij}\) by minimizing histogram-based mutual information after
+subtracting one channel from the other:
+
+$$
+\alpha_{ij}
 =
-\arg\min_{0 \le a \le \alpha_{\max}}
-\operatorname{MI}(F_i, F_j - a F_i).
+\arg\min_{\alpha}
+\operatorname{MI}\!\left(v_i - \alpha v_j,\; v_j\right).
 $$
 
-These pairwise updates induce an estimated unmixing matrix \(U\), which is then
-applied to the selected channels of the full stack.
+The off-diagonal entries of \(A^{(k)}\) are then
 
-This is a PICASSO-like iterative blind-unmixing criterion. It is not a
-deep-learning method and it is conceptually separate from the simpler
-two-channel `unmix(...)` workflow.
+$$
+A^{(k)}_{ij} = -\alpha_{ij}
+\qquad (i \neq j).
+$$
+
+The Python port follows the MATLAB routine closely, including:
+
+- per-channel max normalization before estimation
+- low-percentile background subtraction
+- 2D pixel binning before MI estimation
+- coefficient clipping with `alpha_clip`
+- the MATLAB-style negativity check and occasional positivity enforcement
+
+#### `matlab_n`: explicit N-channel generalization
+The `matlab_n` mode keeps the same pairwise-update idea, but extends it from
+three channels to \(N\) selected channels:
+
+$$
+\mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)},
+\qquad
+C^{(k)} = I + s A^{(k)},
+$$
+
+with pairwise coefficients estimated for all ordered channel pairs
+\((i, j)\), \(i \neq j\).
+
+Conceptually, this is a pragmatic extension of the MATLAB algorithm. It is not
+claimed to be the original PICASSO publication's exact N-channel method,
+because the published MATLAB code itself is specialized to three channels.
+
+#### `source_sink_n`: explicit source-sink modeling
+The `source_sink_n` mode uses a more direct formulation. For each sink channel
+\(j\), the corrected sink is modeled as
+
+$$
+\tilde{I}_j
+=
+I_j - \sum_{i \in \mathcal{S}_j} \alpha_{ij} \, S_i,
+$$
+
+where:
+
+- \(\mathcal{S}_j\) is the set of source channels allowed to contribute to sink
+  \(j\)
+- the allowed source-sink relations are encoded in `source_sink_matrix`
+- \(S_i\) is a prepared source image for channel \(i\)
+
+For users who do not want to write the full matrix manually, the same relation
+graph can be built more readably from channel-role lists:
+
+- `sink_channels=[...]`:
+  selected channels that should be corrected as sinks
+- `neutral_channels=[...]`:
+  selected channels that should remain neutral, meaning they are neither
+  corrected as sinks nor used as sources
+
+In that convenience mode, all selected non-neutral channels are allowed to
+bleed into all specified sink channels except into themselves.
+
+Each coefficient is estimated by minimizing mutual information:
+
+$$
+\alpha_{ij}
+=
+\arg\min_{0 \le \alpha \le \alpha_{\max}}
+\operatorname{MI}\!\left(S_i,\; I_j - \alpha S_i\right).
+$$
+
+This mode is inspired by the napari plugin's source-sink viewpoint, but it is
+not a neural or MINE-based reimplementation of that plugin.
+
+#### `alpha_mode` inside `unmix_picasso(...)`
+As in the two-channel workflow, `alpha_mode` controls *where* the coefficients
+or update sequence are estimated from:
+
+- `alpha_mode="reference_t"`:
+  estimate once from `alpha_reference_t` and apply the learned parameters to all
+  time points
+- `alpha_mode="per_t"`:
+  estimate a separate blind-unmixing solution for each time point
+
+For practical examples, see:
+
+- [user_scripts/unmix_picasso_5color_simulation.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_simulation.py)
 
 ### Output and reproducibility
 Each unmixing run writes a JSON sidecar report next to the output TIFF, for
