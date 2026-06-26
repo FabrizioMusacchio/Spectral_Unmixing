@@ -2,9 +2,9 @@
 
 ![spectral-unmixing logo](figures/spectra_unmixing_logo.png)
 
-`spectral-unmixing` is a small Python package focused on spectral bleed-through correction in microscopy TIFF stacks read with OMIO. The package assumes OMIO's canonical axis order `TZCYX`, so downstream code can safely address time, z, channel, and spatial axes in a predictable way.
+`spectral-unmixing` is a small Python package focused on spectral bleed-through correction in microscopy stacks. It supports linear unmixing methods as well as blind unmixing methods in the PICASSO family, covering both two-channel workflows and multi-channel blind-unmixing workflows. The package is designed for multi-dimensional microscopy stacks in canonical `TZCYX` order and can therefore handle full time-lapse z-stacks as well as simpler cases with `T=1` and/or `Z=1`. The package is designed to be used in Python scripts. We use [OMIO](https://omio.readthedocs.io/en/latest/) for reading and writing microscopy stacks, so any file format currently supported by OMIO can be processed, including TIFF-based formats, CZI, LSM, and other OMIO-readable microscopy formats.
 
-The main goal of the project is reproducible spectral unmixing. Additional modules for filtering, registration, and projection are included as optional helpers for further image processing, but they are intentionally secondary to the unmixing workflow.
+The main goal of the project is reproducible, flexible, and effortless spectral unmixing with small, if any, requirements for user interaction. The main entry point is `spectral_unmixing.unmix(...)`, which reads a microscopy stack, estimates or uses a user-supplied bleed-through coefficient, and writes a corrected output stack along with a JSON sidecar report for reproducibility. Additional modules for filtering, registration, and projection are included as optional helpers for further image processing, but they are intentionally secondary to the unmixing workflow.
 
 ## Installation
 We recommend creating a dedicated Python 3.12 conda environment:
@@ -44,6 +44,16 @@ Main runtime dependencies include:
 - `scipy`
 - `scikit-image`
 - `pystackreg`
+
+## What is bleed-through and why is it a problem?
+In fluorescence microscopy, bleed-through (also called crosstalk or spectral spillover) occurs when signal from one fluorophore is detected in the measurement channel of another fluorophore. A common reason is spectral overlap between fluorophore emission and the selected detection windows, but the the problem also depends on the optical filters, detector settings, and the overall imaging setup.
+
+![](figures/blead_throug_1600px.png)
+*Schematic illustration of spectral bleed-through in fluorescence imaging setups. Shown are four different fluorophores (blue, green, yellow, red) and their respective emission spectra as a function of wavelength. Bleed-through occurs when the emission of one fluorophore is also detected in another channel, for example when green emission is partially recorded in the yellow channel. This can happen if detection windows are not cleanly separated, if the selected detection range is too broad, or if the emission peaks of two fluorophores lie too close together. Source: [fabriziomusacchio.com](https://www.fabriziomusacchio.com/teaching/teaching_bioimage_analysis/09_napari_bleach_correction) (license: CC BY-NC-SA 4.0)*
+
+Biologically and analytically, this is a problem because it can create false-positive signal, inflate apparent [colocalization](https://cellcoloc.readthedocs.io/en/latest/), distort intensity measurements, and ultimately bias the interpretation of cellular structures or dynamics. In practice, one may incorrectly conclude that a structure is present in a given channel even though part of the observed signal actually originates from another fluorophore.
+
+Spectral unmixing aims to correct for this contamination by estimating the contribution of one channel to another channel and subtracting it out, thereby recovering a better approximation of the true signal of interest. In the present package, the core correction models are linear, and the blind-unmixing workflow estimates linear mixing relationships directly from the measured data.
 
 ## Spectral unmixing model
 The implemented correction assumes that one channel contributes linearly to another channel:
@@ -184,7 +194,7 @@ output_path = unmix(
 
 `unmix(...)` performs the following steps:
 
-- reads the input stack with OMIO
+- reads the input stack with [OMIO](https://omio.readthedocs.io/en/latest/)
 - validates that the image is in canonical `TZCYX` order
 - obtains `alpha` either as a fixed value or by estimation from the data
 - optionally obtains a reverse-direction coefficient for bidirectional
@@ -192,10 +202,10 @@ output_path = unmix(
 - applies either the one-direction subtraction model or the bidirectional 2x2
   mixing-model inversion over all `T` and `Z`
 - clips negative corrected values to zero if requested
-- writes the corrected TIFF stack
-- writes a JSON sidecar report next to the output TIFF for reproducibility
+- writes the corrected output stack via [OMIO](https://omio.readthedocs.io/en/latest/), typically as TIFF or OME-TIFF
+- writes a JSON sidecar report next to the output file for reproducibility
 
-The function returns the path to the written TIFF file.
+The function returns the path to the written output file.
 
 When `bidirectional=False` (default), the classic one-direction model is used.
 When `bidirectional=True`, the reverse-direction settings are taken from the
@@ -308,23 +318,19 @@ for alpha estimation.
 
 By default, the mask is defined from bright source voxels:
 
-$$
-\mathcal{M}= \left\{i \;\middle|\; X_i \ge \mathrm{percentile}(X, p_{\mathrm{sig}}) \right\}
-$$
+$$\mathcal{M}= \{\, i \mid X_i \ge \mathrm{percentile}(X, p_{\mathrm{sig}}) \,\}$$
 
 where $p_{\mathrm{sig}}$ is `signal_percentile`.
 
-Optionally, the mask can be restricted further to voxels with comparatively low
-target intensity:
+Optionally, the mask can be restricted further to voxels with comparatively low target intensity:
 
-$$\mathcal{M} = \mathcal{M} \cap \left\{i \;\middle|\; Y_i \le \mathrm{percentile}(Y, p_{\mathrm{target,low}})\right\}$$
+$$\mathcal{M} = \mathcal{M} \cap \{\, i \mid Y_i \le \mathrm{percentile}(Y, p_{\mathrm{target,low}}) \,\}$$
 
 where $p_{\mathrm{target,low}}$ is `target_low_percentile`.
 
 This can be useful when one wants to estimate bleed-through primarily from voxels with strong source signal but as little genuine target signal as possible.
 
-If this stricter mask becomes too small, the implementation falls back to the
-source-only mask when possible and records that behavior in the JSON report.
+If this stricter mask becomes too small, the implementation falls back to the source-only mask when possible and records that behavior in the JSON report.
 
 #### Method: `manual`
 For `method="manual"`, no coefficient is estimated from the data.
@@ -563,7 +569,7 @@ For practical examples, see:
 - [user_scripts/unmix_picasso_5color_simulation.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_simulation.py)
 
 ### Output and reproducibility
-Each unmixing run writes a JSON sidecar report next to the output TIFF, for
+Each unmixing run writes a JSON sidecar report next to the output stack, for
 example:
 
 ```text
