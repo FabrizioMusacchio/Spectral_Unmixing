@@ -7,12 +7,37 @@
 The main goal of the project is reproducible spectral unmixing. Additional modules for filtering, registration, and projection are included as optional helpers for further image processing, but they are intentionally secondary to the unmixing workflow.
 
 ## Installation
+We recommend creating a dedicated Python 3.12 conda environment:
 
 ```bash
+conda create -n spectral-unmixing python=3.12
+conda activate spectral-unmixing
+```
+
+### Official installation from PyPI
+
+```bash
+pip install spectral-unmixing
+```
+
+### Developer installation
+Clone the repository and install it in editable mode:
+
+```bash
+git clone https://github.com/FabrizioMusacchio/spectral-unmixing.git
+cd spectral-unmixing
 pip install -e .
 ```
 
-Core dependencies include:
+### Upgrade
+To upgrade an existing installation from PyPI:
+
+```bash
+pip install --upgrade spectral-unmixing
+```
+
+### Dependencies
+Main runtime dependencies include:
 
 - `numpy`
 - `omio-microscopy`
