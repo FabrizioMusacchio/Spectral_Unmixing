@@ -112,12 +112,10 @@ S_1
 
 The unmixed signals are then obtained by inverting this 2x2 mixing matrix:
 
-$$
-\begin{pmatrix}
+$$\begin{pmatrix}
 S_0 \\
 S_1
-\end{pmatrix}
-=
+\end{pmatrix} =
 \begin{pmatrix}
 1 & \alpha_{10} \\
 \alpha_{01} & 1
@@ -125,8 +123,7 @@ S_1
 \begin{pmatrix}
 I_0 \\
 I_1
-\end{pmatrix}.
-$$
+\end{pmatrix}.$$
 
 Equivalently,
 
@@ -256,12 +253,9 @@ If `preprocess_alpha_inputs=True`, it:
 - clips negative values to zero
 
 Mathematically, if the raw source and target volumes are denoted by
-$X_{\mathrm{raw}}$ and $Y_{\mathrm{raw}}$, the preprocessing step computes
-background estimates
+$X_{\mathrm{raw}}$ and $Y_{\mathrm{raw}}$, the preprocessing step computes background estimates
 
-$$
-b_X = \operatorname{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})
-$$
+$$b_X = \operatorname{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})$$
 
 and
 
