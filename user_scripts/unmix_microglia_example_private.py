@@ -52,7 +52,7 @@ Effect of changing these settings:
   unmixing itself.
 """
 INPUT_PATH = PROJECT_ROOT / "example_data" / "MicroSynDep_private" / "ID14135_TP0_d2.tif"
-#INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSE_examples/2_color_unmixing_validation_Before_unmixing.tif")
+#INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/2_color_unmixing_validation_Before_unmixing.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

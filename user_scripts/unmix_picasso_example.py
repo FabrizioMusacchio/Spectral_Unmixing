@@ -51,7 +51,7 @@ Effect of changing these settings:
 - Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
   unmixing itself.
 """
-INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSE_examples/Quantitative analysis of unmixing Before unmixing.tif")
+INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/Quantitative analysis of unmixing Before unmixing.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
