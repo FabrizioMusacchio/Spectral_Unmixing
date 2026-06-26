@@ -24,6 +24,23 @@ from .estimation import (
     estimate_picasso_unmixing_matrix_from_volume,
 )
 from .io import CANONICAL_AXIS_ORDER, load_stack_with_omio, write_stack_with_omio
+from .picasso_impl import (
+    build_source_sink_matrix,
+    DEFAULT_PICASSO_ALPHA_CLIP,
+    DEFAULT_PICASSO_BIN_FACTOR,
+    DEFAULT_PICASSO_CLIP_EVERY_N_ITERATIONS,
+    DEFAULT_PICASSO_IMPLEMENTATION,
+    DEFAULT_PICASSO_NEGATIVITY_THRESHOLD,
+    DEFAULT_PICASSO_QN,
+    DEFAULT_PICASSO_STEP_SIZE,
+    default_source_sink_matrix,
+    apply_source_sink_parameters,
+    run_picasso_matlab_like,
+    run_source_sink_unmixing,
+    apply_matlab_incremental_sequence,
+    validate_picasso_implementation,
+    validate_source_sink_matrix,
+)
 
 ALPHA_MODES = {"fixed", "reference_t", "per_t"}
 SUPPORTED_UNMIX_METHODS = {"manual", *SUPPORTED_ALPHA_ESTIMATION_METHODS}
@@ -959,22 +976,32 @@ def unmix_picasso(
     channels=None,
     *,
     method="picasso",
+    implementation=DEFAULT_PICASSO_IMPLEMENTATION,
     alpha_mode="reference_t",
     alpha_reference_t=0,
+    source_sink_matrix=None,
+    sink_channels=None,
+    neutral_channels=None,
     background_percentile=1.0,
     preprocess_alpha_inputs=True,
     mi_bins=DEFAULT_MI_BINS,
     alpha_max=DEFAULT_ALPHA_MAX,
-    max_iter=10,
+    max_iter=200,
     tolerance=1e-4,
     max_alpha_voxels=DEFAULT_MAX_ALPHA_VOXELS,
     random_state=DEFAULT_RANDOM_STATE,
+    step_size=DEFAULT_PICASSO_STEP_SIZE,
+    qn=DEFAULT_PICASSO_QN,
+    pixel_bin_size=DEFAULT_PICASSO_BIN_FACTOR,
+    alpha_clip=DEFAULT_PICASSO_ALPHA_CLIP,
+    negativity_threshold=DEFAULT_PICASSO_NEGATIVITY_THRESHOLD,
+    clip_every_n_iterations=DEFAULT_PICASSO_CLIP_EVERY_N_ITERATIONS,
     clip_negative=True,
     output_dtype="float32",
     verbose=True,
 ) -> Path:
     """
-    Perform PICASSO-like iterative multi-channel blind unmixing.
+    Perform PICASSO-family multi-channel blind unmixing.
 
     Parameters
     ----------
@@ -988,30 +1015,75 @@ def unmix_picasso(
         are used.
     method : {"picasso"}, optional
         Method label reserved for the PICASSO-like workflow.
+    implementation : {"matlab_3c", "matlab_n", "source_sink_n"}, optional
+        Concrete implementation variant:
+        ``"matlab_3c"`` for a close Python port of the original MATLAB 3-channel
+        workflow, ``"matlab_n"`` for an N-channel generalization of that
+        workflow, and ``"source_sink_n"`` for a source-sink multi-channel model
+        inspired by the napari plugin.
     alpha_mode : {"reference_t", "per_t"}, optional
         Whether to estimate one unmixing matrix from a reference time point or
         one matrix per time point.
     alpha_reference_t : int, optional
         Reference time point used when ``alpha_mode="reference_t"``.
+    source_sink_matrix : array-like or None, optional
+        Square matrix used only by ``implementation="source_sink_n"``. The
+        selected channels define both rows and columns. The diagonal must be
+        ``1``. Off-diagonal values must be ``-1`` for modeled source-to-sink
+        spillover and ``0`` otherwise. If ``None``, an all-to-all matrix with
+        diagonal ``1`` and off-diagonal ``-1`` is used.
+    sink_channels : sequence of int or None, optional
+        Convenience alternative to ``source_sink_matrix`` for
+        ``implementation="source_sink_n"``. Provide actual channel indices from
+        ``channels`` that should be corrected as sinks. All selected channels
+        except those listed in ``neutral_channels`` may contribute to these
+        sinks.
+    neutral_channels : sequence of int or None, optional
+        Convenience option for ``implementation="source_sink_n"``. Provide
+        actual channel indices from ``channels`` that should remain neutral,
+        meaning they are neither corrected as sinks nor used as sources when a
+        source-sink matrix is auto-generated.
     background_percentile : float, optional
-        Low percentile used for optional per-channel background subtraction
-        before matrix estimation.
+        Low percentile used for per-channel background subtraction in the
+        selected PICASSO implementation.
     preprocess_alpha_inputs : bool, optional
-        If ``True``, apply percentile-based background subtraction and clipping
-        before estimating the unmixing matrix.
+        Backward-compatibility parameter retained from earlier PICASSO-like
+        implementations. The current PICASSO-family implementations define
+        their own internal preprocessing and therefore do not switch behavior
+        based on this flag. The value is nevertheless recorded in the JSON
+        sidecar report for reproducibility.
     mi_bins : int, optional
-        Number of histogram bins used by the mutual-information estimator.
+        Number of histogram bins used by the mutual-information estimator in the
+        source-sink implementation.
     alpha_max : float, optional
-        Upper bound for pairwise subtraction coefficients during optimization.
+        Upper bound for source-to-sink coefficients in the source-sink
+        implementation.
     max_iter : int, optional
-        Maximum number of iterative pairwise update sweeps.
+        Maximum number of iterations for the selected implementation.
     tolerance : float, optional
-        Convergence threshold applied to the largest coefficient update per
-        iteration.
+        Reserved for compatibility with the previous API. The MATLAB-like
+        implementations follow a fixed iteration count rather than tolerance-
+        based early stopping.
     max_alpha_voxels : int or None, optional
-        Optional cap on the number of voxels used for matrix estimation.
+        Optional cap on the number of voxels used for coefficient estimation in
+        the source-sink implementation.
     random_state : int, optional
         Random seed used for optional subsampling during matrix estimation.
+    step_size : float, optional
+        Incremental update step size used by the MATLAB-style implementations.
+    qn : int, optional
+        MATLAB-style mutual-information quantization parameter.
+    pixel_bin_size : int, optional
+        MATLAB-style 2D binning factor applied before mutual-information
+        evaluation.
+    alpha_clip : float, optional
+        Absolute clipping bound applied to each MATLAB-style pairwise alpha
+        estimate before the incremental update matrix is constructed.
+    negativity_threshold : float, optional
+        MATLAB-style negativity ratio threshold above which a pairwise alpha is
+        divided by ten.
+    clip_every_n_iterations : int, optional
+        Frequency of positivity enforcement during the MATLAB-style iterations.
     clip_negative : bool, optional
         If ``True``, clip negative unmixed intensities to zero before writing.
     output_dtype : str or numpy.dtype, optional
@@ -1026,10 +1098,16 @@ def unmix_picasso(
 
     Notes
     -----
-    This function assumes that the number of measured channels equals the number
-    of fluorophores to reconstruct. It implements a PICASSO-inspired iterative
-    blind-unmixing routine based on pairwise mutual-information minimization; it
-    is not a reference-spectrum method and not a deep-learning model.
+    ``implementation="matlab_3c"`` is the default and aims to match the
+    published MATLAB 3-channel workflow as closely as possible.
+
+    ``implementation="matlab_n"`` is an explicit N-channel generalization of
+    that MATLAB workflow.
+
+    ``implementation="source_sink_n"`` uses a direct source-sink subtraction
+    model inspired by the napari plugin structure. It is not a neural-MINE port
+    of the plugin, but it follows the same idea of user-defined source/sink
+    relations.
     """
 
     input_path = Path(input_path)
@@ -1043,6 +1121,7 @@ def unmix_picasso(
 
     method = _validate_picasso_method(method)
     alpha_mode = _validate_picasso_alpha_mode(alpha_mode)
+    implementation = validate_picasso_implementation(implementation)
     alpha_max, mi_bins, _ = _validate_common_estimation_parameters(
         alpha_max=alpha_max,
         mi_bins=mi_bins,
@@ -1053,48 +1132,172 @@ def unmix_picasso(
     stack, metadata = load_stack_with_omio(input_path)
     time_count = int(stack.shape[0])
     channels = _validate_channels(channels, int(stack.shape[2]))
+    selected_stack = np.take(stack, channels, axis=2).astype(np.float32, copy=False)
+
+    if implementation == "matlab_3c" and len(channels) != 3:
+        raise ValueError(
+            "implementation='matlab_3c' requires exactly 3 selected channels. "
+            f"Got {len(channels)} channels: {channels!r}."
+        )
+
+    if source_sink_matrix is not None and implementation != "source_sink_n":
+        raise ValueError(
+            "source_sink_matrix is only used when implementation='source_sink_n'."
+        )
+    if (
+        sink_channels is not None or neutral_channels is not None
+    ) and implementation != "source_sink_n":
+        raise ValueError(
+            "sink_channels and neutral_channels are only used when "
+            "implementation='source_sink_n'."
+        )
+    if implementation == "source_sink_n":
+        if source_sink_matrix is not None and (
+            sink_channels is not None or neutral_channels is not None
+        ):
+            raise ValueError(
+                "Use either source_sink_matrix or sink_channels/neutral_channels, "
+                "not both at the same time."
+            )
+        if source_sink_matrix is None and (
+            sink_channels is not None or neutral_channels is not None
+        ):
+            source_sink_matrix = build_source_sink_matrix(
+                channels,
+                sink_channels=sink_channels,
+                neutral_channels=neutral_channels,
+            )
+        elif source_sink_matrix is None:
+            source_sink_matrix = default_source_sink_matrix(len(channels))
+        source_sink_matrix = validate_source_sink_matrix(
+            source_sink_matrix,
+            n_channels=len(channels),
+        )
+
+    if not bool(preprocess_alpha_inputs):
+        _print_verbose(
+            verbose,
+            (
+                "Note: preprocess_alpha_inputs is retained for backward "
+                "compatibility but is not used to switch preprocessing inside "
+                f"implementation='{implementation}'."
+            ),
+        )
+
+    _print_verbose(
+        verbose,
+        (
+            f"Starting PICASSO unmixing with implementation='{implementation}', "
+            f"method='{method}', alpha_mode='{alpha_mode}', channels={channels}."
+        ),
+    )
+
+    transformed_selected = np.empty_like(selected_stack, dtype=np.float32)
+    matrix = None
+    matrices_by_t = None
+    matrix_details = None
+    matrix_details_by_t = None
 
     if alpha_mode == "reference_t":
-        matrix, matrix_details = _estimate_reference_picasso_matrix(
-            stack,
-            channels=channels,
-            alpha_reference_t=int(alpha_reference_t),
-            background_percentile=background_percentile,
-            preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
-            mi_bins=mi_bins,
-            alpha_max=alpha_max,
-            max_iter=int(max_iter),
-            tolerance=float(tolerance),
-            max_alpha_voxels=max_alpha_voxels,
-            random_state=int(random_state),
-        )
-        transformed_selected = _apply_reference_unmixing_matrix(
-            stack.astype(np.float32, copy=False),
-            channels=channels,
-            matrix=matrix,
-        )
-        matrices_by_t = None
-        matrix_details_by_t = None
+        if not 0 <= int(alpha_reference_t) < time_count:
+            raise ValueError(
+                f"alpha_reference_t must be between 0 and {time_count - 1}. "
+                f"Got {alpha_reference_t!r}."
+            )
+        reference_channel_volumes = np.moveaxis(selected_stack[int(alpha_reference_t)], 1, 0)
+
+        if implementation in {"matlab_3c", "matlab_n"}:
+            reference_unmixed, matrix_details = run_picasso_matlab_like(
+                reference_channel_volumes,
+                background_percentile=float(background_percentile),
+                max_iter=int(max_iter),
+                step_size=float(step_size),
+                qn=int(qn),
+                pixel_bin_size=int(pixel_bin_size),
+                alpha_clip=float(alpha_clip),
+                negativity_threshold=float(negativity_threshold),
+                clip_every_n_iterations=int(clip_every_n_iterations),
+                require_three_channels=(implementation == "matlab_3c"),
+            )
+            matrix = np.asarray(matrix_details["unmixing_matrix"], dtype=np.float64)
+            transformed_selected[int(alpha_reference_t)] = np.moveaxis(reference_unmixed, 0, 1)
+            application_details_by_t: list[dict] = []
+            for t in range(time_count):
+                if t == int(alpha_reference_t):
+                    application_details_by_t.append({"t": int(t), "mode": "estimated"})
+                    continue
+                transformed_t, apply_details = apply_matlab_incremental_sequence(
+                    np.moveaxis(selected_stack[t], 1, 0),
+                    background_percentile=float(background_percentile),
+                    incremental_matrices=matrix_details["incremental_matrices"],
+                    clip_every_n_iterations=int(clip_every_n_iterations),
+                )
+                transformed_selected[t] = np.moveaxis(transformed_t, 0, 1)
+                application_details_by_t.append({"t": int(t), **apply_details})
+            matrix_details["application_details_by_t"] = application_details_by_t
+        else:
+            reference_unmixed, matrix_details = run_source_sink_unmixing(
+                reference_channel_volumes,
+                source_sink_matrix=source_sink_matrix,
+                background_percentile=float(background_percentile),
+                mi_bins=int(mi_bins),
+                alpha_max=float(alpha_max),
+                max_alpha_voxels=max_alpha_voxels,
+                random_state=int(random_state),
+            )
+            transformed_selected[int(alpha_reference_t)] = np.moveaxis(reference_unmixed, 0, 1)
+            matrix = np.asarray(matrix_details["alpha_parameters"], dtype=np.float64)
+            application_details_by_t = []
+            for t in range(time_count):
+                if t == int(alpha_reference_t):
+                    application_details_by_t.append({"t": int(t), "mode": "estimated"})
+                    continue
+                transformed_t = apply_source_sink_parameters(
+                    np.moveaxis(selected_stack[t], 1, 0),
+                    source_sink_matrix=source_sink_matrix,
+                    alpha_parameters=matrix_details["alpha_parameters"],
+                    background_values=matrix_details["background_values"],
+                )
+                transformed_selected[t] = np.moveaxis(transformed_t, 0, 1)
+                application_details_by_t.append({"t": int(t), "mode": "applied"})
+            matrix_details["application_details_by_t"] = application_details_by_t
     else:
-        matrices_by_t, matrix_details_by_t = _estimate_per_t_picasso_matrices(
-            stack,
-            channels=channels,
-            background_percentile=background_percentile,
-            preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
-            mi_bins=mi_bins,
-            alpha_max=alpha_max,
-            max_iter=int(max_iter),
-            tolerance=float(tolerance),
-            max_alpha_voxels=max_alpha_voxels,
-            random_state=int(random_state),
-        )
-        transformed_selected = _apply_per_t_unmixing_matrices(
-            stack.astype(np.float32, copy=False),
-            channels=channels,
-            matrices=matrices_by_t,
-        )
-        matrix = None
-        matrix_details = None
+        matrix_details_by_t = []
+        if implementation in {"matlab_3c", "matlab_n"}:
+            matrices_by_t = np.empty((time_count, len(channels), len(channels)), dtype=np.float64)
+        else:
+            matrices_by_t = np.empty((time_count, len(channels), len(channels)), dtype=np.float64)
+
+        for t in range(time_count):
+            channel_volumes_t = np.moveaxis(selected_stack[t], 1, 0)
+            if implementation in {"matlab_3c", "matlab_n"}:
+                transformed_t, details_t = run_picasso_matlab_like(
+                    channel_volumes_t,
+                    background_percentile=float(background_percentile),
+                    max_iter=int(max_iter),
+                    step_size=float(step_size),
+                    qn=int(qn),
+                    pixel_bin_size=int(pixel_bin_size),
+                    alpha_clip=float(alpha_clip),
+                    negativity_threshold=float(negativity_threshold),
+                    clip_every_n_iterations=int(clip_every_n_iterations),
+                    require_three_channels=(implementation == "matlab_3c"),
+                )
+                matrices_by_t[t] = np.asarray(details_t["unmixing_matrix"], dtype=np.float64)
+            else:
+                transformed_t, details_t = run_source_sink_unmixing(
+                    channel_volumes_t,
+                    source_sink_matrix=source_sink_matrix,
+                    background_percentile=float(background_percentile),
+                    mi_bins=int(mi_bins),
+                    alpha_max=float(alpha_max),
+                    max_alpha_voxels=max_alpha_voxels,
+                    random_state=int(random_state) + int(t),
+                )
+                matrices_by_t[t] = np.asarray(details_t["alpha_parameters"], dtype=np.float64)
+
+            transformed_selected[t] = np.moveaxis(transformed_t, 0, 1)
+            matrix_details_by_t.append({"t": int(t), **details_t})
 
     if clip_negative:
         transformed_selected = np.maximum(transformed_selected, 0.0)
@@ -1111,9 +1314,19 @@ def unmix_picasso(
         "output_path": str(actual_output_path),
         "report_path": str(report_path),
         "method": method,
+        "implementation": implementation,
         "alpha_mode": alpha_mode,
         "alpha_reference_t": int(alpha_reference_t),
         "channels": [int(channel) for channel in channels],
+        "source_sink_matrix": None
+        if source_sink_matrix is None
+        else np.asarray(source_sink_matrix, dtype=int).tolist(),
+        "sink_channels": None
+        if sink_channels is None
+        else [int(channel) for channel in sink_channels],
+        "neutral_channels": None
+        if neutral_channels is None
+        else [int(channel) for channel in neutral_channels],
         "background_percentile": float(background_percentile),
         "preprocess_alpha_inputs": bool(preprocess_alpha_inputs),
         "alpha_max": float(alpha_max),
@@ -1122,6 +1335,12 @@ def unmix_picasso(
         "tolerance": float(tolerance),
         "max_alpha_voxels": None if max_alpha_voxels is None else int(max_alpha_voxels),
         "random_state": int(random_state),
+        "step_size": float(step_size),
+        "qN": int(qn),
+        "pixel_bin_size": int(pixel_bin_size),
+        "alpha_clip": float(alpha_clip),
+        "negativity_threshold": float(negativity_threshold),
+        "clip_every_n_iterations": int(clip_every_n_iterations),
         "clip_negative": bool(clip_negative),
         "unmixing_matrix": None if matrix is None else matrix.tolist(),
         "unmixing_matrix_by_t": None
@@ -1129,16 +1348,19 @@ def unmix_picasso(
         else matrices_by_t.tolist(),
         "iterations_run": None
         if matrix_details is None
-        else int(matrix_details["iterations_run"]),
+        else (
+            None
+            if matrix_details.get("iterations_run") is None
+            else int(matrix_details["iterations_run"])
+        ),
         "iterations_run_by_t": None
         if matrix_details_by_t is None
-        else [int(item["iterations_run"]) for item in matrix_details_by_t],
-        "converged": None
-        if matrix_details is None
-        else bool(matrix_details["converged"]),
-        "converged_by_t": None
-        if matrix_details_by_t is None
-        else [bool(item["converged"]) for item in matrix_details_by_t],
+        else [
+            None if item.get("iterations_run") is None else int(item["iterations_run"])
+            for item in matrix_details_by_t
+        ],
+        "converged": None,
+        "converged_by_t": None,
         "picasso_estimation": matrix_details,
         "picasso_estimation_by_t": matrix_details_by_t,
         "input_shape": tuple(int(v) for v in stack.shape),
