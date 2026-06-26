@@ -91,6 +91,8 @@ When this is useful:
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha=0.62,
     alpha_mode="fixed",
     method="manual")
@@ -137,11 +139,16 @@ Effect of these settings:
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mean_ratio",
     alpha_reference_t=0,
-    signal_percentile=99.0,
-    background_percentile=1.0)
+    signal_percentile=50.5,
+    target_low_percentile=96.0,
+    background_percentile=0.5,
+    preprocess_alpha_inputs=False,
+    clip_negative=True)
 print(reference_output)
 print(report_path_from_output_path(reference_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -149,6 +156,7 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference t0")
+
 # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 """Estimate one alpha from a reference time point via masked least squares.
 
@@ -218,12 +226,15 @@ Effect of these settings:
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="corr_min",
     alpha_reference_t=0,
-    signal_percentile=99.0,
-    background_percentile=1.0,
-    alpha_max=1.0)
+    signal_percentile=95.0,
+    background_percentile=0.5,
+    alpha_max=1.0,
+    preprocess_alpha_inputs=True)
 print(reference_corr_min_output)
 print(report_path_from_output_path(reference_corr_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -263,13 +274,16 @@ Effect of these settings:
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_MI_MIN,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mi_min",
     alpha_reference_t=0,
-    signal_percentile=99.0,
+    signal_percentile=50.0,
     background_percentile=1.0,
+    preprocess_alpha_inputs=False,
     alpha_max=1.0,
-    mi_bins=64,)
+    mi_bins=64)
 print(reference_mi_min_output)
 print(report_path_from_output_path(reference_mi_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -308,6 +322,8 @@ Effect of these settings:
 per_t_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PER_T,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha_mode="per_t",
     method="mean_ratio",
     signal_percentile=99.0,
