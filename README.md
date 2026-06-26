@@ -284,9 +284,7 @@ for alpha estimation.
 By default, the mask is defined from bright source voxels:
 
 $$\mathcal{M}= \left\{
-i \;\middle|\; X_i \ge
-\mathrm{percentile}(X, p_{\mathrm{sig}})
-\right\}$$
+i \;\middle|\; X_i \ge \mathrm{percentile}(X, p_{\mathrm{sig}}) \right\}$$
 
 where $p_{\mathrm{sig}}$ is `signal_percentile`.
 
@@ -294,15 +292,11 @@ Optionally, the mask can be restricted further to voxels with comparatively low
 target intensity:
 
 $$\mathcal{M} = \mathcal{M} \cap \left\{
-i \;\middle|\; Y_i \le
-\mathrm{percentile}(Y, p_{\mathrm{target,low}})
-\right\}$$
+i \;\middle|\; Y_i \le \mathrm{percentile}(Y, p_{\mathrm{target,low}})\right\}$$
 
 where $p_{\mathrm{target,low}}$ is `target_low_percentile`.
 
-This can be useful when one wants to estimate bleed-through primarily from
-voxels with strong source signal but as little genuine target signal as
-possible.
+This can be useful when one wants to estimate bleed-through primarily from voxels with strong source signal but as little genuine target signal as possible.
 
 If this stricter mask becomes too small, the implementation falls back to the
 source-only mask when possible and records that behavior in the JSON report.
