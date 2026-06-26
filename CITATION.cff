@@ -1,15 +1,27 @@
 cff-version: 1.2.0
 message: "If you use Spectral Unmixing in your research, please cite it using the metadata below."
 title: "Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images"
-version: 0.0.1
+version: 0.0.2
 date-released: 2026-06-26
+doi: 10.5281/zenodo.20933784
+url: https://doi.org/10.5281/zenodo.20933784
 
 authors:
   - family-names: Musacchio
     given-names: Fabrizio
     orcid: https://orcid.org/0000-0002-9043-3349
 
-repository-code: https://github.com/FabrizioMusacchio/spectral_unmixing
-# doi: 10.5281/zenodo.18030883
+repository-code: https://github.com/FabrizioMusacchio/spectral-unmixing
 license: GPL-3.0-or-later
-
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Musacchio
+      given-names: Fabrizio
+      orcid: https://orcid.org/0000-0002-9043-3349
+  title: "Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images"
+  version: 0.0.2
+  date-released: 2026-06-26
+  doi: 10.5281/zenodo.20933784
+  url: https://doi.org/10.5281/zenodo.20933784
+  publisher: Zenodo

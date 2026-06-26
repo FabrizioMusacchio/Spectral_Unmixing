@@ -3,7 +3,7 @@
 See here for a detailed list of changes made in each release of *Spectral Unmixing*.
 Please, also refer to the Repository [Releases page](https://github.com/FabrizioMusacchio/spectral-unmixing/releases).
 
-Each release is also archived on Zenodo for long-term preservation and citation purposes: *Will be provided soon.*
+Each release is also archived on Zenodo for long-term preservation and citation purposes: <https://doi.org/10.5281/zenodo.20933784>
 
 
 

@@ -603,4 +603,4 @@ For now, see the tutorial-style user scripts provided in the `user_scripts` fold
 ## Citation
 If you use *Spectral Unmixing* in scientific work, please cite:
 
-> Musacchio, F. (2026). Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images. GitHub: <https://github.com/FabrizioMusacchio/Spectral_Unmixing>. doi: will be provided soon.
+> Musacchio, F. (2026). *Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images*. Zenodo. https://doi.org/10.5281/zenodo.20933784
