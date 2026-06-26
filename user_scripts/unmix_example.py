@@ -37,6 +37,8 @@ What can be adjusted here:
 
 - ``INPUT_PATH``:
   Path to the raw microscopy TIFF stack to be unmixed.
+- ``INPUT_NAME``:
+  Base name of the input file, used for naming output files.
 - ``OUTPUT_DIR``:
   Subfolder in which all unmixed results and JSON reports are written.
 - ``OUTPUT_*``:
@@ -51,17 +53,17 @@ Effect of changing these settings:
 - Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
   unmixing itself.
 """
-INPUT_PATH = PROJECT_ROOT / "example_data" / "MicroSynDep_private" / "ID14135_TP0_d2.tif"
-#INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/2_color_unmixing_validation_Before_unmixing.tif")
+INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/2_color_unmixing_validation.tif")
+INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-OUTPUT_FIXED = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_fixed_alpha.tif"
-OUTPUT_REFERENCE = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_reference_t0_mean_ratio.tif"
-OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_reference_t0_linear_fit.tif"
-OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_reference_t0_corr_min.tif"
-OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_reference_t0_mi_min.tif"
-OUTPUT_PER_T = OUTPUT_DIR / "ID14135_TP0_d2_unmixed_per_t_mean_ratio.tif"
+OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
+OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
+OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
+OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
+OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
+OUTPUT_PER_T = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_per_t_mean_ratio.tif"
 # %% FIXED ALPHA EXAMPLE
 """Run unmixing with a manually chosen fixed bleed-through coefficient.
 
@@ -144,11 +146,8 @@ reference_output = unmix(
     alpha_mode="reference_t",
     method="mean_ratio",
     alpha_reference_t=0,
-    signal_percentile=50.5,
-    target_low_percentile=96.0,
-    background_percentile=0.5,
-    preprocess_alpha_inputs=False,
-    clip_negative=True)
+    signal_percentile=99.0,
+    background_percentile=1.0)
 print(reference_output)
 print(report_path_from_output_path(reference_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -156,7 +155,6 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference t0")
-
 # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 """Estimate one alpha from a reference time point via masked least squares.
 
@@ -186,6 +184,8 @@ Effect of these settings:
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
+    #source_channel=0,  # default: 0
+    #target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="linear_fit",
     alpha_reference_t=0,
@@ -231,10 +231,9 @@ reference_corr_min_output = unmix(
     alpha_mode="reference_t",
     method="corr_min",
     alpha_reference_t=0,
-    signal_percentile=95.0,
-    background_percentile=0.5,
-    alpha_max=1.0,
-    preprocess_alpha_inputs=True)
+    signal_percentile=99.0,
+    background_percentile=1.0,
+    alpha_max=1.0)
 print(reference_corr_min_output)
 print(report_path_from_output_path(reference_corr_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -242,97 +241,4 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference corr_min")
-# %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
-"""Estimate alpha by minimizing mutual information in a PICASSO-like way.
-
-Method summary:
-
-- ``method="mi_min"`` chooses alpha so that the mutual information between the
-  source channel and the corrected target channel becomes as small as possible.
-- This is a two-channel PICASSO-inspired criterion, not the full multi-channel
-  blind-unmixing algorithm.
-
-What can be adjusted:
-
-- ``mi_bins``:
-  Number of histogram bins used for the mutual-information estimate.
-  More bins can capture finer structure but may become noisier.
-- ``alpha_max``:
-  Upper bound of the optimization range for alpha.
-- ``max_alpha_voxels`` and ``random_state``:
-  Control optional subsampling when very many voxels are available.
-- ``signal_percentile`` and ``background_percentile``:
-  Define the source mask and preprocessing used for the estimation.
-
-Effect of these settings:
-
-- ``mi_min`` can outperform simpler methods when residual nonlinear dependence
-  is still visible after correction.
-- It is also the slowest of the scalar alpha estimators and can be sensitive to
-  histogram settings.
-"""
-reference_mi_min_output = unmix(
-    input_path=INPUT_PATH,
-    output_path=OUTPUT_REFERENCE_MI_MIN,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
-    alpha_mode="reference_t",
-    method="mi_min",
-    alpha_reference_t=0,
-    signal_percentile=50.0,
-    background_percentile=1.0,
-    preprocess_alpha_inputs=False,
-    alpha_max=1.0,
-    mi_bins=64)
-print(reference_mi_min_output)
-print(report_path_from_output_path(reference_mi_min_output).read_text(encoding="utf-8"))
-show_unmixed_channels_in_napari(
-    reference_mi_min_output,
-    source_channel=0,
-    target_channel=1,
-    layer_prefix="Reference mi_min",)
-# %% PER-TIME-POINT ALPHA EXAMPLE
-"""Estimate one alpha per time point and correct each time point separately.
-
-Method summary:
-
-- ``alpha_mode="per_t"`` derives a separate alpha for each time point.
-- Here the estimator is ``method="mean_ratio"``, but the same pattern can be
-  combined with the other automatic alpha-estimation methods as well.
-- Each estimated alpha uses all z-slices belonging to that time point.
-
-What can be adjusted:
-
-- ``method``:
-  Swap in ``linear_fit``, ``corr_min`` or ``mi_min`` if needed.
-- ``signal_percentile`` and ``background_percentile``:
-  Influence the per-time-point alpha estimation exactly as in the
-  reference-time-point examples.
-- ``target_low_percentile``:
-  Optional extra mask restriction when true target signal contaminates the
-  estimation heavily.
-
-Effect of these settings:
-
-- Useful when illumination or gain changes over time and one global alpha would
-  be too rigid.
-- More flexible, but it can introduce time-dependent artifacts if biology
-  changes in a way that biases the alpha estimate.
-"""
-per_t_output = unmix(
-    input_path=INPUT_PATH,
-    output_path=OUTPUT_PER_T,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
-    alpha_mode="per_t",
-    method="mean_ratio",
-    signal_percentile=99.0,
-    background_percentile=1.0)
-print(per_t_output)
-print(report_path_from_output_path(per_t_output).read_text(encoding="utf-8"))
-show_unmixed_channels_in_napari(
-    per_t_output,
-    source_channel=0,
-    target_channel=1,
-    layer_prefix="Per t")
 # %% END

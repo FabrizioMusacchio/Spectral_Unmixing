@@ -7,18 +7,6 @@ Date: June 2026
 # %% IMPORTS
 from __future__ import annotations
 
-"""Import the helpers used throughout the bidirectional unmixing tutorial.
-
-This cell adds the repository root to ``sys.path`` so the local
-``spectral_unmixing`` package can be imported without installation.
-The imported functions cover:
-
-- ``unmix(...)`` for the actual bidirectional spectral bleed-through correction.
-- ``report_path_from_output_path(...)`` for loading the JSON sidecar report.
-- ``show_unmixed_channels_in_napari(...)`` for reusing one napari viewer and
-  updating its layers after each run.
-"""
-
 import sys
 from pathlib import Path
 
@@ -57,7 +45,7 @@ INPUT_PATH = (
     PROJECT_ROOT
     / "example_data"
     / "PICASSO_examples"
-    / "Quantitative analysis of unmixing Before unmixing.tif"
+    / "bidirectional_example.tif"
 )
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
