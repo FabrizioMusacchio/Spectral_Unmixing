@@ -438,9 +438,221 @@ class UnmixingTests(unittest.TestCase):
                 report_path_from_output_path(output_path).read_text(encoding="utf-8")
             )
             self.assertEqual(report["method"], "picasso")
+            self.assertEqual(report["implementation"], "matlab_3c")
             self.assertEqual(report["channels"], [0, 1, 2])
             self.assertEqual(len(report["unmixing_matrix"]), 3)
             self.assertTrue(all(np.isfinite(np.asarray(report["unmixing_matrix"])).ravel()))
+            self.assertEqual(report["iterations_run"], 3)
+
+    def test_unmix_picasso_matlab_n_supports_more_than_three_channels(self) -> None:
+        rng = np.random.default_rng(11)
+        fluorophores = np.zeros((4, 1, 20, 20), dtype=np.float32)
+        fluorophores[0, 0, 2:7, 2:7] = 9.0
+        fluorophores[1, 0, 10:16, 3:8] = 11.0
+        fluorophores[2, 0, 4:10, 11:17] = 8.0
+        fluorophores[3, 0, 12:18, 12:18] = 10.0
+        fluorophores += rng.normal(0.0, 0.05, size=fluorophores.shape).astype(np.float32)
+        fluorophores = np.clip(fluorophores, 0.0, None)
+
+        mixing = np.array(
+            [
+                [1.0, 0.18, 0.06, 0.05],
+                [0.07, 1.0, 0.14, 0.05],
+                [0.05, 0.10, 1.0, 0.16],
+                [0.03, 0.05, 0.12, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        measured = np.einsum("ij,jzyx->izyx", mixing, fluorophores, optimize=True)
+        stack = np.moveaxis(measured[np.newaxis, :, :, :, :], 1, 2)
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+        written = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "picasso_matlab_n_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, saved_stack, metadata):
+                written["stack"] = saved_stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix_picasso(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    channels=[0, 1, 2, 3],
+                    implementation="matlab_n",
+                    alpha_mode="reference_t",
+                    alpha_reference_t=0,
+                    background_percentile=0.0,
+                    max_iter=2,
+                    verbose=False,
+                )
+
+            self.assertEqual(written["stack"].shape, stack.shape)
+            self.assertTrue(np.all(np.isfinite(written["stack"])))
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["implementation"], "matlab_n")
+            self.assertEqual(report["channels"], [0, 1, 2, 3])
+            self.assertEqual(len(report["unmixing_matrix"]), 4)
+
+    def test_unmix_picasso_source_sink_n_writes_finite_output(self) -> None:
+        rng = np.random.default_rng(13)
+        fluorophores = np.zeros((4, 1, 18, 18), dtype=np.float32)
+        fluorophores[0, 0, 2:8, 2:8] = 7.0
+        fluorophores[1, 0, 9:15, 2:8] = 9.0
+        fluorophores[2, 0, 3:9, 10:16] = 8.0
+        fluorophores[3, 0, 10:16, 10:16] = 10.0
+        fluorophores += rng.normal(0.0, 0.05, size=fluorophores.shape).astype(np.float32)
+        fluorophores = np.clip(fluorophores, 0.0, None)
+
+        mixing = np.array(
+            [
+                [1.0, 0.15, 0.00, 0.00],
+                [0.00, 1.0, 0.00, 0.00],
+                [0.00, 0.00, 1.0, 0.10],
+                [0.00, 0.00, 0.00, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        measured = np.einsum("ij,jzyx->izyx", mixing, fluorophores, optimize=True)
+        stack = np.moveaxis(measured[np.newaxis, :, :, :, :], 1, 2)
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+        written = {}
+
+        source_sink_matrix = [
+            [1, -1, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, -1],
+            [0, 0, 0, 1],
+        ]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "picasso_source_sink_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, saved_stack, metadata):
+                written["stack"] = saved_stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix_picasso(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    channels=[0, 1, 2, 3],
+                    implementation="source_sink_n",
+                    source_sink_matrix=source_sink_matrix,
+                    alpha_mode="reference_t",
+                    alpha_reference_t=0,
+                    background_percentile=0.0,
+                    mi_bins=16,
+                    alpha_max=1.0,
+                    max_alpha_voxels=None,
+                    verbose=False,
+                )
+
+            self.assertEqual(written["stack"].shape, stack.shape)
+            self.assertTrue(np.all(np.isfinite(written["stack"])))
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["implementation"], "source_sink_n")
+            self.assertEqual(report["channels"], [0, 1, 2, 3])
+            self.assertEqual(report["source_sink_matrix"], source_sink_matrix)
+            self.assertEqual(len(report["picasso_estimation"]["alpha_parameters"]), 4)
+
+    def test_unmix_picasso_source_sink_n_can_build_matrix_from_roles(self) -> None:
+        rng = np.random.default_rng(17)
+        fluorophores = np.zeros((3, 1, 16, 16), dtype=np.float32)
+        fluorophores[0, 0, 2:7, 2:7] = 8.0
+        fluorophores[1, 0, 8:13, 8:13] = 7.0
+        fluorophores[2, 0, 4:10, 10:15] = 6.0
+        fluorophores += rng.normal(0.0, 0.05, size=fluorophores.shape).astype(np.float32)
+        fluorophores = np.clip(fluorophores, 0.0, None)
+
+        mixing = np.array(
+            [
+                [1.0, 0.0, 0.0],
+                [0.18, 1.0, 0.09],
+                [0.0, 0.0, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        measured = np.einsum("ij,jzyx->izyx", mixing, fluorophores, optimize=True)
+        stack = np.moveaxis(measured[np.newaxis, :, :, :, :], 1, 2)
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "picasso_source_sink_roles_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, saved_stack, metadata):
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix_picasso(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    channels=[0, 1, 2],
+                    implementation="source_sink_n",
+                    sink_channels=[1],
+                    neutral_channels=[2],
+                    alpha_mode="reference_t",
+                    alpha_reference_t=0,
+                    background_percentile=0.0,
+                    mi_bins=16,
+                    alpha_max=1.0,
+                    verbose=False,
+                )
+
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["sink_channels"], [1])
+            self.assertEqual(report["neutral_channels"], [2])
+            self.assertEqual(
+                report["source_sink_matrix"],
+                [
+                    [1, -1, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                ],
+            )
 
 
 if __name__ == "__main__":
