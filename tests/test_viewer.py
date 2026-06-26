@@ -37,6 +37,7 @@ class FakeViewer:
     def __init__(self, title=""):
         self.title = title
         self.layers = []
+        self.closed = False
 
     def add_image(
         self,
@@ -105,6 +106,62 @@ class ViewerTests(unittest.TestCase):
         self.assertEqual(viewer.layers[1].name, "Fixed alpha | target C1")
         np.testing.assert_allclose(viewer.layers[1].data, updated_stack[:, :, 1, :, :])
         self.assertEqual(viewer.layers[0].scale, (1.0, 2.0, 3.0, 4.0))
+
+    def test_show_all_channels_cycles_colormaps(self) -> None:
+        fake_napari = FakeNapari()
+        stack = np.zeros((1, 1, 12, 3, 4), dtype=np.float32)
+        metadata = {
+            "axes": "TZCYX",
+            "TimeIncrement": 1.0,
+            "PhysicalSizeZ": 1.0,
+            "PhysicalSizeY": 1.0,
+            "PhysicalSizeX": 1.0,
+        }
+
+        with patch("spectral_unmixing.viewer.import_napari", return_value=fake_napari):
+            with patch(
+                "spectral_unmixing.viewer.load_stack_with_omio",
+                return_value=(stack, metadata),
+            ):
+                viewer = viewer_module.show_all_channels_in_napari(
+                    "dummy_stack.tif",
+                    layer_prefix="All channels",
+                )
+
+        self.assertEqual(len(viewer.layers), 12)
+        self.assertEqual(viewer.layers[0].name, "All channels | C0")
+        self.assertEqual(viewer.layers[10].colormap, viewer.layers[0].colormap)
+        self.assertEqual(viewer.layers[11].colormap, viewer.layers[1].colormap)
+
+    def test_closed_viewer_is_not_reused(self) -> None:
+        fake_napari = FakeNapari()
+        stack = np.zeros((1, 1, 2, 4, 5), dtype=np.float32)
+        metadata = {
+            "axes": "TZCYX",
+            "TimeIncrement": 1.0,
+            "PhysicalSizeZ": 1.0,
+            "PhysicalSizeY": 1.0,
+            "PhysicalSizeX": 1.0,
+        }
+
+        with patch("spectral_unmixing.viewer.import_napari", return_value=fake_napari):
+            with patch(
+                "spectral_unmixing.viewer.load_stack_with_omio",
+                return_value=(stack, metadata),
+            ):
+                first_viewer = viewer_module.show_all_channels_in_napari(
+                    "dummy_stack.tif",
+                    layer_prefix="First",
+                )
+                first_viewer.closed = True
+                fake_napari._current_viewer = None
+                second_viewer = viewer_module.show_all_channels_in_napari(
+                    "dummy_stack.tif",
+                    layer_prefix="Second",
+                )
+
+        self.assertIsNot(first_viewer, second_viewer)
+        self.assertEqual(second_viewer.title, "Spectral Unmixing Results")
 
 # %% MAIN
 if __name__ == "__main__":

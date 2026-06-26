@@ -10,180 +10,22 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import numpy as np
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing import report_path_from_output_path, unmix_picasso
-from spectral_unmixing.io import load_stack_with_omio, write_stack_with_omio
-from spectral_unmixing.viewer import import_napari
+from spectral_unmixing.viewer import show_all_channels_in_napari
 # %% INPUT AND OUTPUT PATHS
 """Define the example input stack and all output targets used below.
 
-In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
+In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be
 automatically generated in a subfolder of the input file's parent directory.
 """
 
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "5-color unmixing simulation.tif")
-GROUND_TRUTH_PATH = ( PROJECT_ROOT / "example_data" / "PICASSO_examples" / "5-color unmixing simulation Ground-truth.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-PREPARED_INPUT_PATH = OUTPUT_DIR / "5-color unmixing simulation_T_as_C.tif"
-# %% VIEWER HELPERS
-"""Define small local helpers for channel visualization in one shared napari viewer.
-
-Why a local helper is useful here:
-
-- the existing package helper ``show_unmixed_channels_in_napari(...)`` is built
-  for two-channel source/target display
-- the present PICASSO tutorial needs to show all five channels as separate
-  layers
-- repeated execution should reuse the same napari viewer and update layers
-  instead of opening a new window every time
-"""
-
-_VIEWER = None
-DEFAULT_COLORMAPS = ["cyan", "yellow", "magenta", "green", "red"]
-
-def _get_or_create_viewer(title: str = "PICASSO 5-Color Unmixing") -> object:
-    """Reuse an existing napari viewer when possible, otherwise create one."""
-
-    global _VIEWER
-    napari = import_napari()
-
-    if _VIEWER is not None:
-        try:
-            _ = len(_VIEWER.layers)
-            return _VIEWER
-        except Exception:
-            _VIEWER = None
-
-    current_viewer = None
-    try:
-        current_viewer = napari.current_viewer()
-    except Exception:
-        current_viewer = None
-
-    if current_viewer is not None:
-        _VIEWER = current_viewer
-        return _VIEWER
-
-    _VIEWER = napari.Viewer(title=title)
-    return _VIEWER
-
-def _metadata_scale_from_tzcyx(metadata: dict) -> tuple[float, float, float, float]:
-    """Extract napari axis scaling for ``T``, ``Z``, ``Y``, and ``X`` from metadata."""
-
-    return (
-        float(metadata.get("TimeIncrement", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeZ", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeY", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeX", 1.0) or 1.0),
-    )
-
-def show_all_channels_in_napari(
-    stack_path: str | Path,
-    *,
-    layer_prefix: str,
-    colormaps: list[str] | None = None,
-) -> object:
-    """Open a canonical ``TZCYX`` stack and show every channel as its own napari layer."""
-
-    stack, metadata = load_stack_with_omio(stack_path)
-    viewer = _get_or_create_viewer()
-    scale = _metadata_scale_from_tzcyx(metadata)
-    colormaps = DEFAULT_COLORMAPS if colormaps is None else list(colormaps)
-
-    for c in range(stack.shape[2]):
-        channel_data = np.asarray(stack[:, :, c, :, :], dtype=np.float32)
-        layer_name = f"{layer_prefix} | C{c}"
-        colormap = colormaps[c % len(colormaps)]
-        contrast_limits = (
-            float(np.min(channel_data)),
-            float(np.max(channel_data))
-            if float(np.max(channel_data)) > float(np.min(channel_data))
-            else float(np.min(channel_data)) + 1.0,
-        )
-
-        existing_layer = None
-        for layer in viewer.layers:
-            if layer.name == layer_name:
-                existing_layer = layer
-                break
-
-        if existing_layer is None:
-            viewer.add_image(
-                channel_data,
-                name=layer_name,
-                scale=scale,
-                colormap=colormap,
-                blending="additive",
-                opacity=0.8,
-                contrast_limits=contrast_limits,
-            )
-        else:
-            existing_layer.data = channel_data
-            existing_layer.scale = scale
-            existing_layer.colormap = colormap
-            existing_layer.blending = "additive"
-            existing_layer.opacity = 0.8
-            existing_layer.contrast_limits = contrast_limits
-            existing_layer.visible = True
-
-    return viewer
-
-# %% PREPARE INPUT STACKS
-"""Convert the PICASSO example from time-encoded pages to channel-encoded TZCYX data.
-
-Important detail:
-
-- OMIO reads the 5-color simulation as ``T=5, Z=1, C=1``.
-- For ``unmix_picasso(...)`` we instead need the five measured color images on
-  the channel axis, i.e. ``T=1, Z=1, C=5``.
-
-This cell therefore:
-
-1. loads the measured simulation stack
-2. moves the five pages from ``T`` to ``C``
-3. writes the converted stack back to disk
-4. repeats the same conversion for the provided ground-truth stack
-
-What can be adjusted:
-
-- If another dataset already arrives as ``C>1``, you can skip this conversion
-  logic or adapt it accordingly.
-"""
-
-def convert_time_encoded_stack_to_channel_stack(
-    input_path: str | Path,
-    output_path: str | Path,
-) -> Path:
-    """Convert a ``TZCYX`` stack with ``T>1`` and ``C=1`` into ``T=1`` and ``C=T``."""
-
-    stack, metadata = load_stack_with_omio(input_path)
-    if stack.shape[2] != 1:
-        raise ValueError(
-            f"Expected a single-channel stack for T-to-C conversion. Got shape {stack.shape!r}."
-        )
-    converted = np.moveaxis(stack, 0, 2)
-    return write_stack_with_omio(output_path, converted, metadata)
-
-prepared_input = convert_time_encoded_stack_to_channel_stack(INPUT_PATH, PREPARED_INPUT_PATH)
-print(f"Prepared measured input: {prepared_input}")
-# %% INSPECT PREPARED STACKS IN NAPARI
-"""Open the converted measured and ground-truth stacks in napari.
-
-This is a sanity-check cell:
-
-- the measured stack should now read as ``T=1, Z=1, C=5``
-- the ground truth should have the same layout
-- each channel is shown as its own color layer so you can verify that the
-  conversion from time pages to channels worked as intended
-"""
-
+# inspect the stack in Napari:
 show_all_channels_in_napari(INPUT_PATH, layer_prefix="Measured 5-color simulation")
 # %% PICASSO MATLAB-N EXAMPLE
 """Run the explicit N-channel generalization of the MATLAB PICASSO workflow.
@@ -229,7 +71,7 @@ What can be adjusted:
 OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
 
 picasso_matlab_n_output = unmix_picasso(
-    input_path=prepared_input,
+    input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_N,
     channels=[0, 1, 2, 3, 4],
     implementation="matlab_n", # "matlab_3c" or "matlab_n" or "source_sink_n"
@@ -312,7 +154,7 @@ neutral_channels = []
 # neutral_channels = [4]
 
 picasso_source_sink_output = unmix_picasso(
-    input_path=prepared_input,
+    input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_SOURCE_SINK,
     channels=[0, 1, 2, 3, 4],
     implementation="source_sink_n",

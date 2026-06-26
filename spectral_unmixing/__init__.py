@@ -13,12 +13,15 @@ from .estimation import (
     prepare_source_target_for_alpha,
 )
 from .filters import apply_filters, match_histograms_across_time, max_z_project
+from .io import convert_time_encoded_stack_to_channel_stack
 from .registration import correct_intra_stack_z_drift, register_stack
 from .unmixing import report_path_from_output_path, unmix, unmix_ch0_from_ch1, unmix_picasso
-from .viewer import show_unmixed_channels_in_napari
+from .viewer import DEFAULT_COLORMAPS, show_all_channels_in_napari, show_unmixed_channels_in_napari
 
 __all__ = [
+    "DEFAULT_COLORMAPS",
     "apply_filters",
+    "convert_time_encoded_stack_to_channel_stack",
     "correct_intra_stack_z_drift",
     "estimate_alpha_from_volume",
     "estimate_picasso_unmixing_matrix_from_volume",
@@ -29,6 +32,7 @@ __all__ = [
     "prepare_source_target_for_alpha",
     "register_stack",
     "report_path_from_output_path",
+    "show_all_channels_in_napari",
     "show_unmixed_channels_in_napari",
     "unmix",
     "unmix_ch0_from_ch1",

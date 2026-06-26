@@ -15,6 +15,18 @@ import numpy as np
 from .io import _configure_omio_runtime_environment, load_stack_with_omio
 # %% CONSTANTS
 _VIEWER = None
+DEFAULT_COLORMAPS = [
+    "cyan",
+    "magenta",
+    "yellow",
+    "green",
+    "red",
+    "blue",
+    "bop orange",
+    "bop purple",
+    "gray",
+    "gray_r",
+]
 
 # %% INTERNAL HELPERS
 def import_napari():
@@ -42,18 +54,48 @@ def _find_layer(viewer, layer_name: str):
     return None
 
 
+def _viewer_is_open(viewer, napari_module) -> bool:
+    """
+    Return ``True`` when a viewer instance still appears to be open and reusable.
+
+    The check is intentionally defensive because napari state differs slightly
+    between real GUI sessions and mocked test environments.
+    """
+
+    if viewer is None:
+        return False
+    if bool(getattr(viewer, "closed", False)):
+        return False
+
+    current_viewer = None
+    try:
+        current_viewer = napari_module.current_viewer()
+    except Exception:
+        current_viewer = None
+
+    if current_viewer is viewer:
+        return True
+    if current_viewer is not None and current_viewer is not viewer:
+        return False
+
+    qt_window = getattr(getattr(viewer, "window", None), "_qt_window", None)
+    if qt_window is not None and hasattr(qt_window, "isVisible"):
+        try:
+            return bool(qt_window.isVisible())
+        except Exception:
+            return False
+
+    # If napari no longer reports a current viewer and no GUI visibility state
+    # is available, assume that the stored viewer should not be reused.
+    return False
+
+
 def _get_or_create_viewer(title: str = "Spectral Unmixing Results"):
     """Reuse an existing napari viewer when possible, otherwise create one."""
 
     global _VIEWER
 
     napari = import_napari()
-    if _VIEWER is not None:
-        try:
-            _ = len(_VIEWER.layers)
-            return _VIEWER
-        except Exception:
-            _VIEWER = None
 
     current_viewer = None
     try:
@@ -61,8 +103,11 @@ def _get_or_create_viewer(title: str = "Spectral Unmixing Results"):
     except Exception:
         current_viewer = None
 
-    if current_viewer is not None:
+    if _viewer_is_open(current_viewer, napari):
         _VIEWER = current_viewer
+        return _VIEWER
+
+    if _viewer_is_open(_VIEWER, napari):
         return _VIEWER
 
     _VIEWER = napari.Viewer(title=title)
@@ -117,6 +162,53 @@ def _upsert_image_layer(
     layer.opacity = opacity
     layer.contrast_limits = contrast_limits
     layer.visible = True
+
+
+def show_all_channels_in_napari(
+    stack_path: str | Path,
+    *,
+    layer_prefix: str = "Channels",
+    colormaps: list[str] | None = None,
+    title: str = "Spectral Unmixing Results",
+):
+    """
+    Show every channel of a canonical ``TZCYX`` stack as a separate napari layer.
+
+    Parameters
+    ----------
+    stack_path : str or Path
+        Path to a microscopy stack readable by OMIO.
+    layer_prefix : str, optional
+        Prefix used when naming napari layers.
+    colormaps : list of str or None, optional
+        Colormaps used for successive channels. If more channels than colormaps
+        are present, the list is reused cyclically.
+    title : str, optional
+        Window title used when a new napari viewer is created.
+
+    Returns
+    -------
+    napari.Viewer
+        Shared napari viewer containing one layer per channel.
+    """
+
+    stack_path = Path(stack_path)
+    stack, metadata = load_stack_with_omio(stack_path)
+    viewer = _get_or_create_viewer(title=title)
+    scale = _metadata_scale_from_tzcyx(metadata)
+    colormaps = DEFAULT_COLORMAPS if colormaps is None else list(colormaps)
+
+    for channel_index in range(stack.shape[2]):
+        channel_data = np.asarray(stack[:, :, channel_index, :, :], dtype=np.float32)
+        _upsert_image_layer(
+            viewer,
+            f"{layer_prefix} | C{channel_index}",
+            channel_data,
+            scale=scale,
+            colormap=colormaps[channel_index % len(colormaps)],
+        )
+
+    return viewer
 
 
 def show_unmixed_channels_in_napari(

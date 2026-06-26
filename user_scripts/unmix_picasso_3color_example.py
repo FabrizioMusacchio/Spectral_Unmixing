@@ -1,5 +1,5 @@
 """
-Interactive VS Code user script for PICASSO-style blind unmixing of a 5-color simulation.
+Interactive VS Code user script for PICASSO-style blind unmixing of a 3-color example.
 
 Author: Fabrizio Musacchio
 Date: June 2026
@@ -10,15 +10,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import numpy as np
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing import report_path_from_output_path, unmix_picasso
-from spectral_unmixing.io import load_stack_with_omio, write_stack_with_omio
-from spectral_unmixing.viewer import import_napari
+from spectral_unmixing.viewer import show_all_channels_in_napari
 # %% INPUT AND OUTPUT PATHS
 """Define the example input stack and all output targets used below.
 
@@ -30,111 +25,6 @@ INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "3color_data.
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "3-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
-OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "3-color unmixing simulation_picasso_source_sink_reference_t0.tif"
-# %% VIEWER HELPERS
-"""Define small local helpers for channel visualization in one shared napari viewer.
-
-Why a local helper is useful here:
-
-- the existing package helper ``show_unmixed_channels_in_napari(...)`` is built
-  for two-channel source/target display
-- the present PICASSO tutorial needs to show all five channels as separate
-  layers
-- repeated execution should reuse the same napari viewer and update layers
-  instead of opening a new window every time
-"""
-
-_VIEWER = None
-DEFAULT_COLORMAPS = ["cyan", "yellow", "magenta", "green", "red"]
-
-def _get_or_create_viewer(title: str = "PICASSO 5-Color Unmixing") -> object:
-    """Reuse an existing napari viewer when possible, otherwise create one."""
-
-    global _VIEWER
-    napari = import_napari()
-
-    if _VIEWER is not None:
-        try:
-            _ = len(_VIEWER.layers)
-            return _VIEWER
-        except Exception:
-            _VIEWER = None
-
-    current_viewer = None
-    try:
-        current_viewer = napari.current_viewer()
-    except Exception:
-        current_viewer = None
-
-    if current_viewer is not None:
-        _VIEWER = current_viewer
-        return _VIEWER
-
-    _VIEWER = napari.Viewer(title=title)
-    return _VIEWER
-
-def _metadata_scale_from_tzcyx(metadata: dict) -> tuple[float, float, float, float]:
-    """Extract napari axis scaling for ``T``, ``Z``, ``Y``, and ``X`` from metadata."""
-
-    return (
-        float(metadata.get("TimeIncrement", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeZ", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeY", 1.0) or 1.0),
-        float(metadata.get("PhysicalSizeX", 1.0) or 1.0),
-    )
-
-def show_all_channels_in_napari(
-    stack_path: str | Path,
-    *,
-    layer_prefix: str,
-    colormaps: list[str] | None = None,
-) -> object:
-    """Open a canonical ``TZCYX`` stack and show every channel as its own napari layer."""
-
-    stack, metadata = load_stack_with_omio(stack_path)
-    viewer = _get_or_create_viewer()
-    scale = _metadata_scale_from_tzcyx(metadata)
-    colormaps = DEFAULT_COLORMAPS if colormaps is None else list(colormaps)
-
-    for c in range(stack.shape[2]):
-        channel_data = np.asarray(stack[:, :, c, :, :], dtype=np.float32)
-        layer_name = f"{layer_prefix} | C{c}"
-        colormap = colormaps[c % len(colormaps)]
-        contrast_limits = (
-            float(np.min(channel_data)),
-            float(np.max(channel_data))
-            if float(np.max(channel_data)) > float(np.min(channel_data))
-            else float(np.min(channel_data)) + 1.0,
-        )
-
-        existing_layer = None
-        for layer in viewer.layers:
-            if layer.name == layer_name:
-                existing_layer = layer
-                break
-
-        if existing_layer is None:
-            viewer.add_image(
-                channel_data,
-                name=layer_name,
-                scale=scale,
-                colormap=colormap,
-                blending="additive",
-                opacity=0.8,
-                contrast_limits=contrast_limits,
-            )
-        else:
-            existing_layer.data = channel_data
-            existing_layer.scale = scale
-            existing_layer.colormap = colormap
-            existing_layer.blending = "additive"
-            existing_layer.opacity = 0.8
-            existing_layer.contrast_limits = contrast_limits
-            existing_layer.visible = True
-
-    return viewer
 # %% INSPECT PREPARED STACKS IN NAPARI
 show_all_channels_in_napari(INPUT_PATH, layer_prefix="3-color simulation")
 # %% PICASSO MATLAB-N EXAMPLE
@@ -178,6 +68,8 @@ What can be adjusted:
   Hard bound applied to each pairwise coefficient before update.
 """
 
+OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "3-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
+
 picasso_matlab_n_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_N,
@@ -201,9 +93,7 @@ picasso_matlab_n_output = unmix_picasso(
     verbose=True)
 print(picasso_matlab_n_output)
 print(report_path_from_output_path(picasso_matlab_n_output).read_text(encoding="utf-8"))
-show_all_channels_in_napari(
-    picasso_matlab_n_output,
-    layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
+show_all_channels_in_napari(picasso_matlab_n_output, layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
 # %% PICASSO MATLAB-3C EXAMPLE
 """Run the explicit 3-channel MATLAB PICASSO workflow.
 
@@ -245,9 +135,11 @@ What can be adjusted:
   Hard bound applied to each pairwise coefficient before update.
 """
 
-picasso_matlab_n_output = unmix_picasso(
+OUTPUT_PICASSO_MATLAB_3C = OUTPUT_DIR / "3-color unmixing simulation_picasso_matlab_3c_reference_t0.tif"
+
+picasso_matlab_3c_output = unmix_picasso(
     input_path=INPUT_PATH,
-    output_path=OUTPUT_PICASSO_MATLAB_N,
+    output_path=OUTPUT_PICASSO_MATLAB_3C,
     channels=[0, 1, 2],
     implementation="matlab_3c", # "matlab_3c" or "matlab_n" or "source_sink_n"
     alpha_mode="reference_t",
@@ -266,11 +158,9 @@ picasso_matlab_n_output = unmix_picasso(
     clip_negative=True,
     output_dtype="float32",
     verbose=True)
-print(picasso_matlab_n_output)
-print(report_path_from_output_path(picasso_matlab_n_output).read_text(encoding="utf-8"))
-show_all_channels_in_napari(
-    picasso_matlab_n_output,
-    layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
+print(picasso_matlab_3c_output)
+print(report_path_from_output_path(picasso_matlab_3c_output).read_text(encoding="utf-8"))
+show_all_channels_in_napari(picasso_matlab_3c_output, layer_prefix="PICASSO MATLAB-3C unmixed 3-color simulation")
 # %% PICASSO SOURCE-SINK-N EXAMPLE
 """Run the source-sink N-channel variant inspired by the napari PICASSO plugin.
 
@@ -312,7 +202,9 @@ For this specific 3-channel example we assume:
 - ``channel 2`` may optionally also bleed into ``channel 1``
 """
 
-sink_channels = [1]
+OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "3-color unmixing simulation_picasso_source_sink_reference_t0.tif"
+
+sink_channels = [0,2]
 neutral_channels = []
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution

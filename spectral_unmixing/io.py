@@ -150,6 +150,46 @@ def update_metadata_shape(metadata: dict[str, Any], shape: tuple[int, ...]) -> d
     return updated
 
 
+def convert_time_encoded_stack_to_channel_stack(
+    input_path: str | Path,
+    output_path: str | Path,
+) -> Path:
+    """
+    Convert a ``TZCYX`` stack with ``T>1`` and ``C=1`` into ``T=1`` and ``C=T``.
+
+    This helper is useful for microscopy examples in which multiple measured
+    channels are stored as successive time pages rather than on the channel axis.
+
+    Parameters
+    ----------
+    input_path : str or Path
+        Path to the input microscopy stack readable by OMIO.
+    output_path : str or Path
+        Destination path for the converted stack written via OMIO.
+
+    Returns
+    -------
+    Path
+        Actual path of the written converted stack.
+
+    Raises
+    ------
+    ValueError
+        If the input does not have exactly one channel on the canonical channel
+        axis.
+    """
+
+    stack, metadata = load_stack_with_omio(input_path)
+    if stack.shape[2] != 1:
+        raise ValueError(
+            "Expected a single-channel stack for T-to-C conversion. "
+            f"Got shape {stack.shape!r}."
+        )
+
+    converted = np.moveaxis(stack, 0, 2)
+    return write_stack_with_omio(output_path, converted, metadata)
+
+
 def write_stack_with_omio(
     output_path: str | Path,
     stack: np.ndarray,
