@@ -122,6 +122,133 @@ class UnmixingTests(unittest.TestCase):
             self.assertEqual(report["method_effective"], "manual")
             self.assertEqual(report["alpha_source"], "user_provided")
 
+    def test_fixed_bidirectional_unmixing_recovers_both_channels(self) -> None:
+        true_source = np.array(
+            [
+                [4.0, 5.0, 6.0, 7.0, 8.0],
+                [5.0, 6.0, 7.0, 8.0, 9.0],
+                [6.0, 7.0, 8.0, 9.0, 10.0],
+                [7.0, 8.0, 9.0, 10.0, 11.0],
+            ],
+            dtype=np.float32,
+        )
+        true_target = np.array(
+            [
+                [2.0, 3.0, 2.0, 3.0, 2.0],
+                [3.0, 2.0, 3.0, 2.0, 3.0],
+                [2.0, 3.0, 2.0, 3.0, 2.0],
+                [3.0, 2.0, 3.0, 2.0, 3.0],
+            ],
+            dtype=np.float32,
+        )
+        alpha_forward = 0.2
+        alpha_reverse = 0.1
+
+        stack = np.zeros((1, 2, 2, 4, 5), dtype=np.float32)
+        stack[:, :, 0, :, :] = true_source
+        stack[:, :, 1, :, :] = true_target
+        measured_source = stack[:, :, 0, :, :] + alpha_reverse * stack[:, :, 1, :, :]
+        measured_target = stack[:, :, 1, :, :] + alpha_forward * stack[:, :, 0, :, :]
+        stack[:, :, 0, :, :] = measured_source
+        stack[:, :, 1, :, :] = measured_target
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+        written = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "bidirectional_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, stack, metadata):
+                written["stack"] = stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    alpha=alpha_forward,
+                    alpha_reverse=alpha_reverse,
+                    alpha_mode="fixed",
+                    bidirectional=True,
+                    method="manual",
+                    method_reverse="manual",
+                    verbose=False,
+                )
+
+            expected_source = np.broadcast_to(true_source, written["stack"][:, :, 0, :, :].shape)
+            expected_target = np.broadcast_to(true_target, written["stack"][:, :, 1, :, :].shape)
+            np.testing.assert_allclose(written["stack"][:, :, 0, :, :], expected_source, atol=1e-6)
+            np.testing.assert_allclose(written["stack"][:, :, 1, :, :], expected_target, atol=1e-6)
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertTrue(report["bidirectional"])
+            self.assertAlmostEqual(report["alpha"], alpha_forward)
+            self.assertAlmostEqual(report["alpha_reverse"], alpha_reverse)
+            self.assertEqual(report["method_reverse_effective"], "manual")
+
+    def test_fixed_bidirectional_inherits_reverse_alpha_when_not_provided(self) -> None:
+        true_source = np.full((1, 1, 4, 5), 6.0, dtype=np.float32)
+        true_target = np.full((1, 1, 4, 5), 2.0, dtype=np.float32)
+        alpha_value = 0.2
+
+        measured_source = true_source + alpha_value * true_target
+        measured_target = true_target + alpha_value * true_source
+        stack = np.zeros((1, 1, 2, 4, 5), dtype=np.float32)
+        stack[:, :, 0, :, :] = measured_source
+        stack[:, :, 1, :, :] = measured_target
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+        written = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "bidirectional_inherited_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, stack, metadata):
+                written["stack"] = stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    alpha=alpha_value,
+                    alpha_mode="fixed",
+                    bidirectional=True,
+                    method="manual",
+                    verbose=False,
+                )
+
+            np.testing.assert_allclose(written["stack"][:, :, 0, :, :], true_source, atol=1e-6)
+            np.testing.assert_allclose(written["stack"][:, :, 1, :, :], true_target, atol=1e-6)
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertTrue(report["alpha_reverse_inherited_from_forward"])
+            self.assertAlmostEqual(report["alpha_reverse"], alpha_value)
+
     def test_per_t_reports_one_alpha_per_timepoint(self) -> None:
         written = {}
         with tempfile.TemporaryDirectory() as tmpdir:
