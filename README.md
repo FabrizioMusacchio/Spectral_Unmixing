@@ -308,7 +308,9 @@ for alpha estimation.
 
 By default, the mask is defined from bright source voxels:
 
-$$\mathcal{M}= \left\{i \;\middle|\; X_i \ge \mathrm{percentile}(X, p_{\mathrm{sig}}) \right\}$$
+$$
+\mathcal{M}= \left\{i \;\middle|\; X_i \ge \mathrm{percentile}(X, p_{\mathrm{sig}}) \right\}
+$$
 
 where $p_{\mathrm{sig}}$ is `signal_percentile`.
 
