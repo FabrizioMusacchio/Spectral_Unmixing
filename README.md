@@ -255,11 +255,11 @@ If `preprocess_alpha_inputs=True`, it:
 Mathematically, if the raw source and target volumes are denoted by
 $X_{\mathrm{raw}}$ and $Y_{\mathrm{raw}}$, the preprocessing step computes background estimates
 
-$$b_X = \operatorname{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})$$
+$$b_X = \mathrm{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})$$
 
 and
 
-$$b_Y = \operatorname{percentile}(Y_{\mathrm{raw}}, p_{\mathrm{bg}})$$
+$$b_Y = \mathrm{percentile}(Y_{\mathrm{raw}}, p_{\mathrm{bg}})$$
 
 and then forms
 
@@ -285,7 +285,7 @@ By default, the mask is defined from bright source voxels:
 
 $$\mathcal{M}= \left\{
 i \;\middle|\; X_i \ge
-\operatorname{percentile}(X, p_{\mathrm{sig}})
+\mathrm{percentile}(X, p_{\mathrm{sig}})
 \right\}$$
 
 where $p_{\mathrm{sig}}$ is `signal_percentile`.
@@ -295,7 +295,7 @@ target intensity:
 
 $$\mathcal{M} = \mathcal{M} \cap \left\{
 i \;\middle|\; Y_i \le
-\operatorname{percentile}(Y, p_{\mathrm{target,low}})
+\mathrm{percentile}(Y, p_{\mathrm{target,low}})
 \right\}$$
 
 where $p_{\mathrm{target,low}}$ is `target_low_percentile`.
@@ -373,10 +373,9 @@ $$
 
 The estimate is obtained by solving
 
-$$\hat{\alpha}_{\mathrm{corr\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{corr}(X, Y^{(\alpha)})^2.$$
+$$\hat{\alpha}_{\mathrm{corr\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \mathrm{corr}(X, Y^{(\alpha)})^2.$$
 
-In practice, the implementation uses Pearson correlation and bounded scalar
-optimization on the interval $[0, \alpha_{\max}]$.
+In practice, the implementation uses Pearson correlation and bounded scalar optimization on the interval $[0, \alpha_{\max}]$.
 
 This can be more aggressive than `mean_ratio` or `linear_fit`, especially when
 the true biology in source and target channels is itself correlated.
@@ -394,9 +393,9 @@ $$
 
 Then the estimate is obtained from
 
-$$\hat{\alpha}_{\mathrm{mi\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{MI}(X, Y^{(\alpha)}),$$
+$$\hat{\alpha}_{\mathrm{mi\_min}} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \mathrm{MI}(X, Y^{(\alpha)}),$$
 
-where $\operatorname{MI}$ denotes mutual information. The current
+where $\mathrm{MI}$ denotes mutual information. The current
 implementation uses a histogram-based mutual-information estimate with a user
 controlled number of bins `mi_bins`.
 
@@ -469,7 +468,7 @@ For each ordered channel pair $(i, j)$, the MATLAB-style routine estimates a
 scalar $\alpha_{ij}$ by minimizing histogram-based mutual information after
 subtracting one channel from the other:
 
-$$\alpha_{ij}= \arg\min_{\alpha} \operatorname{MI}\!\left(v_i - \alpha v_j,\; v_j\right).$$
+$$\alpha_{ij}= \arg\min_{\alpha} \mathrm{MI}\!\left(v_i - \alpha v_j,\; v_j\right).$$
 
 The off-diagonal entries of $A^{(k)}$ are then
 
@@ -524,7 +523,7 @@ bleed into all specified sink channels except into themselves.
 Each coefficient is estimated by minimizing mutual information:
 
 $$
-\alpha_{ij} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \operatorname{MI}\!\left(S_i,\; I_j - \alpha S_i\right).
+\alpha_{ij} = \arg\min_{0 \le \alpha \le \alpha_{\max}} \mathrm{MI}\!\left(S_i,\; I_j - \alpha S_i\right).
 $$
 
 This mode is inspired by the napari plugin's source-sink viewpoint, but it is
