@@ -586,3 +586,8 @@ For now, see the tutorial-style user scripts:
 - [user_scripts/filter_and_project_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_project_stack.py)
 - [user_scripts/filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_register_stack.py)
 - [user_scripts/fine_filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/fine_filter_and_register_stack.py)
+
+## Citation
+If you use *Spectral Unmixing* in scientific work, please cite:
+
+> Musacchio, F. (2026). Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images. GitHub: <https://github.com/FabrizioMusacchio/Spectral_Unmixing>. doi: will be provided soon.
