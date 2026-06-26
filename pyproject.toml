@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spectral-unmixing"
-version = "0.0.1"
+version = "0.0.2"
 description = "Spectral bleed-through correction utilities for TZCYX microscopy stacks."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -77,4 +77,3 @@ filterwarnings = [
 branch = true
 relative_files = true
 include = ["spectral_unmixing/*"]
-

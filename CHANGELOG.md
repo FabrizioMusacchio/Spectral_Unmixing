@@ -9,6 +9,22 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ---
 
+## 🚀 spectral-unmixing v0.0.2
+
+June 26, 2026
+
+PyPI and archival release of **spectral-unmixing**.
+
+This release contains no code changes relative to `v0.0.1`.
+
+It was created to:
+
+- publish the package on PyPI via `pip install spectral-unmixing`
+- create a follow-up GitHub release suitable for Zenodo archiving and citation
+- align the public release metadata with the first official package publication
+
+---
+
 ## 🚀 spectral-unmixing v0.0.1
 
 June 26, 2026
