@@ -11,8 +11,6 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing import report_path_from_output_path, unmix_picasso
 from spectral_unmixing.viewer import show_all_channels_in_napari
@@ -23,8 +21,8 @@ In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will 
 automatically generated in a subfolder of the input file's parent directory.
 """
 
-INPUT_PATH = (PROJECT_ROOT/ "example_data"/ "PICASSO_examples"
-    / "2_color_unmixing_validation.tif")
+INPUT_PATH = (PROJECT_ROOT/ "example_data"/ "PICASSO_examples" / "2_color_unmixing_validation.tif")
+#INPUT_PATH = (PROJECT_ROOT/ "example_data"/ "PICASSO_examples" / "Autofluorescence_2channel.tif")
 INPUT_NAME = INPUT_PATH.stem
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"

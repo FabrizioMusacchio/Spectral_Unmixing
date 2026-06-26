@@ -21,7 +21,7 @@ In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will 
 automatically generated in a subfolder of the input file's parent directory.
 """
 
-INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "5-color unmixing simulation.tif")
+INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "5_color_unmixing_simulation.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -68,7 +68,7 @@ What can be adjusted:
   Hard bound applied to each pairwise coefficient before update.
 """
 
-OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
+OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5_color_unmixing_simulation_picasso_matlab_n_reference_t0.tif"
 
 picasso_matlab_n_output = unmix_picasso(
     input_path=INPUT_PATH,
@@ -143,7 +143,7 @@ targeted run, simply restrict ``sink_channels`` or add channels to
 ``neutral_channels``.
 """
 
-OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "5-color unmixing simulation_picasso_source_sink_reference_t0.tif"
+OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "5_color_unmixing_simulation_picasso_source_sink_reference_t0.tif"
 
 sink_channels = [0, 1, 2, 3, 4]
 neutral_channels = []

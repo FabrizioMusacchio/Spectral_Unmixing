@@ -23,8 +23,6 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing import (
     report_path_from_output_path,
@@ -209,7 +207,6 @@ Effect of these settings:
 - If source and target channels are biologically correlated, this method may
   subtract true target signal together with bleed-through.
 """
-
 
 OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
 

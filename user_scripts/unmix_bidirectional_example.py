@@ -11,15 +11,11 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from spectral_unmixing import (
     report_path_from_output_path,
     show_unmixed_channels_in_napari,
-    unmix,
-)
-
+    unmix)
 # %% INPUT AND OUTPUT PATHS
 """Define the example input stack and all output targets used below.
 

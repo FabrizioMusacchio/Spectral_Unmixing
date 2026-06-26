@@ -21,7 +21,8 @@ In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will 
 automatically generated in a subfolder of the input file's parent directory.
 """
 
-INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "3color_data.tif")
+INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "3_color_data.tif")
+#INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "m1_e0_GFAPgreenDRAQmagenta.tif")
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -204,7 +205,7 @@ For this specific 3-channel example we assume:
 
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "3-color unmixing simulation_picasso_source_sink_reference_t0.tif"
 
-sink_channels = [0,2]
+sink_channels = [0,1,2]
 neutral_channels = []
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution
