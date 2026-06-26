@@ -39,6 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Reference time point used when alpha_mode='reference_t'.",
     )
     parser.add_argument(
+        "--method",
+        choices=["manual", "mean_ratio", "linear_fit", "corr_min", "mi_min"],
+        default="mean_ratio",
+        help="Method used to estimate alpha for non-fixed alpha modes.",
+    )
+    parser.add_argument(
         "--source-channel",
         type=int,
         default=0,
@@ -57,10 +63,45 @@ def build_parser() -> argparse.ArgumentParser:
         help="Percentile threshold for the bright source-signal mask.",
     )
     parser.add_argument(
+        "--target-low-percentile",
+        type=float,
+        default=None,
+        help="Optional low-target percentile used to restrict the alpha mask.",
+    )
+    parser.add_argument(
         "--background-percentile",
         type=float,
         default=1.0,
         help="Percentile used for rough background subtraction.",
+    )
+    parser.add_argument(
+        "--alpha-max",
+        type=float,
+        default=1.0,
+        help="Upper bound used by optimization-based alpha methods.",
+    )
+    parser.add_argument(
+        "--mi-bins",
+        type=int,
+        default=64,
+        help="Number of histogram bins used for mutual-information estimation.",
+    )
+    parser.add_argument(
+        "--max-alpha-voxels",
+        type=int,
+        default=500000,
+        help="Maximum number of voxels used for alpha estimation after subsampling.",
+    )
+    parser.add_argument(
+        "--random-state",
+        type=int,
+        default=0,
+        help="Random seed used when alpha-estimation voxels are subsampled.",
+    )
+    parser.add_argument(
+        "--no-preprocess-alpha-inputs",
+        action="store_true",
+        help="Disable optional background subtraction and clipping for alpha estimation.",
     )
     parser.add_argument(
         "--no-clip-negative",
@@ -91,10 +132,17 @@ def main(argv: list[str] | None = None) -> int:
         alpha=args.alpha,
         alpha_mode=args.alpha_mode,
         alpha_reference_t=args.alpha_reference_t,
+        method=args.method,
         source_channel=args.source_channel,
         target_channel=args.target_channel,
         signal_percentile=args.signal_percentile,
+        target_low_percentile=args.target_low_percentile,
         background_percentile=args.background_percentile,
+        preprocess_alpha_inputs=not args.no_preprocess_alpha_inputs,
+        alpha_max=args.alpha_max,
+        mi_bins=args.mi_bins,
+        max_alpha_voxels=args.max_alpha_voxels,
+        random_state=args.random_state,
         clip_negative=not args.no_clip_negative,
         output_dtype=args.output_dtype,
         verbose=not args.quiet,

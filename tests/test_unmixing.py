@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from spectral_unmixing.unmixing import report_path_from_output_path, unmix
+from spectral_unmixing.unmixing import report_path_from_output_path, unmix, unmix_picasso
 
 
 class UnmixingTests(unittest.TestCase):
@@ -68,6 +68,7 @@ class UnmixingTests(unittest.TestCase):
                     output_path=output_path,
                     alpha=0.2,
                     alpha_mode="fixed",
+                    method="manual",
                     verbose=False,
                 )
 
@@ -81,8 +82,45 @@ class UnmixingTests(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["alpha"], 0.2)
             self.assertEqual(report["alpha_mode"], "fixed")
+            self.assertEqual(report["method_effective"], "manual")
             self.assertEqual(report["size_t"], 2)
             self.assertEqual(report["size_z"], 3)
+
+    def test_fixed_alpha_with_non_manual_method_still_marks_user_provided_alpha(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return self.stack.copy(), self.metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, stack, metadata):
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    alpha=0.2,
+                    alpha_mode="fixed",
+                    method="mean_ratio",
+                    verbose=False,
+                )
+
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["method"], "mean_ratio")
+            self.assertEqual(report["method_effective"], "manual")
+            self.assertEqual(report["alpha_source"], "user_provided")
 
     def test_per_t_reports_one_alpha_per_timepoint(self) -> None:
         written = {}
@@ -124,6 +162,7 @@ class UnmixingTests(unittest.TestCase):
             report_path = report_path_from_output_path(output_path)
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(len(report["alpha_values"]), 2)
+            self.assertEqual(report["method"], "mean_ratio")
 
     def test_refuses_to_overwrite_input_path(self) -> None:
         with self.assertRaises(ValueError):
@@ -185,6 +224,96 @@ class UnmixingTests(unittest.TestCase):
             self.assertEqual(report["size_z"], 1)
             self.assertFalse(report["has_multiple_t"])
             self.assertFalse(report["has_multiple_z"])
+
+    def test_manual_method_requires_fixed_alpha_mode(self) -> None:
+        with self.assertRaises(ValueError):
+            unmix(
+                input_path="input.tif",
+                output_path="other.tif",
+                alpha_mode="reference_t",
+                method="manual",
+            )
+
+    def test_unmix_picasso_preserves_shape_and_reduces_channel_dependence(self) -> None:
+        rng = np.random.default_rng(7)
+        fluorophores = np.zeros((3, 1, 24, 24), dtype=np.float32)
+        fluorophores[0, 0, 3:9, 3:9] = 12.0
+        fluorophores[1, 0, 12:18, 5:12] = 15.0
+        fluorophores[2, 0, 8:16, 14:21] = 10.0
+        fluorophores += rng.normal(0.0, 0.1, size=fluorophores.shape).astype(np.float32)
+        fluorophores = np.clip(fluorophores, 0.0, None)
+
+        mixing = np.array(
+            [
+                [1.0, 0.22, 0.10],
+                [0.15, 1.0, 0.18],
+                [0.08, 0.20, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        measured = np.einsum("ij,jzyx->izyx", mixing, fluorophores, optimize=True)
+        stack = measured[np.newaxis, :, :, :, :]
+        stack = np.moveaxis(stack, 1, 2)
+        metadata = {"axes": "TZCYX", "shape": stack.shape}
+        written = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "picasso_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, saved_stack, metadata):
+                written["stack"] = saved_stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix_picasso(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    channels=[0, 1, 2],
+                    alpha_mode="reference_t",
+                    alpha_reference_t=0,
+                    background_percentile=0.0,
+                    mi_bins=16,
+                    max_iter=3,
+                    max_alpha_voxels=None,
+                    verbose=False,
+                )
+
+            self.assertEqual(written["stack"].shape, stack.shape)
+            self.assertTrue(np.all(np.isfinite(written["stack"])))
+
+            measured_flat = stack[0, 0].reshape(3, -1)
+            corrected_flat = written["stack"][0, 0].reshape(3, -1)
+            measured_dependence = (
+                abs(np.corrcoef(measured_flat[0], measured_flat[1])[0, 1])
+                + abs(np.corrcoef(measured_flat[0], measured_flat[2])[0, 1])
+                + abs(np.corrcoef(measured_flat[1], measured_flat[2])[0, 1])
+            )
+            corrected_dependence = (
+                abs(np.corrcoef(corrected_flat[0], corrected_flat[1])[0, 1])
+                + abs(np.corrcoef(corrected_flat[0], corrected_flat[2])[0, 1])
+                + abs(np.corrcoef(corrected_flat[1], corrected_flat[2])[0, 1])
+            )
+            self.assertLess(corrected_dependence, measured_dependence)
+
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["method"], "picasso")
+            self.assertEqual(report["channels"], [0, 1, 2])
+            self.assertEqual(len(report["unmixing_matrix"]), 3)
+            self.assertTrue(all(np.isfinite(np.asarray(report["unmixing_matrix"])).ravel()))
 
 
 if __name__ == "__main__":

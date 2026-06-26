@@ -111,14 +111,286 @@ Three `alpha_mode` values are available:
   Estimate one `alpha` value per time point, again using all z-slices for each
   time point.
 
-The helper `spectral_unmixing.estimate_alpha_from_volume(...)` implements the
-actual estimation on matching source and target volumes. It:
+`alpha_mode` answers the question:
+
+> From which part of the dataset should the coefficient be obtained?
+
+It does **not** determine how the coefficient is computed numerically.
+
+### Alpha estimation methods
+`method` controls how `alpha` is estimated once the relevant source and target
+volumes have been chosen by `alpha_mode`.
+
+Available methods are:
+
+- `manual`
+  Use a user-provided `alpha`. This is only meaningful for
+  `alpha_mode="fixed"`.
+- `mean_ratio`
+  Estimate `alpha` as the ratio of mean target and source intensities inside a
+  bright-source mask.
+- `linear_fit`
+  Estimate `alpha` by masked least-squares fitting without intercept.
+- `corr_min`
+  Estimate `alpha` by minimizing the correlation between the source channel and
+  the corrected target channel.
+- `mi_min`
+  Estimate `alpha` by minimizing the mutual information between the source
+  channel and the corrected target channel.
+
+So the logic is:
+
+- `alpha_mode` decides **where** alpha is estimated from
+- `method` decides **how** alpha is estimated
+
+The default estimation method is `mean_ratio`:
+
+```python
+method="mean_ratio"
+```
+
+#### Shared alpha-estimation preprocessing
+The helper `spectral_unmixing.prepare_source_target_for_alpha(...)` implements a
+shared optional preprocessing step for alpha estimation.
+
+If `preprocess_alpha_inputs=True`, it:
 
 - converts inputs to `float32`
 - subtracts a low-percentile background estimate from both channels
 - clips negative values to zero
-- creates a source-signal mask from bright source voxels
-- estimates `alpha` from the ratio of masked mean target and source intensities
+
+Mathematically, if the raw source and target volumes are denoted by
+\(X_{\mathrm{raw}}\) and \(Y_{\mathrm{raw}}\), the preprocessing step computes
+background estimates
+
+$$
+b_X = \operatorname{percentile}(X_{\mathrm{raw}}, p_{\mathrm{bg}})
+$$
+
+and
+
+$$
+b_Y = \operatorname{percentile}(Y_{\mathrm{raw}}, p_{\mathrm{bg}})
+$$
+
+and then forms
+
+$$
+X = \max(X_{\mathrm{raw}} - b_X, 0)
+$$
+
+$$
+Y = \max(Y_{\mathrm{raw}} - b_Y, 0)
+$$
+
+where \(p_{\mathrm{bg}}\) is the chosen `background_percentile`.
+
+This preprocessing is used only for **estimating** `alpha`. The final image
+correction is still applied to the measured working array inside the unmixing
+pipeline.
+
+#### Shared alpha mask
+The helper `spectral_unmixing.make_alpha_mask(...)` creates the voxel mask used
+for alpha estimation.
+
+By default, the mask is defined from bright source voxels:
+
+$$
+\mathcal{M}
+=
+\left\{
+i \;\middle|\; X_i \ge
+\operatorname{percentile}(X, p_{\mathrm{sig}})
+\right\}
+$$
+
+where \(p_{\mathrm{sig}}\) is `signal_percentile`.
+
+Optionally, the mask can be restricted further to voxels with comparatively low
+target intensity:
+
+$$
+\mathcal{M}
+=
+\mathcal{M}
+\cap
+\left\{
+i \;\middle|\; Y_i \le
+\operatorname{percentile}(Y, p_{\mathrm{target,low}})
+\right\}
+$$
+
+where \(p_{\mathrm{target,low}}\) is `target_low_percentile`.
+
+This can be useful when one wants to estimate bleed-through primarily from
+voxels with strong source signal but as little genuine target signal as
+possible.
+
+If this stricter mask becomes too small, the implementation falls back to the
+source-only mask when possible and records that behavior in the JSON report.
+
+#### Method: `manual`
+For `method="manual"`, no coefficient is estimated from the data.
+
+The user supplies
+
+$$
+\alpha \ge 0
+$$
+
+directly, and the correction uses that fixed value.
+
+This is the scientifically preferred mode when `alpha` has been determined from
+a suitable single-label control measurement acquired with the same imaging
+settings.
+
+#### Method: `mean_ratio`
+This is the original default behavior of the package.
+
+After preprocessing and masking, let
+
+$$
+x_i = X_i \quad \text{for } i \in \mathcal{M}
+$$
+
+and
+
+$$
+y_i = Y_i \quad \text{for } i \in \mathcal{M}.
+$$
+
+Then the estimate is
+
+$$
+\hat{\alpha}_{\mathrm{mean\_ratio}}
+=
+\frac{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} y_i}
+{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} x_i}.
+$$
+
+This estimator is simple and often stable, but it is not identical to a
+least-squares fit.
+
+#### Method: `linear_fit`
+This method performs masked least-squares fitting **without intercept**:
+
+$$
+y_i \approx \alpha x_i
+\qquad \text{for } i \in \mathcal{M}.
+$$
+
+The resulting estimator is
+
+$$
+\hat{\alpha}_{\mathrm{linear\_fit}}
+=
+\frac{\sum_{i \in \mathcal{M}} x_i y_i}
+{\sum_{i \in \mathcal{M}} x_i^2}.
+$$
+
+No intercept is fitted, because the optional background subtraction is already
+handled during preprocessing and because an intercept would blur the
+interpretation of \(\alpha\) as a bleed-through coefficient.
+
+#### Method: `corr_min`
+This method chooses \(\alpha\) so that the corrected target channel becomes as
+uncorrelated as possible with the source channel:
+
+$$
+Y^{(\alpha)} = Y - \alpha X.
+$$
+
+The estimate is obtained by solving
+
+$$
+\hat{\alpha}_{\mathrm{corr\_min}}
+=
+\arg\min_{0 \le \alpha \le \alpha_{\max}}
+\operatorname{corr}(X, Y^{(\alpha)})^2.
+$$
+
+In practice, the implementation uses Pearson correlation and bounded scalar
+optimization on the interval \([0, \alpha_{\max}]\).
+
+This can be more aggressive than `mean_ratio` or `linear_fit`, especially when
+the true biology in source and target channels is itself correlated.
+
+#### Method: `mi_min`
+This method follows the two-channel version of the PICASSO idea: choose
+\(\alpha\) such that the statistical dependence between source and corrected
+target becomes minimal.
+
+Again define
+
+$$
+Y^{(\alpha)} = Y - \alpha X.
+$$
+
+Then the estimate is obtained from
+
+$$
+\hat{\alpha}_{\mathrm{mi\_min}}
+=
+\arg\min_{0 \le \alpha \le \alpha_{\max}}
+\operatorname{MI}(X, Y^{(\alpha)}),
+$$
+
+where \(\operatorname{MI}\) denotes mutual information. The current
+implementation uses a histogram-based mutual-information estimate with a user
+controlled number of bins `mi_bins`.
+
+The two-channel `mi_min` method is inspired by the PICASSO criterion, but it is
+**not** the full multi-channel PICASSO algorithm.
+
+### Multi-channel PICASSO-like blind unmixing
+The package additionally provides a separate function:
+
+```python
+from spectral_unmixing import unmix_picasso
+```
+
+This implements an iterative multi-channel blind-unmixing workflow under the
+assumption that:
+
+- the number of measured channels equals the number of fluorophores
+- the mixture is approximately linear
+- one wants to reduce pairwise statistical dependence between reconstructed
+  channels
+
+The underlying linear model is
+
+$$
+I = M F,
+$$
+
+where
+
+- \(I\) is the vector of measured channels
+- \(F\) is the vector of latent fluorophore signals
+- \(M\) is an unknown mixing matrix
+
+The iterative PICASSO-like implementation starts from the measured channels and
+repeatedly updates channel pairs using
+
+$$
+F_j \leftarrow F_j - a_{ij} F_i
+$$
+
+with
+
+$$
+a_{ij}
+=
+\arg\min_{0 \le a \le \alpha_{\max}}
+\operatorname{MI}(F_i, F_j - a F_i).
+$$
+
+These pairwise updates induce an estimated unmixing matrix \(U\), which is then
+applied to the selected channels of the full stack.
+
+This is a PICASSO-like iterative blind-unmixing criterion. It is not a
+deep-learning method and it is conceptually separate from the simpler
+two-channel `unmix(...)` workflow.
 
 ### Output and reproducibility
 Each unmixing run writes a JSON sidecar report next to the output TIFF, for
