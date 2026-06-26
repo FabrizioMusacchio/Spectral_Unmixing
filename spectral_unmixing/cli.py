@@ -52,6 +52,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Method used to estimate alpha for non-fixed alpha modes.",
     )
     parser.add_argument(
+        "--bidirectional",
+        action="store_true",
+        help="Enable bidirectional two-channel unmixing with a 2x2 mixing model.",
+    )
+    parser.add_argument(
+        "--alpha-reverse",
+        type=float,
+        default=None,
+        help="Optional reverse-direction fixed bleed-through coefficient.",
+    )
+    parser.add_argument(
+        "--method-reverse",
+        choices=["manual", "mean_ratio", "linear_fit", "corr_min", "mi_min"],
+        default=None,
+        help="Optional reverse-direction alpha-estimation method.",
+    )
+    parser.add_argument(
         "--source-channel",
         type=int,
         default=0,
@@ -82,16 +99,46 @@ def build_parser() -> argparse.ArgumentParser:
         help="Percentile used for rough background subtraction.",
     )
     parser.add_argument(
+        "--signal-percentile-reverse",
+        type=float,
+        default=None,
+        help="Optional reverse-direction source-mask percentile.",
+    )
+    parser.add_argument(
+        "--target-low-percentile-reverse",
+        type=float,
+        default=None,
+        help="Optional reverse-direction low-target percentile.",
+    )
+    parser.add_argument(
+        "--background-percentile-reverse",
+        type=float,
+        default=None,
+        help="Optional reverse-direction background percentile.",
+    )
+    parser.add_argument(
         "--alpha-max",
         type=float,
         default=1.0,
         help="Upper bound used by optimization-based alpha methods.",
     )
     parser.add_argument(
+        "--alpha-max-reverse",
+        type=float,
+        default=None,
+        help="Optional reverse-direction optimization bound.",
+    )
+    parser.add_argument(
         "--mi-bins",
         type=int,
         default=64,
         help="Number of histogram bins used for mutual-information estimation.",
+    )
+    parser.add_argument(
+        "--mi-bins-reverse",
+        type=int,
+        default=None,
+        help="Optional reverse-direction histogram bin count for mutual information.",
     )
     parser.add_argument(
         "--max-alpha-voxels",
@@ -153,14 +200,22 @@ def main(argv: list[str] | None = None) -> int:
         alpha_mode=args.alpha_mode,
         alpha_reference_t=args.alpha_reference_t,
         method=args.method,
+        bidirectional=args.bidirectional,
+        alpha_reverse=args.alpha_reverse,
+        method_reverse=args.method_reverse,
         source_channel=args.source_channel,
         target_channel=args.target_channel,
         signal_percentile=args.signal_percentile,
         target_low_percentile=args.target_low_percentile,
         background_percentile=args.background_percentile,
+        signal_percentile_reverse=args.signal_percentile_reverse,
+        target_low_percentile_reverse=args.target_low_percentile_reverse,
+        background_percentile_reverse=args.background_percentile_reverse,
         preprocess_alpha_inputs=not args.no_preprocess_alpha_inputs,
         alpha_max=args.alpha_max,
+        alpha_max_reverse=args.alpha_max_reverse,
         mi_bins=args.mi_bins,
+        mi_bins_reverse=args.mi_bins_reverse,
         max_alpha_voxels=args.max_alpha_voxels,
         random_state=args.random_state,
         clip_negative=not args.no_clip_negative,

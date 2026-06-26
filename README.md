@@ -72,6 +72,80 @@ So these are not two different models. They are two consecutive steps:
 Only the chosen target channel is corrected. The source channel is left
 unchanged.
 
+### Optional bidirectional unmixing
+For some imaging setups, bleed-through can occur in both directions. The
+package therefore optionally supports bidirectional two-channel unmixing via
+
+```python
+bidirectional=True
+```
+
+In that case, the model becomes
+
+$$
+I_0 = S_0 + \alpha_{10} S_1
+$$
+
+$$
+I_1 = S_1 + \alpha_{01} S_0
+$$
+
+where
+
+- \(\alpha_{01}\) denotes bleed-through from channel \(0\) into channel \(1\)
+- \(\alpha_{10}\) denotes bleed-through from channel \(1\) into channel \(0\)
+
+This can be written in matrix form as
+
+$$
+\begin{pmatrix}
+I_0 \\
+I_1
+\end{pmatrix}
+=
+\begin{pmatrix}
+1 & \alpha_{10} \\
+\alpha_{01} & 1
+\end{pmatrix}
+\begin{pmatrix}
+S_0 \\
+S_1
+\end{pmatrix}.
+$$
+
+The unmixed signals are then obtained by inverting this 2x2 mixing matrix:
+
+$$
+\begin{pmatrix}
+S_0 \\
+S_1
+\end{pmatrix}
+=
+\begin{pmatrix}
+1 & \alpha_{10} \\
+\alpha_{01} & 1
+\end{pmatrix}^{-1}
+\begin{pmatrix}
+I_0 \\
+I_1
+\end{pmatrix}.
+$$
+
+Equivalently,
+
+$$
+S_0 = \frac{I_0 - \alpha_{10} I_1}{1 - \alpha_{01}\alpha_{10}}
+$$
+
+and
+
+$$
+S_1 = \frac{I_1 - \alpha_{01} I_0}{1 - \alpha_{01}\alpha_{10}}.
+$$
+
+This is preferable to sequential subtraction, because sequentially subtracting
+one mixed channel from the other would depend on the update order.
+
 ## Core unmixing function
 The main entry point is `spectral_unmixing.unmix(...)`.
 
@@ -94,12 +168,20 @@ output_path = unmix(
 - reads the input stack with OMIO
 - validates that the image is in canonical `TZCYX` order
 - obtains `alpha` either as a fixed value or by estimation from the data
-- applies the correction to the target channel over all `T` and `Z`
+- optionally obtains a reverse-direction coefficient for bidirectional
+  unmixing
+- applies either the one-direction subtraction model or the bidirectional 2x2
+  mixing-model inversion over all `T` and `Z`
 - clips negative corrected values to zero if requested
 - writes the corrected TIFF stack
 - writes a JSON sidecar report next to the output TIFF for reproducibility
 
 The function returns the path to the written TIFF file.
+
+When `bidirectional=False` (default), the classic one-direction model is used.
+When `bidirectional=True`, the reverse-direction settings are taken from the
+optional `*_reverse` arguments. For every reverse parameter that is left at
+`None`, the corresponding forward value is reused.
 
 ### Alpha modes
 Three `alpha_mode` values are available:
@@ -118,6 +200,9 @@ Three `alpha_mode` values are available:
 > From which part of the dataset should the coefficient be obtained?
 
 It does **not** determine how the coefficient is computed numerically.
+
+In bidirectional mode, the same `alpha_mode` is applied independently to the
+forward and reverse directions.
 
 ### Alpha estimation methods
 `method` controls how `alpha` is estimated once the relevant source and target
@@ -144,6 +229,18 @@ So the logic is:
 
 - `alpha_mode` decides **where** alpha is estimated from
 - `method` decides **how** alpha is estimated
+
+For bidirectional unmixing, `method_reverse` can optionally be supplied. If it
+is left as `None`, the forward `method` is reused for the reverse direction.
+
+The same inheritance rule applies to:
+
+- `alpha_reverse`
+- `signal_percentile_reverse`
+- `background_percentile_reverse`
+- `target_low_percentile_reverse`
+- `alpha_max_reverse`
+- `mi_bins_reverse`
 
 The default estimation method is `mean_ratio`:
 
@@ -245,6 +342,10 @@ directly, and the correction uses that fixed value.
 This is the scientifically preferred mode when `alpha` has been determined from
 a suitable single-label control measurement acquired with the same imaging
 settings.
+
+In bidirectional fixed mode, one may either provide both `alpha` and
+`alpha_reverse`, or provide only `alpha` and let the reverse direction inherit
+that value.
 
 #### Method: `mean_ratio`
 This is the original default behavior of the package.
@@ -403,7 +504,8 @@ input_unmixed_reference_t0.tif.json
 ```
 
 This report stores the main processing settings such as alpha mode, estimated
-alpha values, source and target channels, axis order, and output dtype.
+alpha values, reverse-direction settings when bidirectional unmixing is used,
+source and target channels, axis order, and output dtype.
 
 Terminal progress output is enabled by default and can be disabled with
 `verbose=False`.
@@ -432,6 +534,7 @@ These helper modules are meant to support follow-up image processing after unmix
 For now, see the tutorial-style user scripts:
 
 - [user_scripts/unmix_ch0_from_ch1_interactive.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_ch0_from_ch1_interactive.py)
+- [user_scripts/unmix_bidirectional_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_bidirectional_example.py)
 - [user_scripts/filter_and_project_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_project_stack.py)
 - [user_scripts/filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_register_stack.py)
 - [user_scripts/fine_filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/fine_filter_and_register_stack.py)

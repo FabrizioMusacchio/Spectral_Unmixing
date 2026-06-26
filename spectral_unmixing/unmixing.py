@@ -146,6 +146,12 @@ def _validate_channels(channels, channel_count: int) -> list[int]:
     return normalized
 
 
+def _resolve_reverse_parameter(forward_value, reverse_value):
+    """Return a reverse-direction override or fall back to the forward value."""
+
+    return forward_value if reverse_value is None else reverse_value
+
+
 def _estimate_reference_alpha(
     stack: np.ndarray,
     *,
@@ -230,6 +236,155 @@ def _estimate_per_t_alphas(
         alpha_values[t] = alpha_value
         details_by_t.append({"t": int(t), **details})
     return alpha_values, details_by_t
+
+
+def _estimate_directional_alpha(
+    stack: np.ndarray,
+    *,
+    alpha_mode: str,
+    alpha,
+    alpha_reference_t: int,
+    source_channel: int,
+    target_channel: int,
+    signal_percentile: float,
+    target_low_percentile: float | None,
+    background_percentile: float,
+    method: str,
+    preprocess_alpha_inputs: bool,
+    alpha_max: float,
+    mi_bins: int,
+    max_alpha_voxels: int | None,
+    random_state: int,
+    min_mask_voxels: int,
+    verbose: bool,
+    direction_label: str,
+) -> tuple[float | None, np.ndarray | None, dict | None, list[dict] | None, str, str]:
+    """Estimate or validate one directional bleed-through coefficient workflow."""
+
+    alpha_scalar: float | None = None
+    alpha_values: np.ndarray | None = None
+    alpha_details: dict | None = None
+    alpha_details_by_t: list[dict] | None = None
+    alpha_source = "estimated"
+    method_effective = method
+
+    if alpha_mode == "fixed":
+        if alpha is None:
+            raise ValueError(
+                f"alpha must be provided for {direction_label} correction when alpha_mode='fixed'."
+            )
+        alpha_scalar = _validate_alpha_value(alpha)
+        alpha_source = "user_provided"
+        method_effective = "manual"
+        _print_verbose(
+            verbose,
+            (
+                f"Using user-provided {direction_label} alpha={alpha_scalar:.6f} for "
+                f"source_channel={source_channel} -> target_channel={target_channel}."
+            ),
+        )
+    elif alpha_mode == "reference_t":
+        alpha_scalar, alpha_details = _estimate_reference_alpha(
+            stack,
+            alpha_reference_t=int(alpha_reference_t),
+            source_channel=source_channel,
+            target_channel=target_channel,
+            signal_percentile=signal_percentile,
+            target_low_percentile=target_low_percentile,
+            background_percentile=background_percentile,
+            method=method,
+            preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
+            alpha_max=alpha_max,
+            mi_bins=mi_bins,
+            max_alpha_voxels=max_alpha_voxels,
+            random_state=int(random_state),
+            min_mask_voxels=min_mask_voxels,
+        )
+        _print_verbose(
+            verbose,
+            (
+                f"Estimated {direction_label} reference alpha={alpha_scalar:.6f} from "
+                f"t={int(alpha_reference_t)} with method='{method}'."
+            ),
+        )
+    else:
+        alpha_values, alpha_details_by_t = _estimate_per_t_alphas(
+            stack,
+            source_channel=source_channel,
+            target_channel=target_channel,
+            signal_percentile=signal_percentile,
+            target_low_percentile=target_low_percentile,
+            background_percentile=background_percentile,
+            method=method,
+            preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
+            alpha_max=alpha_max,
+            mi_bins=mi_bins,
+            max_alpha_voxels=max_alpha_voxels,
+            random_state=int(random_state),
+            min_mask_voxels=min_mask_voxels,
+        )
+        _print_verbose(
+            verbose,
+            f"Estimated {direction_label} per-time-point alpha values: "
+            + ", ".join(f"{float(value):.6f}" for value in np.asarray(alpha_values)),
+        )
+
+    return (
+        alpha_scalar,
+        alpha_values,
+        alpha_details,
+        alpha_details_by_t,
+        alpha_source,
+        method_effective,
+    )
+
+
+def _validate_bidirectional_determinant(
+    alpha_forward,
+    alpha_reverse,
+    *,
+    context: str,
+) -> float:
+    """Validate the determinant of the 2x2 bidirectional mixing matrix."""
+
+    determinant = 1.0 - float(alpha_forward) * float(alpha_reverse)
+    if determinant <= 0.0 or not np.isfinite(determinant):
+        raise ValueError(
+            f"Invalid bidirectional unmixing matrix for {context}: "
+            f"determinant = 1 - alpha_forward * alpha_reverse = {determinant!r}. "
+            "Please choose coefficients with alpha_forward * alpha_reverse < 1."
+        )
+    return float(determinant)
+
+
+def _apply_bidirectional_unmixing(
+    source_measured: np.ndarray,
+    target_measured: np.ndarray,
+    *,
+    alpha_forward: float,
+    alpha_reverse: float,
+    clip_negative: bool,
+    context: str,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Unmix a two-channel bidirectional linear mixture by 2x2 matrix inversion."""
+
+    determinant = _validate_bidirectional_determinant(
+        alpha_forward,
+        alpha_reverse,
+        context=context,
+    )
+    corrected_source = (
+        source_measured - float(alpha_reverse) * target_measured
+    ) / determinant
+    corrected_target = (
+        target_measured - float(alpha_forward) * source_measured
+    ) / determinant
+
+    if clip_negative:
+        corrected_source = np.maximum(corrected_source, 0.0)
+        corrected_target = np.maximum(corrected_target, 0.0)
+
+    return corrected_source, corrected_target, determinant
 
 
 def _cast_output_stack(stack: np.ndarray, output_dtype: str | np.dtype) -> np.ndarray:
@@ -387,9 +542,17 @@ def unmix(
     output_dtype="float32",
     verbose=True,
     method="mean_ratio",
+    bidirectional=False,
+    alpha_reverse=None,
+    method_reverse=None,
     preprocess_alpha_inputs=True,
     alpha_max=DEFAULT_ALPHA_MAX,
+    signal_percentile_reverse=None,
+    background_percentile_reverse=None,
+    target_low_percentile_reverse=None,
+    alpha_max_reverse=None,
     mi_bins=DEFAULT_MI_BINS,
+    mi_bins_reverse=None,
     max_alpha_voxels=DEFAULT_MAX_ALPHA_VOXELS,
     random_state=DEFAULT_RANDOM_STATE,
     min_mask_voxels=MIN_MASK_VOXELS,
@@ -435,13 +598,40 @@ def unmix(
         Method used to obtain alpha. ``"manual"`` is meaningful only together
         with ``alpha_mode="fixed"``; the other methods estimate alpha from the
         data.
+    bidirectional : bool, optional
+        If ``True``, estimate or use coefficients for both
+        ``source_channel -> target_channel`` and
+        ``target_channel -> source_channel`` and solve the resulting 2x2 linear
+        mixing model by matrix inversion.
+    alpha_reverse : float or None, optional
+        Optional fixed reverse-direction bleed-through coefficient, i.e. from
+        ``target_channel`` back into ``source_channel``. If ``None`` and
+        ``bidirectional=True``, the forward ``alpha`` value is reused.
+    method_reverse : {"manual", "mean_ratio", "linear_fit", "corr_min", "mi_min"} or None, optional
+        Optional reverse-direction alpha-estimation method. If ``None`` and
+        ``bidirectional=True``, the forward ``method`` value is reused.
     preprocess_alpha_inputs : bool, optional
         If ``True``, apply percentile-based background subtraction and clipping
         before automatic alpha estimation.
     alpha_max : float, optional
         Upper search bound for optimization-based alpha-estimation methods.
+    signal_percentile_reverse : float or None, optional
+        Optional reverse-direction source-mask percentile. Falls back to
+        ``signal_percentile`` when ``None``.
+    background_percentile_reverse : float or None, optional
+        Optional reverse-direction background percentile. Falls back to
+        ``background_percentile`` when ``None``.
+    target_low_percentile_reverse : float or None, optional
+        Optional reverse-direction low-target percentile. Falls back to
+        ``target_low_percentile`` when ``None``.
+    alpha_max_reverse : float or None, optional
+        Optional reverse-direction optimization bound. Falls back to
+        ``alpha_max`` when ``None``.
     mi_bins : int, optional
         Number of histogram bins used by the mutual-information estimator.
+    mi_bins_reverse : int or None, optional
+        Optional reverse-direction histogram-bin count used by ``mi_min``.
+        Falls back to ``mi_bins`` when ``None``.
     max_alpha_voxels : int or None, optional
         Optional cap on the number of voxels used for alpha estimation after
         masking.
@@ -466,6 +656,10 @@ def unmix(
     the output stack. Automatic alpha estimation is performed on prepared data,
     but the final subtraction is applied to the original stack intensities cast
     to ``float32``.
+
+    If ``bidirectional=True``, both selected channels are corrected jointly by
+    inverting the 2x2 linear mixing model. In that mode, ``clip_negative``
+    applies to both corrected channels.
     """
 
     input_path = Path(input_path)
@@ -484,9 +678,41 @@ def unmix(
         mi_bins=mi_bins,
         min_mask_voxels=min_mask_voxels,
     )
+    bidirectional = bool(bidirectional)
+    method_reverse_resolved = None if not bidirectional else _validate_unmix_method(
+        _resolve_reverse_parameter(method, method_reverse)
+    )
+    signal_percentile_reverse_resolved = _resolve_reverse_parameter(
+        signal_percentile,
+        signal_percentile_reverse,
+    )
+    background_percentile_reverse_resolved = _resolve_reverse_parameter(
+        background_percentile,
+        background_percentile_reverse,
+    )
+    target_low_percentile_reverse_resolved = _resolve_reverse_parameter(
+        target_low_percentile,
+        target_low_percentile_reverse,
+    )
+    alpha_max_reverse_resolved = _resolve_reverse_parameter(
+        alpha_max,
+        alpha_max_reverse,
+    )
+    mi_bins_reverse_resolved = _resolve_reverse_parameter(
+        mi_bins,
+        mi_bins_reverse,
+    )
+    if bidirectional:
+        alpha_max_reverse_resolved, mi_bins_reverse_resolved, _ = _validate_common_estimation_parameters(
+            alpha_max=alpha_max_reverse_resolved,
+            mi_bins=mi_bins_reverse_resolved,
+            min_mask_voxels=min_mask_voxels,
+        )
 
     if method == "manual" and alpha_mode != "fixed":
         raise ValueError("method='manual' is only valid with alpha_mode='fixed'.")
+    if bidirectional and method_reverse_resolved == "manual" and alpha_mode != "fixed":
+        raise ValueError("method_reverse='manual' is only valid with alpha_mode='fixed'.")
 
     _print_verbose(verbose, f"Reading stack with OMIO: {input_path}")
     stack, metadata = load_stack_with_omio(input_path)
@@ -522,81 +748,113 @@ def unmix(
     alpha_details_by_t: list[dict] | None = None
     alpha_source = "estimated"
     method_effective = method
+    (
+        alpha_scalar,
+        alpha_values,
+        alpha_details,
+        alpha_details_by_t,
+        alpha_source,
+        method_effective,
+    ) = _estimate_directional_alpha(
+        stack,
+        alpha_mode=alpha_mode,
+        alpha=alpha,
+        alpha_reference_t=int(alpha_reference_t),
+        source_channel=source_channel,
+        target_channel=target_channel,
+        signal_percentile=signal_percentile,
+        target_low_percentile=target_low_percentile,
+        background_percentile=background_percentile,
+        method=method,
+        preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
+        alpha_max=alpha_max,
+        mi_bins=mi_bins,
+        max_alpha_voxels=max_alpha_voxels,
+        random_state=int(random_state),
+        min_mask_voxels=min_mask_voxels,
+        verbose=bool(verbose),
+        direction_label="forward",
+    )
 
-    if alpha_mode == "fixed":
-        if alpha is None:
-            raise ValueError("alpha must be provided when alpha_mode='fixed'.")
-        alpha_scalar = _validate_alpha_value(alpha)
-        alpha_source = "user_provided"
-        method_effective = "manual"
-        _print_verbose(
-            verbose,
-            (
-                f"Using user-provided alpha={alpha_scalar:.6f} for source_channel="
-                f"{source_channel} -> target_channel={target_channel}."
-            ),
-        )
-    elif alpha_mode == "reference_t":
-        alpha_scalar, alpha_details = _estimate_reference_alpha(
+    alpha_reverse_scalar: float | None = None
+    alpha_reverse_values: np.ndarray | None = None
+    alpha_reverse_details: dict | None = None
+    alpha_reverse_details_by_t: list[dict] | None = None
+    alpha_reverse_source: str | None = None
+    method_reverse_effective: str | None = None
+
+    if bidirectional:
+        reverse_alpha_input = _resolve_reverse_parameter(alpha, alpha_reverse)
+        (
+            alpha_reverse_scalar,
+            alpha_reverse_values,
+            alpha_reverse_details,
+            alpha_reverse_details_by_t,
+            alpha_reverse_source,
+            method_reverse_effective,
+        ) = _estimate_directional_alpha(
             stack,
+            alpha_mode=alpha_mode,
+            alpha=reverse_alpha_input,
             alpha_reference_t=int(alpha_reference_t),
-            source_channel=source_channel,
-            target_channel=target_channel,
-            signal_percentile=signal_percentile,
-            target_low_percentile=target_low_percentile,
-            background_percentile=background_percentile,
-            method=method,
+            source_channel=target_channel,
+            target_channel=source_channel,
+            signal_percentile=signal_percentile_reverse_resolved,
+            target_low_percentile=target_low_percentile_reverse_resolved,
+            background_percentile=background_percentile_reverse_resolved,
+            method=method_reverse_resolved,
             preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
-            alpha_max=alpha_max,
-            mi_bins=mi_bins,
+            alpha_max=alpha_max_reverse_resolved,
+            mi_bins=mi_bins_reverse_resolved,
             max_alpha_voxels=max_alpha_voxels,
-            random_state=int(random_state),
+            random_state=int(random_state) + 10_000,
             min_mask_voxels=min_mask_voxels,
-        )
-        _print_verbose(
-            verbose,
-            (
-                f"Estimated reference alpha={alpha_scalar:.6f} from t={int(alpha_reference_t)} "
-                f"with method='{method}'."
-            ),
-        )
-    else:
-        alpha_values, alpha_details_by_t = _estimate_per_t_alphas(
-            stack,
-            source_channel=source_channel,
-            target_channel=target_channel,
-            signal_percentile=signal_percentile,
-            target_low_percentile=target_low_percentile,
-            background_percentile=background_percentile,
-            method=method,
-            preprocess_alpha_inputs=bool(preprocess_alpha_inputs),
-            alpha_max=alpha_max,
-            mi_bins=mi_bins,
-            max_alpha_voxels=max_alpha_voxels,
-            random_state=int(random_state),
-            min_mask_voxels=min_mask_voxels,
-        )
-        _print_verbose(
-            verbose,
-            "Estimated per-time-point alpha values: "
-            + ", ".join(f"{float(value):.6f}" for value in np.asarray(alpha_values)),
+            verbose=bool(verbose),
+            direction_label="reverse",
         )
 
     working_stack = stack.astype(np.float32, copy=True)
     source_view = working_stack[:, :, source_channel, :, :]
     target_view = working_stack[:, :, target_channel, :, :]
+    bidirectional_determinants: list[float] | None = None
 
-    if alpha_mode in {"fixed", "reference_t"}:
+    if not bidirectional and alpha_mode in {"fixed", "reference_t"}:
         corrected_target = target_view - float(alpha_scalar) * source_view
         if clip_negative:
             corrected_target = np.maximum(corrected_target, 0.0)
         working_stack[:, :, target_channel, :, :] = corrected_target
-    else:
+    elif not bidirectional:
         for t in range(working_stack.shape[0]):
             corrected_target = target_view[t] - float(alpha_values[t]) * source_view[t]
             if clip_negative:
                 corrected_target = np.maximum(corrected_target, 0.0)
             working_stack[t, :, target_channel, :, :] = corrected_target
+    elif alpha_mode in {"fixed", "reference_t"}:
+        corrected_source, corrected_target, determinant = _apply_bidirectional_unmixing(
+            source_view,
+            target_view,
+            alpha_forward=float(alpha_scalar),
+            alpha_reverse=float(alpha_reverse_scalar),
+            clip_negative=bool(clip_negative),
+            context="global bidirectional unmixing",
+        )
+        working_stack[:, :, source_channel, :, :] = corrected_source
+        working_stack[:, :, target_channel, :, :] = corrected_target
+        bidirectional_determinants = [float(determinant)]
+    else:
+        bidirectional_determinants = []
+        for t in range(working_stack.shape[0]):
+            corrected_source, corrected_target, determinant = _apply_bidirectional_unmixing(
+                source_view[t],
+                target_view[t],
+                alpha_forward=float(alpha_values[t]),
+                alpha_reverse=float(alpha_reverse_values[t]),
+                clip_negative=bool(clip_negative),
+                context=f"bidirectional unmixing at t={t}",
+            )
+            working_stack[t, :, source_channel, :, :] = corrected_source
+            working_stack[t, :, target_channel, :, :] = corrected_target
+            bidirectional_determinants.append(float(determinant))
 
     _print_verbose(verbose, f"Writing corrected stack to: {output_path}")
     output_stack = _cast_output_stack(working_stack, output_dtype)
@@ -617,6 +875,20 @@ def unmix(
         "alpha_by_t": None
         if alpha_values is None
         else [float(value) for value in np.asarray(alpha_values)],
+        "bidirectional": bool(bidirectional),
+        "alpha_reverse": None
+        if alpha_reverse_scalar is None
+        else float(alpha_reverse_scalar),
+        "alpha_reverse_values": None
+        if alpha_reverse_values is None
+        else [float(value) for value in np.asarray(alpha_reverse_values)],
+        "alpha_reverse_by_t": None
+        if alpha_reverse_values is None
+        else [float(value) for value in np.asarray(alpha_reverse_values)],
+        "alpha_reverse_inherited_from_forward": bool(bidirectional and alpha_reverse is None),
+        "method_reverse": None if not bidirectional else method_reverse_resolved,
+        "method_reverse_effective": method_reverse_effective,
+        "alpha_reverse_source": alpha_reverse_source,
         "source_channel": int(source_channel),
         "target_channel": int(target_channel),
         "signal_percentile": float(signal_percentile),
@@ -624,20 +896,49 @@ def unmix(
         if target_low_percentile is None
         else float(target_low_percentile),
         "background_percentile": float(background_percentile),
+        "signal_percentile_reverse": None
+        if not bidirectional
+        else float(signal_percentile_reverse_resolved),
+        "target_low_percentile_reverse": None
+        if not bidirectional or target_low_percentile_reverse_resolved is None
+        else float(target_low_percentile_reverse_resolved),
+        "background_percentile_reverse": None
+        if not bidirectional
+        else float(background_percentile_reverse_resolved),
         "preprocess_alpha_inputs": bool(preprocess_alpha_inputs),
         "alpha_max": float(alpha_max),
+        "alpha_max_reverse": None if not bidirectional else float(alpha_max_reverse_resolved),
         "mi_bins": int(mi_bins),
+        "mi_bins_reverse": None if not bidirectional else int(mi_bins_reverse_resolved),
         "max_alpha_voxels": None if max_alpha_voxels is None else int(max_alpha_voxels),
         "random_state": int(random_state),
         "min_mask_voxels": int(min_mask_voxels),
         "mask_voxel_count": None
         if alpha_details is None
         else int(alpha_details["mask_voxel_count"]),
+        "mask_voxel_count_reverse": None
+        if alpha_reverse_details is None
+        else int(alpha_reverse_details["mask_voxel_count"]),
         "mask_voxel_count_by_t": None
         if alpha_details_by_t is None
         else [int(item["mask_voxel_count"]) for item in alpha_details_by_t],
+        "mask_voxel_count_reverse_by_t": None
+        if alpha_reverse_details_by_t is None
+        else [int(item["mask_voxel_count"]) for item in alpha_reverse_details_by_t],
         "alpha_estimation": alpha_details,
         "alpha_estimation_by_t": alpha_details_by_t,
+        "alpha_estimation_reverse": alpha_reverse_details,
+        "alpha_estimation_reverse_by_t": alpha_reverse_details_by_t,
+        "bidirectional_mixing_matrix_determinant": None
+        if bidirectional_determinants is None
+        else (
+            float(bidirectional_determinants[0])
+            if len(bidirectional_determinants) == 1
+            else None
+        ),
+        "bidirectional_mixing_matrix_determinant_by_t": None
+        if bidirectional_determinants is None or len(bidirectional_determinants) == 1
+        else [float(value) for value in bidirectional_determinants],
         "input_shape": tuple(int(v) for v in stack.shape),
         "axis_order": CANONICAL_AXIS_ORDER,
         "size_t": time_count,
