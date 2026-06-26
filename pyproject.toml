@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spectral-unmixing"
-version = "0.1.0"
+version = "0.0.1"
 description = "Spectral bleed-through correction utilities for TZCYX microscopy stacks."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [
   { name = "Fabrizio Musacchio" }
@@ -19,8 +19,6 @@ classifiers = [
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Image Processing",
 ]
@@ -30,6 +28,7 @@ dependencies = [
   "pystackreg>=0.2.8",
   "scikit-image>=0.26.0",
   "scipy>=1.12",
+  "ipykernel",
 ]
 
 [project.optional-dependencies]
