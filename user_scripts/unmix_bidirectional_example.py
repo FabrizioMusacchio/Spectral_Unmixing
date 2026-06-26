@@ -21,43 +21,15 @@ from spectral_unmixing import (
 )
 
 # %% INPUT AND OUTPUT PATHS
-"""Define the example input stack and all output paths used below.
+"""Define the example input stack and all output targets used below.
 
-What can be adjusted here:
-
-- ``INPUT_PATH``:
-  Path to the raw two-channel microscopy stack to be unmixed. Any input format
-  currently supported by OMIO can be used here.
-- ``OUTPUT_DIR``:
-  Subfolder that will receive all bidirectional unmixing outputs and JSON
-  reports.
-- ``OUTPUT_*``:
-  One output file per alpha-estimation strategy.
-
-Effect of changing these settings:
-
-- A different ``INPUT_PATH`` switches to another dataset.
-- A different ``OUTPUT_DIR`` changes where the results are stored.
-- Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
-  processing logic.
+In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
+automatically generated in a subfolder of the input file's parent directory.
 """
 
-INPUT_PATH = (
-    PROJECT_ROOT
-    / "example_data"
-    / "PICASSO_examples"
-    / "bidirectional_example.tif"
-)
+INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "bidirectional_example.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_FIXED = OUTPUT_DIR / "bidirectional_unmixed_fixed_alpha.tif"
-OUTPUT_REFERENCE = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mean_ratio.tif"
-OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_linear_fit.tif"
-OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_corr_min.tif"
-OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mi_min.tif"
-OUTPUT_PER_T = OUTPUT_DIR / "bidirectional_unmixed_per_t_mean_ratio.tif"
-
 # %% FIXED BIDIRECTIONAL ALPHA EXAMPLE
 """Run bidirectional unmixing with manually chosen fixed coefficients.
 
@@ -87,6 +59,8 @@ Why this is useful:
 - Best choice when both directional coefficients were measured from proper
   single-label controls acquired with the same imaging settings.
 """
+
+OUTPUT_FIXED = OUTPUT_DIR / "bidirectional_unmixed_fixed_alpha.tif"
 
 fixed_output = unmix(
     input_path=INPUT_PATH,
@@ -140,6 +114,8 @@ Effect of these settings:
   reverse-direction settings inherit the forward values unless overridden.
 """
 
+OUTPUT_REFERENCE = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mean_ratio.tif"
+
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
@@ -184,6 +160,8 @@ What can be adjusted:
 - ``background_percentile`` and ``background_percentile_reverse``:
   Optional direction-specific preprocessing percentiles.
 """
+
+OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_linear_fit.tif"
 
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
@@ -230,6 +208,9 @@ What can be adjusted:
   Can be changed independently if one direction should use another estimator.
 """
 
+
+OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_corr_min.tif"
+
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
@@ -274,6 +255,8 @@ What can be adjusted:
 - ``alpha_max`` and ``alpha_max_reverse``:
   Search bounds for the forward and reverse optimizations.
 """
+
+OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mi_min.tif"
 
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,

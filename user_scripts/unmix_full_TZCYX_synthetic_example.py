@@ -33,36 +33,13 @@ from spectral_unmixing import (
 # %% INPUT AND OUTPUT PATHS
 """Define the example input stack and all output targets used below.
 
-What can be adjusted here:
-
-- ``INPUT_PATH``:
-  Path to the raw microscopy stack to be unmixed. Any input format currently
-  supported by OMIO can be used here.
-- ``OUTPUT_DIR``:
-  Subfolder in which all unmixed results and JSON reports are written.
-- ``OUTPUT_*``:
-  One output file per alpha-estimation strategy, making it easy to compare
-  methods side by side without overwriting previous runs.
-
-Effect of changing these settings:
-
-- A different ``INPUT_PATH`` changes which dataset is processed.
-- A different ``OUTPUT_DIR`` controls where the corrected output files and
-  matching JSON sidecar reports are stored.
-- Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
-  unmixing itself.
+In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
+automatically generated in a subfolder of the input file's parent directory.
 """
 INPUT_PATH = PROJECT_ROOT / "example_data" / "synthetic_data" / "synthetic_bleedthrough_T9_Z20_C2.tif"
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
-OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
-OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
-OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
-OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
-OUTPUT_PER_T = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_per_t_mean_ratio.tif"
 # %% FIXED ALPHA EXAMPLE
 """Run unmixing with a manually chosen fixed bleed-through coefficient.
 
@@ -89,6 +66,9 @@ When this is useful:
 - Most reproducible and scientifically preferred if acquisition settings are
 - stable across experiments.
 """
+
+OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
+
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
@@ -137,6 +117,9 @@ Effect of these settings:
 - A different ``alpha_reference_t`` matters when bleed-through or biology
   changes over time.
 """
+
+OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
+
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
@@ -157,7 +140,6 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference t0")
-
 # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 """Estimate one alpha from a reference time point via masked least squares.
 
@@ -184,6 +166,9 @@ Effect of these settings:
   least-squares estimate and can behave differently when masked intensities
   have broad dynamic ranges.
 """
+
+OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
+
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
@@ -224,6 +209,10 @@ Effect of these settings:
 - If source and target channels are biologically correlated, this method may
   subtract true target signal together with bleed-through.
 """
+
+
+OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
+
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
@@ -272,6 +261,9 @@ Effect of these settings:
 - It is also the slowest of the scalar alpha estimators and can be sensitive to
   histogram settings.
 """
+
+OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
+
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_MI_MIN,
@@ -320,6 +312,9 @@ Effect of these settings:
 - More flexible, but it can introduce time-dependent artifacts if biology
   changes in a way that biases the alpha estimate.
 """
+
+OUTPUT_PER_T = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_per_t_mean_ratio.tif"
+
 per_t_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PER_T,

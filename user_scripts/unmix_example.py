@@ -33,38 +33,13 @@ from spectral_unmixing import (
 # %% INPUT AND OUTPUT PATHS
 """Define the example input stack and all output targets used below.
 
-What can be adjusted here:
-
-- ``INPUT_PATH``:
-  Path to the raw microscopy stack to be unmixed. Any input format currently
-  supported by OMIO can be used here.
-- ``INPUT_NAME``:
-  Base name of the input file, used for naming output files.
-- ``OUTPUT_DIR``:
-  Subfolder in which all unmixed results and JSON reports are written.
-- ``OUTPUT_*``:
-  One output file per alpha-estimation strategy, making it easy to compare
-  methods side by side without overwriting previous runs.
-
-Effect of changing these settings:
-
-- A different ``INPUT_PATH`` changes which dataset is processed.
-- A different ``OUTPUT_DIR`` controls where the corrected output files and
-  matching JSON sidecar reports are stored.
-- Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
-  unmixing itself.
+In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
+automatically generated in a subfolder of the input file's parent directory.
 """
 INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/2_color_unmixing_validation.tif")
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
-OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
-OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
-OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
-OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
-OUTPUT_PER_T = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_per_t_mean_ratio.tif"
 # %% FIXED ALPHA EXAMPLE
 """Run unmixing with a manually chosen fixed bleed-through coefficient.
 
@@ -91,6 +66,9 @@ When this is useful:
 - Most reproducible and scientifically preferred if acquisition settings are
 - stable across experiments.
 """
+
+OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
+
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
@@ -139,6 +117,9 @@ Effect of these settings:
 - A different ``alpha_reference_t`` matters when bleed-through or biology
   changes over time.
 """
+
+OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
+
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
@@ -182,6 +163,9 @@ Effect of these settings:
   least-squares estimate and can behave differently when masked intensities
   have broad dynamic ranges.
 """
+
+OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
+
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
@@ -224,6 +208,9 @@ Effect of these settings:
 - If source and target channels are biologically correlated, this method may
   subtract true target signal together with bleed-through.
 """
+
+OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
+
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
@@ -242,4 +229,42 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference corr_min")
+
+# %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
+"""Estimate forward coefficient by minimizing mutual information.
+
+Method summary:
+
+- ``method="mi_min"`` uses a PICASSO-like two-channel criterion for each
+  direction independently.
+- ``mi_bins`` controls the histogram-based mutual-information estimate for the
+  forward direction.
+
+What can be adjusted:
+
+- ``mi_bins``:
+  Histogram resolution used by the mutual-information estimate.
+- ``alpha_max``:
+  Search bound for the forward optimization.
+"""
+
+OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
+
+reference_mi_min_output = unmix(
+    input_path=INPUT_PATH,
+    output_path=OUTPUT_REFERENCE_MI_MIN,
+    alpha_mode="reference_t",
+    method="mi_min",
+    alpha_reference_t=0,
+    signal_percentile=50.0,
+    background_percentile=1.0,
+    alpha_max=1.0,
+    mi_bins=64)
+print(reference_mi_min_output)
+print(report_path_from_output_path(reference_mi_min_output).read_text(encoding="utf-8"))
+show_unmixed_channels_in_napari(
+    reference_mi_min_output,
+    source_channel=0,
+    target_channel=1,
+    layer_prefix="Reference mi_min")
 # %% END

@@ -20,24 +20,10 @@ from spectral_unmixing import report_path_from_output_path, unmix_picasso
 from spectral_unmixing.io import load_stack_with_omio, write_stack_with_omio
 from spectral_unmixing.viewer import import_napari
 # %% INPUT AND OUTPUT PATHS
-"""Define the input stack, optional ground-truth stack, and all output paths.
+"""Define the example input stack and all output targets used below.
 
-What can be adjusted here:
-
-- ``INPUT_PATH``:
-  Measured 5-color simulation used for PICASSO-style blind unmixing.
-- ``GROUND_TRUTH_PATH``:
-  Matching ground-truth stack for visual comparison after converting it to the
-  same channel layout.
-- ``OUTPUT_PICASSO_REFERENCE``:
-  Final unmixed output written by ``unmix_picasso(...)``.
-
-Effect of changing these settings:
-
-- A different input path lets you reuse the same workflow on another
-  multi-channel PICASSO example.
-- Renaming an output path changes only where the corresponding TIFF and JSON
-  sidecar are stored.
+In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
+automatically generated in a subfolder of the input file's parent directory.
 """
 
 INPUT_PATH = (PROJECT_ROOT/ "example_data"/ "PICASSO_examples"
