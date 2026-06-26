@@ -92,8 +92,8 @@ $$
 
 where
 
-- \(\alpha_{01}\) denotes bleed-through from channel \(0\) into channel \(1\)
-- \(\alpha_{10}\) denotes bleed-through from channel \(1\) into channel \(0\)
+- $\alpha_{01}$ denotes bleed-through from channel $0$ into channel $1$
+- $\alpha_{10}$ denotes bleed-through from channel $1$ into channel $0$
 
 This can be written in matrix form as
 
@@ -259,7 +259,7 @@ If `preprocess_alpha_inputs=True`, it:
 - clips negative values to zero
 
 Mathematically, if the raw source and target volumes are denoted by
-\(X_{\mathrm{raw}}\) and \(Y_{\mathrm{raw}}\), the preprocessing step computes
+$X_{\mathrm{raw}}$ and $Y_{\mathrm{raw}}$, the preprocessing step computes
 background estimates
 
 $$
@@ -282,7 +282,7 @@ $$
 Y = \max(Y_{\mathrm{raw}} - b_Y, 0)
 $$
 
-where \(p_{\mathrm{bg}}\) is the chosen `background_percentile`.
+where $p_{\mathrm{bg}}$ is the chosen `background_percentile`.
 
 This preprocessing is used only for **estimating** `alpha`. The final image
 correction is still applied to the measured working array inside the unmixing
@@ -303,7 +303,7 @@ i \;\middle|\; X_i \ge
 \right\}
 $$
 
-where \(p_{\mathrm{sig}}\) is `signal_percentile`.
+where $p_{\mathrm{sig}}$ is `signal_percentile`.
 
 Optionally, the mask can be restricted further to voxels with comparatively low
 target intensity:
@@ -319,7 +319,7 @@ i \;\middle|\; Y_i \le
 \right\}
 $$
 
-where \(p_{\mathrm{target,low}}\) is `target_low_percentile`.
+where $p_{\mathrm{target,low}}$ is `target_low_percentile`.
 
 This can be useful when one wants to estimate bleed-through primarily from
 voxels with strong source signal but as little genuine target signal as
@@ -393,10 +393,10 @@ $$
 
 No intercept is fitted, because the optional background subtraction is already
 handled during preprocessing and because an intercept would blur the
-interpretation of \(\alpha\) as a bleed-through coefficient.
+interpretation of $\alpha$ as a bleed-through coefficient.
 
 #### Method: `corr_min`
-This method chooses \(\alpha\) so that the corrected target channel becomes as
+This method chooses $\alpha$ so that the corrected target channel becomes as
 uncorrelated as possible with the source channel:
 
 $$
@@ -413,14 +413,14 @@ $$
 $$
 
 In practice, the implementation uses Pearson correlation and bounded scalar
-optimization on the interval \([0, \alpha_{\max}]\).
+optimization on the interval $[0, \alpha_{\max}]$.
 
 This can be more aggressive than `mean_ratio` or `linear_fit`, especially when
 the true biology in source and target channels is itself correlated.
 
 #### Method: `mi_min`
 This method follows the two-channel version of the PICASSO idea: choose
-\(\alpha\) such that the statistical dependence between source and corrected
+$\alpha$ such that the statistical dependence between source and corrected
 target becomes minimal.
 
 Again define
@@ -438,7 +438,7 @@ $$
 \operatorname{MI}(X, Y^{(\alpha)}),
 $$
 
-where \(\operatorname{MI}\) denotes mutual information. The current
+where $\operatorname{MI}$ denotes mutual information. The current
 implementation uses a histogram-based mutual-information estimate with a user
 controlled number of bins `mi_bins`.
 
@@ -468,9 +468,9 @@ $$
 
 where
 
-- \(I\) is the vector of measured channels
-- \(F\) is the vector of latent fluorophore signals
-- \(M\) is an unknown mixing matrix.
+- $I$ is the vector of measured channels
+- $F$ is the vector of latent fluorophore signals
+- $M$ is an unknown mixing matrix.
 
 `unmix_picasso(...)` now supports three implementation modes:
 
@@ -489,7 +489,7 @@ where
 
 #### `matlab_3c`: close port of the original MATLAB algorithm
 In the original MATLAB-style workflow, the current channel vector
-\(\mathbf{v}^{(k)}\) is updated iteratively:
+$\mathbf{v}^{(k)}$ is updated iteratively:
 
 $$
 \mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)},
@@ -503,12 +503,12 @@ $$
 
 Here:
 
-- \(I\) is the identity matrix
-- \(s\) is the user-controlled `step_size`
-- \(A^{(k)}\) is a matrix of pairwise subtraction coefficients
+- $I$ is the identity matrix
+- $s$ is the user-controlled `step_size`
+- $A^{(k)}$ is a matrix of pairwise subtraction coefficients
 
-For each ordered channel pair \((i, j)\), the MATLAB-style routine estimates a
-scalar \(\alpha_{ij}\) by minimizing histogram-based mutual information after
+For each ordered channel pair $(i, j)$, the MATLAB-style routine estimates a
+scalar $\alpha_{ij}$ by minimizing histogram-based mutual information after
 subtracting one channel from the other:
 
 $$
@@ -518,7 +518,7 @@ $$
 \operatorname{MI}\!\left(v_i - \alpha v_j,\; v_j\right).
 $$
 
-The off-diagonal entries of \(A^{(k)}\) are then
+The off-diagonal entries of $A^{(k)}$ are then
 
 $$
 A^{(k)}_{ij} = -\alpha_{ij}
@@ -535,7 +535,7 @@ The Python port follows the MATLAB routine closely, including:
 
 #### `matlab_n`: explicit N-channel generalization
 The `matlab_n` mode keeps the same pairwise-update idea, but extends it from
-three channels to \(N\) selected channels:
+three channels to $N$ selected channels:
 
 $$
 \mathbf{v}^{(k+1)} = C^{(k)} \mathbf{v}^{(k)},
@@ -544,7 +544,7 @@ C^{(k)} = I + s A^{(k)},
 $$
 
 with pairwise coefficients estimated for all ordered channel pairs
-\((i, j)\), \(i \neq j\).
+$(i, j)$, $i \neq j$.
 
 Conceptually, this is a pragmatic extension of the MATLAB algorithm. It is not
 claimed to be the original PICASSO publication's exact N-channel method,
@@ -552,7 +552,7 @@ because the published MATLAB code itself is specialized to three channels.
 
 #### `source_sink_n`: explicit source-sink modeling
 The `source_sink_n` mode uses a more direct formulation. For each sink channel
-\(j\), the corrected sink is modeled as
+$j$, the corrected sink is modeled as
 
 $$
 \tilde{I}_j
@@ -562,10 +562,10 @@ $$
 
 where:
 
-- \(\mathcal{S}_j\) is the set of source channels allowed to contribute to sink
-  \(j\)
+- $\mathcal{S}_j$ is the set of source channels allowed to contribute to sink
+  $j$
 - the allowed source-sink relations are encoded in `source_sink_matrix`
-- \(S_i\) is a prepared source image for channel \(i\)
+- $S_i$ is a prepared source image for channel $i$
 
 For users who do not want to write the full matrix manually, the same relation
 graph can be built more readably from channel-role lists:
