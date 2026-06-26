@@ -7,21 +7,6 @@ Date: June 2026
 # %% IMPORTS
 from __future__ import annotations
 
-"""Import the helpers used throughout the multi-channel PICASSO tutorial.
-
-This script demonstrates a full blind-unmixing workflow for the file
-``example_data/PICASSO_examples/5-color unmixing simulation.tif``.
-
-The imported helpers cover:
-
-- ``unmix_picasso(...)`` for iterative multi-channel blind unmixing.
-- ``report_path_from_output_path(...)`` for reading the JSON sidecar report.
-- ``load_stack_with_omio(...)`` and ``write_stack_with_omio(...)`` for a small
-  preparatory reshaping step before unmixing.
-- a local napari helper in this script for visualizing all five channels as
-  separate layers in one shared viewer.
-"""
-
 import sys
 from pathlib import Path
 
@@ -47,9 +32,6 @@ OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 PREPARED_INPUT_PATH = OUTPUT_DIR / "5-color unmixing simulation_T_as_C.tif"
-PREPARED_GROUND_TRUTH_PATH = OUTPUT_DIR / "5-color unmixing simulation Ground-truth_T_as_C.tif"
-OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
-OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "5-color unmixing simulation_picasso_source_sink_reference_t0.tif"
 # %% VIEWER HELPERS
 """Define small local helpers for channel visualization in one shared napari viewer.
 
@@ -189,12 +171,8 @@ def convert_time_encoded_stack_to_channel_stack(
     converted = np.moveaxis(stack, 0, 2)
     return write_stack_with_omio(output_path, converted, metadata)
 
-prepared_input = convert_time_encoded_stack_to_channel_stack(
-    INPUT_PATH, PREPARED_INPUT_PATH)
-prepared_ground_truth = convert_time_encoded_stack_to_channel_stack(
-    GROUND_TRUTH_PATH, PREPARED_GROUND_TRUTH_PATH)
+prepared_input = convert_time_encoded_stack_to_channel_stack(INPUT_PATH, PREPARED_INPUT_PATH)
 print(f"Prepared measured input: {prepared_input}")
-print(f"Prepared ground truth: {prepared_ground_truth}")
 # %% INSPECT PREPARED STACKS IN NAPARI
 """Open the converted measured and ground-truth stacks in napari.
 
@@ -206,8 +184,7 @@ This is a sanity-check cell:
   conversion from time pages to channels worked as intended
 """
 
-show_all_channels_in_napari(prepared_input, layer_prefix="Measured 5-color simulation")
-show_all_channels_in_napari(prepared_ground_truth, layer_prefix="Ground truth 5-color simulation")
+show_all_channels_in_napari(INPUT_PATH, layer_prefix="Measured 5-color simulation")
 # %% PICASSO MATLAB-N EXAMPLE
 """Run the explicit N-channel generalization of the MATLAB PICASSO workflow.
 
@@ -248,6 +225,8 @@ What can be adjusted:
 - ``alpha_clip``:
   Hard bound applied to each pairwise coefficient before update.
 """
+
+OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
 
 picasso_matlab_n_output = unmix_picasso(
     input_path=prepared_input,
@@ -321,6 +300,8 @@ channel is treated as a potential sink and a potential source. For a more
 targeted run, simply restrict ``sink_channels`` or add channels to
 ``neutral_channels``.
 """
+
+OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "5-color unmixing simulation_picasso_source_sink_reference_t0.tif"
 
 sink_channels = [0, 1, 2, 3, 4]
 neutral_channels = []
