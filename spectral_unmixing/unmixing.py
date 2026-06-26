@@ -580,10 +580,10 @@ def unmix(
     Parameters
     ----------
     input_path : str or Path
-        Path to the input TIFF stack.
+        Path to the input microscopy stack readable by OMIO.
     output_path : str or Path
-        Path to the output TIFF stack. A JSON sidecar report with the same name
-        plus ``.json`` is written alongside it.
+        Path to the output stack to be written via OMIO. A JSON sidecar report
+        with the same name plus ``.json`` is written alongside it.
     alpha : float or None, optional
         User-provided bleed-through coefficient. Required when
         ``alpha_mode="fixed"``.
@@ -660,7 +660,7 @@ def unmix(
     Returns
     -------
     Path
-        Actual path of the written TIFF stack.
+        Actual path of the written output stack.
 
     Raises
     ------
@@ -1006,10 +1006,10 @@ def unmix_picasso(
     Parameters
     ----------
     input_path : str or Path
-        Path to the input TIFF stack.
+        Path to the input microscopy stack readable by OMIO.
     output_path : str or Path or None, optional
-        Output TIFF path. If ``None``, a filename ending in ``"_picasso.tif"``
-        is created next to the input.
+        Output path for the unmixed stack written via OMIO. If ``None``, a
+        filename ending in ``"_picasso.tif"`` is created next to the input.
     channels : sequence of int or None, optional
         Channel indices to include in blind unmixing. If ``None``, all channels
         are used.
@@ -1094,7 +1094,7 @@ def unmix_picasso(
     Returns
     -------
     Path
-        Actual path of the written TIFF stack.
+        Actual path of the written output stack.
 
     Notes
     -----

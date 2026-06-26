@@ -25,8 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Remove bleed-through from one microscopy channel into another."
     )
-    parser.add_argument("input_path", help="Input TIFF stack path.")
-    parser.add_argument("output_path", help="Output TIFF stack path.")
+    parser.add_argument("input_path", help="Input microscopy stack path readable by OMIO.")
+    parser.add_argument("output_path", help="Output stack path to be written via OMIO.")
     parser.add_argument(
         "--alpha",
         type=float,

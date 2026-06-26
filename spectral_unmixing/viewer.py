@@ -134,7 +134,7 @@ def show_unmixed_channels_in_napari(
     Parameters
     ----------
     output_path : str or Path
-        Path to an unmixed TIFF stack readable by OMIO.
+        Path to an unmixed microscopy stack readable by OMIO.
     source_channel : int, optional
         Source channel index to display.
     target_channel : int, optional

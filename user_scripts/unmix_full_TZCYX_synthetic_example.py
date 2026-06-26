@@ -36,7 +36,8 @@ from spectral_unmixing import (
 What can be adjusted here:
 
 - ``INPUT_PATH``:
-  Path to the raw microscopy TIFF stack to be unmixed.
+  Path to the raw microscopy stack to be unmixed. Any input format currently
+  supported by OMIO can be used here.
 - ``OUTPUT_DIR``:
   Subfolder in which all unmixed results and JSON reports are written.
 - ``OUTPUT_*``:
@@ -46,7 +47,7 @@ What can be adjusted here:
 Effect of changing these settings:
 
 - A different ``INPUT_PATH`` changes which dataset is processed.
-- A different ``OUTPUT_DIR`` controls where the corrected TIFF files and
+- A different ``OUTPUT_DIR`` controls where the corrected output files and
   matching JSON sidecar reports are stored.
 - Renaming an ``OUTPUT_*`` path changes only the saved filename, not the
   unmixing itself.

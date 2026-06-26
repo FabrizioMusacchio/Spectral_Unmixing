@@ -26,7 +26,8 @@ from spectral_unmixing import (
 What can be adjusted here:
 
 - ``INPUT_PATH``:
-  Path to the raw two-channel TIFF stack to be unmixed.
+  Path to the raw two-channel microscopy stack to be unmixed. Any input format
+  currently supported by OMIO can be used here.
 - ``OUTPUT_DIR``:
   Subfolder that will receive all bidirectional unmixing outputs and JSON
   reports.

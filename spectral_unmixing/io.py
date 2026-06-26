@@ -97,7 +97,7 @@ def validate_tzcxy_stack(stack: np.ndarray, metadata: dict[str, Any]) -> None:
 
 def load_stack_with_omio(input_path: str | Path) -> tuple[np.ndarray, dict[str, Any]]:
     """
-    Read a microscopy TIFF stack with OMIO and validate canonical axis order.
+    Read a microscopy stack with OMIO and validate canonical axis order.
 
     Parameters
     ----------
