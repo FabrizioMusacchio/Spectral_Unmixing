@@ -203,10 +203,7 @@ picasso_matlab_n_output = unmix_picasso(
     verbose=True)
 print(picasso_matlab_n_output)
 print(report_path_from_output_path(picasso_matlab_n_output).read_text(encoding="utf-8"))
-show_all_channels_in_napari(
-    picasso_matlab_n_output,
-    layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
-
+show_all_channels_in_napari(picasso_matlab_n_output, layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
 # %% PICASSO SOURCE-SINK-N EXAMPLE
 """Run the source-sink N-channel variant inspired by the napari PICASSO plugin.
 
