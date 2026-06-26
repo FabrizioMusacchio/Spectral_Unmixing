@@ -181,6 +181,7 @@ def write_stack_with_omio(
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_existed_before_write = output_path.exists()
 
     om = import_omio()
     metadata_to_write = update_metadata_shape(metadata, tuple(np.shape(stack)))
@@ -199,7 +200,7 @@ def write_stack_with_omio(
     actual_path = Path(written_paths[0])
     final_path: Path | None = None
 
-    if output_path.exists():
+    if output_path.exists() and not output_existed_before_write:
         final_path = output_path
     elif actual_path.exists():
         if actual_path.resolve() != output_path.resolve():
