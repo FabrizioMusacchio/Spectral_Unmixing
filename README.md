@@ -1,5 +1,7 @@
 # Spectral unmixing for microscopy image stacks
 
+![spectral-unmixing logo](figures/spectra_unmixing_logo.png)
+
 `spectral-unmixing` is a small Python package focused on spectral bleed-through correction in microscopy TIFF stacks read with OMIO. The package assumes OMIO's canonical axis order `TZCYX`, so downstream code can safely address time, z, channel, and spatial axes in a predictable way.
 
 The main goal of the project is reproducible spectral unmixing. Additional modules for filtering, registration, and projection are included as optional helpers for further image processing, but they are intentionally secondary to the unmixing workflow.
