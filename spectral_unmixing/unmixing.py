@@ -39,11 +39,15 @@ def report_path_from_output_path(output_path: str | Path) -> Path:
 
 
 def _print_verbose(verbose: bool, message: str) -> None:
+    """Print a status message only when verbose mode is enabled."""
+
     if verbose:
         print(message)
 
 
 def _validate_channel_index(name: str, channel: int, channel_count: int) -> int:
+    """Validate a channel index against the available channel count."""
+
     channel = int(channel)
     if not 0 <= channel < channel_count:
         raise ValueError(
@@ -53,6 +57,8 @@ def _validate_channel_index(name: str, channel: int, channel_count: int) -> int:
 
 
 def _validate_alpha_mode(alpha_mode: str) -> str:
+    """Normalize and validate a scalar-alpha application mode."""
+
     alpha_mode = str(alpha_mode).strip().lower()
     if alpha_mode not in ALPHA_MODES:
         raise ValueError(
@@ -62,6 +68,8 @@ def _validate_alpha_mode(alpha_mode: str) -> str:
 
 
 def _validate_picasso_alpha_mode(alpha_mode: str) -> str:
+    """Validate the subset of alpha modes currently supported by ``unmix_picasso``."""
+
     alpha_mode = _validate_alpha_mode(alpha_mode)
     if alpha_mode not in PICASSO_ALPHA_MODES:
         raise ValueError(
@@ -72,6 +80,8 @@ def _validate_picasso_alpha_mode(alpha_mode: str) -> str:
 
 
 def _validate_unmix_method(method: str) -> str:
+    """Normalize and validate a two-channel unmixing method name."""
+
     method = str(method).strip().lower()
     if method not in SUPPORTED_UNMIX_METHODS:
         raise ValueError(
@@ -81,6 +91,8 @@ def _validate_unmix_method(method: str) -> str:
 
 
 def _validate_picasso_method(method: str) -> str:
+    """Normalize and validate the multi-channel blind-unmixing method name."""
+
     method = str(method).strip().lower()
     if method not in SUPPORTED_PICASSO_METHODS:
         raise ValueError(
@@ -90,6 +102,8 @@ def _validate_picasso_method(method: str) -> str:
 
 
 def _validate_alpha_value(alpha: float) -> float:
+    """Validate a user-provided fixed alpha value."""
+
     alpha = float(alpha)
     if not np.isfinite(alpha) or alpha < 0.0:
         raise ValueError(
@@ -104,6 +118,8 @@ def _validate_common_estimation_parameters(
     mi_bins: int,
     min_mask_voxels: int,
 ) -> tuple[float, int, int]:
+    """Validate alpha-estimation parameters shared across multiple workflows."""
+
     alpha_max = float(alpha_max)
     if alpha_max <= 0.0:
         raise ValueError(f"alpha_max must be > 0. Got {alpha_max!r}.")
@@ -117,6 +133,8 @@ def _validate_common_estimation_parameters(
 
 
 def _validate_channels(channels, channel_count: int) -> list[int]:
+    """Normalize and validate the channel subset used for PICASSO-style unmixing."""
+
     if channels is None:
         return list(range(channel_count))
 
@@ -145,6 +163,8 @@ def _estimate_reference_alpha(
     random_state: int,
     min_mask_voxels: int,
 ) -> tuple[float, dict]:
+    """Estimate one scalar alpha from all Z slices of a chosen reference time point."""
+
     time_count = int(stack.shape[0])
     if not 0 <= int(alpha_reference_t) < time_count:
         raise ValueError(
@@ -187,6 +207,8 @@ def _estimate_per_t_alphas(
     random_state: int,
     min_mask_voxels: int,
 ) -> tuple[np.ndarray, list[dict]]:
+    """Estimate one scalar alpha per time point using all Z slices of each time point."""
+
     alpha_values = np.empty(stack.shape[0], dtype=np.float32)
     details_by_t: list[dict] = []
     for t in range(stack.shape[0]):
@@ -211,6 +233,8 @@ def _estimate_per_t_alphas(
 
 
 def _cast_output_stack(stack: np.ndarray, output_dtype: str | np.dtype) -> np.ndarray:
+    """Cast an output stack while clipping integer targets to their valid range."""
+
     dtype = np.dtype(output_dtype)
     if np.issubdtype(dtype, np.integer):
         info = np.iinfo(dtype)
@@ -219,6 +243,8 @@ def _cast_output_stack(stack: np.ndarray, output_dtype: str | np.dtype) -> np.nd
 
 
 def _write_report(report: dict, report_path: Path) -> Path:
+    """Write a JSON sidecar report for a processing run."""
+
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2)
@@ -227,10 +253,14 @@ def _write_report(report: dict, report_path: Path) -> Path:
 
 
 def _derive_picasso_output_path(input_path: Path) -> Path:
+    """Derive a default output path for PICASSO-style unmixing results."""
+
     return input_path.with_name(f"{input_path.stem}_picasso.tif")
 
 
 def _move_selected_channels_last(stack: np.ndarray, channels: list[int]) -> np.ndarray:
+    """Extract selected channels and move channel to the trailing axis."""
+
     selected = np.take(stack, channels, axis=2)
     return np.moveaxis(selected, 2, -1)
 
@@ -241,6 +271,8 @@ def _apply_reference_unmixing_matrix(
     channels: list[int],
     matrix: np.ndarray,
 ) -> np.ndarray:
+    """Apply one blind-unmixing matrix to the selected channels of an entire stack."""
+
     moved = _move_selected_channels_last(stack, channels)
     unmixed = np.einsum("ij,tzyxj->tzyxi", matrix, moved, optimize=True)
     return np.moveaxis(unmixed, -1, 2)
@@ -252,6 +284,8 @@ def _apply_per_t_unmixing_matrices(
     channels: list[int],
     matrices: np.ndarray,
 ) -> np.ndarray:
+    """Apply one blind-unmixing matrix per time point to selected stack channels."""
+
     moved = _move_selected_channels_last(stack, channels)
     unmixed = np.einsum("tij,tzyxj->tzyxi", matrices, moved, optimize=True)
     return np.moveaxis(unmixed, -1, 2)
@@ -271,6 +305,8 @@ def _estimate_reference_picasso_matrix(
     max_alpha_voxels: int | None,
     random_state: int,
 ) -> tuple[np.ndarray, dict]:
+    """Estimate one blind-unmixing matrix from a chosen reference time point."""
+
     time_count = int(stack.shape[0])
     if not 0 <= int(alpha_reference_t) < time_count:
         raise ValueError(
@@ -310,6 +346,8 @@ def _estimate_per_t_picasso_matrices(
     max_alpha_voxels: int | None,
     random_state: int,
 ) -> tuple[np.ndarray, list[dict]]:
+    """Estimate one blind-unmixing matrix per time point."""
+
     matrices = np.empty((stack.shape[0], len(channels), len(channels)), dtype=np.float64)
     details_by_t: list[dict] = []
     for t in range(stack.shape[0]):
@@ -358,6 +396,76 @@ def unmix(
 ) -> Path:
     """
     Remove bleed-through from one source channel into one target channel in a TZCYX stack.
+
+    Parameters
+    ----------
+    input_path : str or Path
+        Path to the input TIFF stack.
+    output_path : str or Path
+        Path to the output TIFF stack. A JSON sidecar report with the same name
+        plus ``.json`` is written alongside it.
+    alpha : float or None, optional
+        User-provided bleed-through coefficient. Required when
+        ``alpha_mode="fixed"``.
+    alpha_mode : {"fixed", "reference_t", "per_t"}, optional
+        Strategy that determines whether alpha is taken directly from ``alpha``,
+        estimated once from a reference time point, or estimated separately for
+        each time point.
+    alpha_reference_t : int, optional
+        Reference time point used when ``alpha_mode="reference_t"``.
+    source_channel : int, optional
+        Channel whose signal bleeds into the target channel.
+    target_channel : int, optional
+        Channel from which the source contribution should be removed.
+    signal_percentile : float, optional
+        Percentile used to define a bright-source signal mask for automatic
+        alpha estimation.
+    target_low_percentile : float or None, optional
+        Optional low-target constraint for the alpha-estimation mask.
+    background_percentile : float, optional
+        Low percentile used for optional percentile-based background subtraction
+        during alpha estimation.
+    clip_negative : bool, optional
+        If ``True``, clip negative corrected target values to zero.
+    output_dtype : str or numpy.dtype, optional
+        Data type used for the written output stack.
+    verbose : bool, optional
+        If ``True``, print processing progress and estimated coefficients.
+    method : {"manual", "mean_ratio", "linear_fit", "corr_min", "mi_min"}, optional
+        Method used to obtain alpha. ``"manual"`` is meaningful only together
+        with ``alpha_mode="fixed"``; the other methods estimate alpha from the
+        data.
+    preprocess_alpha_inputs : bool, optional
+        If ``True``, apply percentile-based background subtraction and clipping
+        before automatic alpha estimation.
+    alpha_max : float, optional
+        Upper search bound for optimization-based alpha-estimation methods.
+    mi_bins : int, optional
+        Number of histogram bins used by the mutual-information estimator.
+    max_alpha_voxels : int or None, optional
+        Optional cap on the number of voxels used for alpha estimation after
+        masking.
+    random_state : int, optional
+        Random seed used for optional voxel subsampling during alpha estimation.
+    min_mask_voxels : int, optional
+        Minimum number of voxels required for a valid alpha-estimation mask.
+
+    Returns
+    -------
+    Path
+        Actual path of the written TIFF stack.
+
+    Raises
+    ------
+    ValueError
+        If the input configuration is inconsistent or would overwrite the input.
+
+    Notes
+    -----
+    Only ``target_channel`` is modified. ``source_channel`` remains unchanged in
+    the output stack. Automatic alpha estimation is performed on prepared data,
+    but the final subtraction is applied to the original stack intensities cast
+    to ``float32``.
     """
 
     input_path = Path(input_path)
@@ -567,10 +675,60 @@ def unmix_picasso(
     """
     Perform PICASSO-like iterative multi-channel blind unmixing.
 
+    Parameters
+    ----------
+    input_path : str or Path
+        Path to the input TIFF stack.
+    output_path : str or Path or None, optional
+        Output TIFF path. If ``None``, a filename ending in ``"_picasso.tif"``
+        is created next to the input.
+    channels : sequence of int or None, optional
+        Channel indices to include in blind unmixing. If ``None``, all channels
+        are used.
+    method : {"picasso"}, optional
+        Method label reserved for the PICASSO-like workflow.
+    alpha_mode : {"reference_t", "per_t"}, optional
+        Whether to estimate one unmixing matrix from a reference time point or
+        one matrix per time point.
+    alpha_reference_t : int, optional
+        Reference time point used when ``alpha_mode="reference_t"``.
+    background_percentile : float, optional
+        Low percentile used for optional per-channel background subtraction
+        before matrix estimation.
+    preprocess_alpha_inputs : bool, optional
+        If ``True``, apply percentile-based background subtraction and clipping
+        before estimating the unmixing matrix.
+    mi_bins : int, optional
+        Number of histogram bins used by the mutual-information estimator.
+    alpha_max : float, optional
+        Upper bound for pairwise subtraction coefficients during optimization.
+    max_iter : int, optional
+        Maximum number of iterative pairwise update sweeps.
+    tolerance : float, optional
+        Convergence threshold applied to the largest coefficient update per
+        iteration.
+    max_alpha_voxels : int or None, optional
+        Optional cap on the number of voxels used for matrix estimation.
+    random_state : int, optional
+        Random seed used for optional subsampling during matrix estimation.
+    clip_negative : bool, optional
+        If ``True``, clip negative unmixed intensities to zero before writing.
+    output_dtype : str or numpy.dtype, optional
+        Data type used for the written output stack.
+    verbose : bool, optional
+        If ``True``, print processing progress and output paths.
+
+    Returns
+    -------
+    Path
+        Actual path of the written TIFF stack.
+
     Notes
     -----
     This function assumes that the number of measured channels equals the number
-    of fluorophores to reconstruct.
+    of fluorophores to reconstruct. It implements a PICASSO-inspired iterative
+    blind-unmixing routine based on pairwise mutual-information minimization; it
+    is not a reference-spectrum method and not a deep-learning model.
     """
 
     input_path = Path(input_path)

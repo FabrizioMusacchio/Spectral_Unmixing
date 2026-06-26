@@ -13,7 +13,14 @@ from .unmixing import unmix
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the package CLI parser."""
+    """
+    Build the command-line parser for the two-channel unmixing workflow.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured parser for the package CLI entry point.
+    """
 
     parser = argparse.ArgumentParser(
         description="Remove bleed-through from one microscopy channel into another."
@@ -122,7 +129,20 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the spectral unmixing CLI."""
+    """
+    Run the package command-line interface.
+
+    Parameters
+    ----------
+    argv : list of str or None, optional
+        Optional argument vector. If ``None``, arguments are taken from
+        ``sys.argv``.
+
+    Returns
+    -------
+    int
+        Process-style exit code. ``0`` indicates success.
+    """
 
     parser = build_parser()
     args = parser.parse_args(argv)

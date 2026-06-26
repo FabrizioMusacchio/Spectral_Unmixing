@@ -20,6 +20,8 @@ SECOND_CHANNEL_INDEX = 1
 
 
 def _normalize_filter_sequence(filters: str | Sequence[str]) -> list[str]:
+    """Normalize one or more filter names into a validated execution sequence."""
+
     if isinstance(filters, str):
         filter_sequence = [filters]
     else:
@@ -40,12 +42,16 @@ def _normalize_filter_sequence(filters: str | Sequence[str]) -> list[str]:
 
 
 def _normalize_optional_filter_sequence(filters: str | Sequence[str] | None) -> list[str] | None:
+    """Normalize an optional filter sequence while preserving ``None``."""
+
     if filters is None:
         return None
     return _normalize_filter_sequence(filters)
 
 
 def _ensure_tzcyx_stack(stack) -> np.ndarray:
+    """Promote ``YX`` or ``ZYX`` input to canonical ``TZCYX`` stack shape."""
+
     stack = np.asarray(stack)
     if stack.ndim == 2:
         return stack[np.newaxis, np.newaxis, np.newaxis, :, :]
@@ -60,6 +66,8 @@ def _ensure_tzcyx_stack(stack) -> np.ndarray:
 
 
 def _restore_original_shape(filtered_stack: np.ndarray, original_ndim: int) -> np.ndarray:
+    """Undo temporary dimension promotion performed by :func:`_ensure_tzcyx_stack`."""
+
     if original_ndim == 2:
         return filtered_stack[0, 0, 0, :, :]
     if original_ndim == 3:
@@ -71,6 +79,8 @@ def _normalize_zrange(
     zrange: tuple[int, int] | Sequence[int] | None,
     z_count: int,
 ) -> tuple[int, int]:
+    """Clamp and sanitize an optional half-open Z range against stack bounds."""
+
     if zrange is None:
         return 0, z_count
 
@@ -103,6 +113,8 @@ def _normalize_time_dependent_parameter(
     name: str,
     cast,
 ):
+    """Expand a scalar or sequence into one value per time point."""
+
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         values = list(value)
         if not values:
@@ -123,6 +135,8 @@ def _resolve_channel2_sequence(
     name: str,
     cast,
 ) -> list:
+    """Resolve per-time filter parameters for the optional second-channel override."""
+
     if channel2_value is None:
         return list(primary_sequence)
     return _normalize_time_dependent_parameter(
@@ -141,6 +155,8 @@ def _apply_filter_sequence_to_volume(
     gaussian_sigma: float,
     apply_3d: bool,
 ) -> np.ndarray:
+    """Apply a validated filter sequence to one ``ZYX`` volume."""
+
     working_volume = np.asarray(volume_zyx, dtype=np.float32).copy()
 
     for filter_name in filter_sequence:
@@ -185,6 +201,8 @@ def _apply_filter_sequences_tzcyx(
     second_channel_gaussian_sigmas: Sequence[float],
     apply_3d: bool,
 ) -> np.ndarray:
+    """Apply channel-aware filter sequences across a canonical ``TZCYX`` stack."""
+
     filtered = np.empty_like(stack, dtype=np.float32)
     time_count, z_count, channel_count = stack.shape[:3]
 
@@ -266,6 +284,12 @@ def apply_filters(
     -------
     np.ndarray
         Filtered stack with the same shape as the input.
+
+    Notes
+    -----
+    Channel-specific overrides currently target the second channel, i.e. channel
+    index ``1``. This matches the common two-channel use case in the unmixing
+    workflow where the second channel may need different smoothing strength.
     """
 
     filter_sequence = _normalize_filter_sequence(filters)
@@ -367,6 +391,12 @@ def match_histograms_across_time(
     -------
     np.ndarray
         Histogram-matched stack with the same ``TZCYX`` shape as the input.
+
+    Notes
+    -----
+    Matching is performed independently for each channel. If ``Z > 1``, the full
+    ``ZYX`` volume of each time point is matched to the corresponding reference
+    volume of the same channel.
     """
 
     stack_tzcyx = _ensure_tzcyx_stack(stack)

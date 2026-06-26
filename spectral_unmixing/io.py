@@ -42,7 +42,14 @@ def _configure_omio_runtime_environment() -> Path:
 
 
 def import_omio():
-    """Import OMIO after configuring a writable runtime environment."""
+    """
+    Import OMIO after configuring a writable runtime environment.
+
+    Returns
+    -------
+    module
+        Imported :mod:`omio` module.
+    """
 
     _configure_omio_runtime_environment()
     import omio as om  # pylint: disable=import-outside-toplevel
@@ -51,7 +58,22 @@ def import_omio():
 
 
 def validate_tzcxy_stack(stack: np.ndarray, metadata: dict[str, Any]) -> None:
-    """Validate that the stack is a 5D array with metadata axis order ``TZCYX``."""
+    """
+    Validate that the stack is a 5D array with metadata axis order ``TZCYX``.
+
+    Parameters
+    ----------
+    stack : numpy.ndarray
+        Image data returned by OMIO.
+    metadata : dict
+        OMIO metadata mapping that must contain an ``"axes"`` entry.
+
+    Raises
+    ------
+    ValueError
+        If the metadata or array shape are incompatible with canonical
+        ``TZCYX`` order.
+    """
 
     axes = metadata.get("axes")
     if axes is None:
@@ -74,7 +96,20 @@ def validate_tzcxy_stack(stack: np.ndarray, metadata: dict[str, Any]) -> None:
 
 
 def load_stack_with_omio(input_path: str | Path) -> tuple[np.ndarray, dict[str, Any]]:
-    """Read a microscopy stack with OMIO and validate canonical axis order."""
+    """
+    Read a microscopy TIFF stack with OMIO and validate canonical axis order.
+
+    Parameters
+    ----------
+    input_path : str or Path
+        Path to the input stack.
+
+    Returns
+    -------
+    tuple
+        ``(stack, metadata)`` where ``stack`` is a NumPy array in canonical
+        ``TZCYX`` order and ``metadata`` is the OMIO metadata dictionary.
+    """
 
     om = import_omio()
     image, metadata = om.imread(str(input_path), verbose=False)
@@ -84,7 +119,22 @@ def load_stack_with_omio(input_path: str | Path) -> tuple[np.ndarray, dict[str, 
 
 
 def update_metadata_shape(metadata: dict[str, Any], shape: tuple[int, ...]) -> dict[str, Any]:
-    """Return a deep-copied metadata mapping updated for a canonical ``TZCYX`` shape."""
+    """
+    Return a deep-copied metadata mapping updated for a canonical ``TZCYX`` shape.
+
+    Parameters
+    ----------
+    metadata : dict
+        Original OMIO metadata.
+    shape : tuple of int
+        Target stack shape in canonical ``TZCYX`` order.
+
+    Returns
+    -------
+    dict
+        Deep-copied metadata with shape and size fields updated to match the
+        supplied stack.
+    """
 
     if len(shape) != 5:
         raise ValueError(f"Expected a 5D shape in TZCYX order, got {shape!r}.")
@@ -107,6 +157,26 @@ def write_stack_with_omio(
 ) -> Path:
     """
     Write a corrected stack with OMIO and rename the result to the requested path.
+
+    Parameters
+    ----------
+    output_path : str or Path
+        Requested output path for the TIFF file.
+    stack : numpy.ndarray
+        Image data to write in canonical ``TZCYX`` order.
+    metadata : dict
+        OMIO metadata dictionary used as the basis for the output metadata.
+
+    Returns
+    -------
+    Path
+        Actual path of the written TIFF file.
+
+    Notes
+    -----
+    OMIO may emit a different filename than requested, for example an
+    ``.ome.tif`` variant. This helper reconciles the written file with the
+    requested path and removes redundant duplicate outputs when possible.
     """
 
     output_path = Path(output_path)

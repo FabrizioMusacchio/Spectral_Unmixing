@@ -28,6 +28,8 @@ SUPPORTED_ALPHA_ESTIMATION_METHODS = {
 
 
 def _validate_percentile(name: str, value: float | None) -> float | None:
+    """Validate an optional percentile argument and return it as ``float``."""
+
     if value is None:
         return None
     value = float(value)
@@ -37,6 +39,8 @@ def _validate_percentile(name: str, value: float | None) -> float | None:
 
 
 def _validate_alpha_estimation_method(method: str) -> str:
+    """Normalize and validate a two-channel alpha-estimation method name."""
+
     method = str(method).strip().lower()
     if method not in SUPPORTED_ALPHA_ESTIMATION_METHODS:
         raise ValueError(
@@ -47,6 +51,8 @@ def _validate_alpha_estimation_method(method: str) -> str:
 
 
 def _validate_positive_int(name: str, value: int, *, minimum: int = 1) -> int:
+    """Validate that an integer parameter satisfies a lower bound."""
+
     value = int(value)
     if value < minimum:
         raise ValueError(f"{name} must be >= {minimum}. Got {value!r}.")
@@ -54,6 +60,8 @@ def _validate_positive_int(name: str, value: int, *, minimum: int = 1) -> int:
 
 
 def _validate_positive_float(name: str, value: float, *, strictly_positive: bool = True) -> float:
+    """Validate that a floating-point parameter satisfies a lower bound."""
+
     value = float(value)
     if strictly_positive and value <= 0.0:
         raise ValueError(f"{name} must be > 0. Got {value!r}.")
@@ -63,6 +71,8 @@ def _validate_positive_float(name: str, value: float, *, strictly_positive: bool
 
 
 def _safe_correlation(x: np.ndarray, y: np.ndarray) -> float:
+    """Return a finite Pearson correlation when both vectors contain variance."""
+
     if x.size == 0 or y.size == 0:
         return float("nan")
     if np.std(x) <= EPSILON or np.std(y) <= EPSILON:
@@ -73,6 +83,25 @@ def _safe_correlation(x: np.ndarray, y: np.ndarray) -> float:
 def mutual_information_1d(x, y, bins: int = DEFAULT_MI_BINS) -> float:
     """
     Estimate mutual information between two 1D intensity arrays using a 2D histogram.
+
+    Parameters
+    ----------
+    x, y : array-like
+        One-dimensional or flattenable intensity arrays of equal length.
+    bins : int, optional
+        Number of histogram bins used for the joint density estimate. Must be
+        at least ``2``.
+
+    Returns
+    -------
+    float
+        Estimated mutual information in natural-log units.
+
+    Notes
+    -----
+    This is a histogram-based estimator intended for relative comparisons
+    during alpha optimization, not for bias-corrected information-theoretic
+    inference.
     """
 
     bins = _validate_positive_int("mi_bins", bins, minimum=2)
@@ -106,6 +135,8 @@ def _prepare_single_volume_for_alpha(
     background_percentile: float = 1.0,
     preprocess_alpha_inputs: bool = True,
 ) -> tuple[np.ndarray, float]:
+    """Prepare one image volume for alpha estimation and return its background."""
+
     volume = np.asarray(volume, dtype=np.float32)
     background_percentile = _validate_percentile(
         "background_percentile",
@@ -129,6 +160,28 @@ def prepare_source_target_for_alpha(
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """
     Convert, optionally background-correct, and clip source and target volumes.
+
+    Parameters
+    ----------
+    source_volume, target_volume : array-like
+        Matching source and target image volumes. Any matching shape is
+        accepted, for example ``ZYX`` or flattened arrays.
+    background_percentile : float, optional
+        Low percentile used to estimate a rough background in each input.
+    preprocess_alpha_inputs : bool, optional
+        If ``True``, subtract the percentile-based background from each input
+        and clip negative values to zero. If ``False``, the inputs are only
+        converted to ``float32``.
+
+    Returns
+    -------
+    tuple
+        ``(source_prepared, target_prepared, source_background, target_background)``.
+
+    Raises
+    ------
+    ValueError
+        If the input volumes do not share the same shape or are empty.
     """
 
     source_f = np.asarray(source_volume, dtype=np.float32)
@@ -165,6 +218,29 @@ def make_alpha_mask(
 ) -> tuple[np.ndarray, dict]:
     """
     Create a robust mask for alpha estimation.
+
+    Parameters
+    ----------
+    source : array-like
+        Prepared source intensities used to define the bright-source mask.
+    target : array-like or None, optional
+        Optional prepared target intensities used to additionally constrain the
+        mask to low-target voxels.
+    signal_percentile : float, optional
+        Source percentile above which voxels are considered signal-rich.
+    target_low_percentile : float or None, optional
+        If provided, only voxels at or below this target percentile are kept,
+        unless that mask would become too small and the source-only fallback is
+        used instead.
+    min_voxels : int, optional
+        Minimum number of voxels required for a valid estimation mask.
+
+    Returns
+    -------
+    tuple
+        ``(mask, details)`` where ``mask`` is a boolean array and ``details`` is
+        a metadata dictionary describing thresholds, fallback behavior, and voxel
+        counts.
     """
 
     source = np.asarray(source, dtype=np.float32)
@@ -242,6 +318,8 @@ def _subsample_masked_vectors(
     max_alpha_voxels: int | None = DEFAULT_MAX_ALPHA_VOXELS,
     random_state: int = DEFAULT_RANDOM_STATE,
 ) -> tuple[np.ndarray, np.ndarray, dict]:
+    """Optionally subsample masked source/target vectors for faster estimation."""
+
     x = np.asarray(x, dtype=np.float64).ravel()
     y = np.asarray(y, dtype=np.float64).ravel()
 
@@ -278,6 +356,8 @@ def _subsample_masked_vectors(
 
 
 def _estimate_alpha_mean_ratio(x: np.ndarray, y: np.ndarray) -> tuple[float, dict]:
+    """Estimate alpha from the ratio of masked mean target and source intensities."""
+
     denominator = float(np.mean(x))
     if denominator <= EPSILON:
         raise ValueError("Mean source intensity inside the estimation mask must be > 0.")
@@ -289,6 +369,8 @@ def _estimate_alpha_mean_ratio(x: np.ndarray, y: np.ndarray) -> tuple[float, dic
 
 
 def _estimate_alpha_linear_fit(x: np.ndarray, y: np.ndarray) -> tuple[float, dict]:
+    """Estimate alpha by least-squares fitting of ``y ≈ alpha * x`` without intercept."""
+
     denominator = float(np.sum(x * x))
     if denominator <= EPSILON:
         raise ValueError(
@@ -308,6 +390,8 @@ def _estimate_alpha_corr_min(
     *,
     alpha_max: float,
 ) -> tuple[float, dict]:
+    """Estimate alpha by minimizing residual Pearson correlation after correction."""
+
     alpha_max = _validate_positive_float("alpha_max", alpha_max)
 
     def objective(alpha_value: float) -> float:
@@ -339,6 +423,8 @@ def _estimate_alpha_mi_min(
     alpha_max: float,
     mi_bins: int,
 ) -> tuple[float, dict]:
+    """Estimate alpha by minimizing residual mutual information after correction."""
+
     alpha_max = _validate_positive_float("alpha_max", alpha_max)
     mi_bins = _validate_positive_int("mi_bins", mi_bins, minimum=2)
 
@@ -382,6 +468,53 @@ def estimate_alpha_from_volume(
 ) -> float | tuple[float, dict]:
     """
     Estimate a bleed-through coefficient alpha from matching source and target volumes.
+
+    Parameters
+    ----------
+    source, target : array-like
+        Matching source and target image volumes. Typical microscopy input is a
+        ``ZYX`` volume, but any matching shape is accepted.
+    signal_percentile : float, optional
+        Percentile used to define a bright-source signal mask.
+    background_percentile : float, optional
+        Low percentile used for optional percentile-based background subtraction
+        before alpha estimation.
+    min_mask_voxels : int, optional
+        Minimum number of voxels required in the final alpha-estimation mask.
+    method : {"mean_ratio", "linear_fit", "corr_min", "mi_min"}, optional
+        Scalar alpha-estimation strategy.
+    target_low_percentile : float or None, optional
+        Optional extra target constraint for the estimation mask. If provided,
+        voxels are restricted to bright source signal and low target signal
+        whenever that yields enough voxels.
+    preprocess_alpha_inputs : bool, optional
+        If ``True``, apply percentile-based background subtraction and clip
+        negative values to zero before alpha estimation. If ``False``, estimate
+        alpha directly on the original intensities converted to ``float32``.
+    alpha_max : float, optional
+        Upper search bound for optimization-based methods ``"corr_min"`` and
+        ``"mi_min"``.
+    mi_bins : int, optional
+        Number of histogram bins used by the mutual-information estimator.
+    max_alpha_voxels : int or None, optional
+        Optional cap on the number of voxels used after masking. If the mask is
+        larger, voxels are subsampled without replacement.
+    random_state : int, optional
+        Random seed used for optional voxel subsampling.
+    return_details : bool, optional
+        If ``True``, also return a dictionary describing preprocessing,
+        thresholds, mask size, subsampling, and method-specific diagnostics.
+
+    Returns
+    -------
+    float or tuple
+        Estimated alpha, or ``(alpha, details)`` if ``return_details=True``.
+
+    Raises
+    ------
+    ValueError
+        If the input data are incompatible, the estimation mask is too small,
+        or the estimated alpha is invalid.
     """
 
     method = _validate_alpha_estimation_method(method)
@@ -493,6 +626,36 @@ def estimate_picasso_unmixing_matrix_from_volume(
 ) -> tuple[np.ndarray, dict]:
     """
     Estimate a PICASSO-like blind unmixing matrix from multi-channel image data.
+
+    Parameters
+    ----------
+    channel_volumes : array-like
+        Multi-channel image data with channel as the first axis, for example
+        ``(C, Z, Y, X)`` or ``(C, N)``.
+    background_percentile : float, optional
+        Low percentile used for optional per-channel background subtraction.
+    preprocess_alpha_inputs : bool, optional
+        If ``True``, apply percentile-based background subtraction and clipping
+        before estimating the unmixing matrix.
+    mi_bins : int, optional
+        Number of histogram bins used by the mutual-information estimator.
+    alpha_max : float, optional
+        Upper bound for each pairwise subtraction coefficient.
+    max_iter : int, optional
+        Maximum number of pairwise update sweeps.
+    tolerance : float, optional
+        Convergence criterion on the largest pairwise coefficient update in one
+        iteration.
+    max_alpha_voxels : int or None, optional
+        Optional cap on the number of voxels used for matrix estimation.
+    random_state : int, optional
+        Random seed used for optional subsampling.
+
+    Returns
+    -------
+    tuple
+        ``(matrix, details)`` with the estimated unmixing matrix and a metadata
+        dictionary describing convergence and pairwise updates.
 
     Notes
     -----

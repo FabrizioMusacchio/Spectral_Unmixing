@@ -20,6 +20,8 @@ SUPPORTED_INTRA_STACK_REFERENCE_MODES = {"neighbor", "full_projection"}
 
 
 def _normalize_registration_method(method: str) -> str:
+    """Normalize and validate the requested inter-frame registration backend."""
+
     normalized = str(method).strip().lower()
     if normalized not in SUPPORTED_REGISTRATION_METHODS:
         raise ValueError(
@@ -30,6 +32,8 @@ def _normalize_registration_method(method: str) -> str:
 
 
 def _normalize_zrange(zrange: tuple[int, int] | Sequence[int] | None, z_count: int) -> tuple[int, int]:
+    """Validate a strict half-open Z range for registration projections."""
+
     if zrange is None:
         return 0, z_count
 
@@ -46,6 +50,8 @@ def _normalize_zrange(zrange: tuple[int, int] | Sequence[int] | None, z_count: i
 
 
 def _normalize_intra_stack_reference_mode(reference_mode: str) -> str:
+    """Normalize and validate the intra-stack reference-image strategy."""
+
     normalized = str(reference_mode).strip().lower()
     if normalized not in SUPPORTED_INTRA_STACK_REFERENCE_MODES:
         raise ValueError(
@@ -56,6 +62,8 @@ def _normalize_intra_stack_reference_mode(reference_mode: str) -> str:
 
 
 def _normalize_neighbor_window_size(neighbor_window_size: int) -> int:
+    """Validate the odd-sized neighborhood used for local intra-stack references."""
+
     neighbor_window_size = int(neighbor_window_size)
     if neighbor_window_size < 1:
         raise ValueError(
@@ -69,6 +77,8 @@ def _normalize_neighbor_window_size(neighbor_window_size: int) -> int:
 
 
 def _ensure_tzcyx_stack(stack) -> np.ndarray:
+    """Validate that the input already follows canonical ``TZCYX`` order."""
+
     stack = np.asarray(stack)
     if stack.ndim != 5:
         raise ValueError(
@@ -78,6 +88,8 @@ def _ensure_tzcyx_stack(stack) -> np.ndarray:
 
 
 def _apply_median_to_zyx(volume_zyx: np.ndarray, kernel_size: int) -> np.ndarray:
+    """Apply a 2D median filter independently to each Z plane of a ``ZYX`` volume."""
+
     filtered = np.empty_like(volume_zyx, dtype=np.float32)
     for z in range(volume_zyx.shape[0]):
         filtered[z, :, :] = median_filter(volume_zyx[z, :, :], size=(kernel_size, kernel_size))
@@ -91,6 +103,8 @@ def _build_intra_stack_reference_image(
     reference_mode: str,
     neighbor_window_size: int,
 ) -> np.ndarray:
+    """Build the per-slice registration reference used for intra-stack drift correction."""
+
     if reference_mode == "full_projection":
         return np.max(volume_zyx, axis=0)
 
@@ -109,6 +123,8 @@ def _build_registration_projections(
     post_median_filter: bool,
     median_kernel_size: int,
 ) -> np.ndarray:
+    """Create per-time-point 2D registration projections from a ``TZCYX`` stack."""
+
     z_start, z_stop = _normalize_zrange(zrange, stack.shape[1])
     channel_stack = np.asarray(stack[:, z_start:z_stop, registration_channel, :, :], dtype=np.float32)
     working = channel_stack.copy()
@@ -129,11 +145,15 @@ def _build_registration_projections(
 
 
 def _phase_cross_correlation_shift(reference_projection: np.ndarray, moving_projection: np.ndarray) -> np.ndarray:
+    """Estimate a 2D translation with :func:`skimage.registration.phase_cross_correlation`."""
+
     shift_2d, _, _ = phase_cross_correlation(reference_projection, moving_projection)
     return np.asarray(shift_2d, dtype=np.float32)
 
 
 def _pystackreg_shift(reference_projection: np.ndarray, moving_projection: np.ndarray) -> np.ndarray:
+    """Estimate a 2D translation with :mod:`pystackreg` in translation mode."""
+
     from pystackreg import StackReg  # pylint: disable=import-outside-toplevel
 
     sr = StackReg(StackReg.TRANSLATION)
@@ -143,6 +163,8 @@ def _pystackreg_shift(reference_projection: np.ndarray, moving_projection: np.nd
 
 
 def _apply_translation_to_tzyx(stack_tzyx: np.ndarray, shift_yx: np.ndarray) -> np.ndarray:
+    """Apply one XY translation to all channels and Z slices of a single time point."""
+
     shifted = np.empty_like(stack_tzyx, dtype=np.float32)
     for z in range(stack_tzyx.shape[0]):
         for c in range(stack_tzyx.shape[1]):
@@ -158,6 +180,8 @@ def _apply_translation_to_tzyx(stack_tzyx: np.ndarray, shift_yx: np.ndarray) -> 
 
 
 def _apply_translation_to_cyx(slice_cyx: np.ndarray, shift_yx: np.ndarray) -> np.ndarray:
+    """Apply one XY translation to all channels of a single Z slice."""
+
     shifted = np.empty_like(slice_cyx, dtype=np.float32)
     for c in range(slice_cyx.shape[0]):
         shifted[c, :, :] = ndi_shift(
@@ -172,6 +196,8 @@ def _apply_translation_to_cyx(slice_cyx: np.ndarray, shift_yx: np.ndarray) -> np
 
 
 def _print_verbose(verbose: bool, message: str) -> None:
+    """Print a progress message only when verbose mode is enabled."""
+
     if verbose:
         print(message)
 
@@ -223,6 +249,12 @@ def correct_intra_stack_z_drift(
     -------
     np.ndarray
         Z-drift-corrected stack with the same ``TZCYX`` shape as the input.
+
+    Notes
+    -----
+    This function estimates XY shifts independently for each Z slice within each
+    time point. The shifts are computed from a user-selected registration
+    channel, but are applied to all channels of the affected slice.
     """
 
     stack = _ensure_tzcyx_stack(stack).astype(np.float32, copy=True)
@@ -324,6 +356,12 @@ def register_stack(
     -------
     np.ndarray
         Registered stack with the same ``TZCYX`` shape as the input.
+
+    Notes
+    -----
+    Time-wise shifts are estimated from 2D max-Z projections of the selected
+    registration channel. The resulting translations are then applied to the
+    original unprojected ``TZCYX`` data.
     """
 
     stack = _ensure_tzcyx_stack(stack).astype(np.float32, copy=True)

@@ -18,7 +18,14 @@ _VIEWER = None
 
 
 def import_napari():
-    """Import napari after configuring a writable runtime environment."""
+    """
+    Import napari after configuring a writable runtime environment.
+
+    Returns
+    -------
+    module
+        Imported :mod:`napari` module.
+    """
 
     _configure_omio_runtime_environment()
     import napari  # pylint: disable=import-outside-toplevel
@@ -27,6 +34,8 @@ def import_napari():
 
 
 def _find_layer(viewer, layer_name: str):
+    """Return the napari layer with a matching name, or ``None`` if absent."""
+
     for layer in viewer.layers:
         if layer.name == layer_name:
             return layer
@@ -34,6 +43,8 @@ def _find_layer(viewer, layer_name: str):
 
 
 def _get_or_create_viewer(title: str = "Spectral Unmixing Results"):
+    """Reuse an existing napari viewer when possible, otherwise create one."""
+
     global _VIEWER
 
     napari = import_napari()
@@ -59,6 +70,8 @@ def _get_or_create_viewer(title: str = "Spectral Unmixing Results"):
 
 
 def _metadata_scale_from_tzcyx(metadata: dict[str, Any]) -> tuple[float, float, float, float]:
+    """Extract napari axis scaling for ``T``, ``Z``, ``Y``, and ``X`` from OMIO metadata."""
+
     return (
         float(metadata.get("TimeIncrement", 1.0) or 1.0),
         float(metadata.get("PhysicalSizeZ", 1.0) or 1.0),
@@ -77,6 +90,8 @@ def _upsert_image_layer(
     blending: str = "additive",
     opacity: float = 0.8,
 ) -> None:
+    """Create or update one image layer in the shared napari viewer."""
+
     layer = _find_layer(viewer, layer_name)
     contrast_limits = (
         float(np.min(data)),
@@ -115,6 +130,26 @@ def show_unmixed_channels_in_napari(
 ):
     """
     Show source and corrected target channel from an unmixed stack in a shared napari viewer.
+
+    Parameters
+    ----------
+    output_path : str or Path
+        Path to an unmixed TIFF stack readable by OMIO.
+    source_channel : int, optional
+        Source channel index to display.
+    target_channel : int, optional
+        Corrected target channel index to display.
+    layer_prefix : str, optional
+        Prefix used when naming napari layers.
+    source_colormap : str, optional
+        Colormap assigned to the source-channel layer.
+    target_colormap : str, optional
+        Colormap assigned to the target-channel layer.
+
+    Returns
+    -------
+    napari.Viewer
+        Shared napari viewer containing the requested layers.
 
     Repeated calls reuse the same napari viewer and update layers with matching names
     instead of opening a new viewer.
