@@ -4,7 +4,7 @@ Unit tests for stack-level bleed-through correction.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import json
@@ -22,7 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from spectral_unmixing.unmixing import report_path_from_output_path, unmix, unmix_picasso
 
-
+# %% CLASS DEFINITION
 class UnmixingTests(unittest.TestCase):
     def setUp(self) -> None:
         self.stack = np.zeros((2, 3, 2, 4, 5), dtype=np.float32)
@@ -654,6 +654,7 @@ class UnmixingTests(unittest.TestCase):
                 ],
             )
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

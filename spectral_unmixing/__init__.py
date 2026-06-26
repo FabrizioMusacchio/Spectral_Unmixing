@@ -4,7 +4,7 @@ Spectral unmixing utilities for microscopy stacks.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from .estimation import (
     estimate_alpha_from_volume,
     estimate_picasso_unmixing_matrix_from_volume,
@@ -34,3 +34,4 @@ __all__ = [
     "unmix_ch0_from_ch1",
     "unmix_picasso",
 ]
+# %% END

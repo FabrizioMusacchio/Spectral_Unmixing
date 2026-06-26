@@ -4,7 +4,7 @@ Unit tests for OMIO writer path handling.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -21,7 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from spectral_unmixing.io import write_stack_with_omio
 
-
+# %% CLASS DEFINITION
 class WriteStackWithOmioTests(unittest.TestCase):
     def test_moves_omio_reported_ome_tif_to_requested_output_path(self) -> None:
         stack = np.zeros((1, 1, 2, 4, 5), dtype=np.float32)
@@ -84,6 +84,7 @@ class WriteStackWithOmioTests(unittest.TestCase):
             self.assertFalse(reported_path.exists())
             self.assertEqual(output_path.read_bytes(), b"fresh-tif")
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

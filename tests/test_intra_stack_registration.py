@@ -4,7 +4,7 @@ Unit tests for intra-stack Z-drift correction helpers.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -20,7 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from spectral_unmixing.registration import correct_intra_stack_z_drift
 
-
+# %% CLASS DEFINITION
 class IntraStackRegistrationTests(unittest.TestCase):
     def _base_plane(self) -> np.ndarray:
         plane = np.zeros((48, 48), dtype=np.float32)
@@ -95,6 +95,7 @@ class IntraStackRegistrationTests(unittest.TestCase):
                 verbose=False,
             )
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

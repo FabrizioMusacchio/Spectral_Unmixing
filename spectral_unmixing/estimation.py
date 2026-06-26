@@ -4,14 +4,14 @@ Alpha estimation helpers for spectral bleed-through correction.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
 
 import numpy as np
 from scipy.optimize import minimize_scalar
-
+# %% CONSTANTS
 MIN_MASK_VOXELS = 16
 DEFAULT_ALPHA_MAX = 1.0
 DEFAULT_MI_BINS = 64
@@ -26,7 +26,7 @@ SUPPORTED_ALPHA_ESTIMATION_METHODS = {
     "mi_min",
 }
 
-
+# %% ESTIMATION HELPERS
 def _validate_percentile(name: str, value: float | None) -> float | None:
     """Validate an optional percentile argument and return it as ``float``."""
 
@@ -774,7 +774,7 @@ def estimate_picasso_unmixing_matrix_from_volume(
     }
     return U.astype(np.float64, copy=False), details
 
-
+# %% PUBLIC API
 __all__ = [
     "DEFAULT_ALPHA_MAX",
     "DEFAULT_MAX_ALPHA_VOXELS",
@@ -788,3 +788,4 @@ __all__ = [
     "mutual_information_1d",
     "prepare_source_target_for_alpha",
 ]
+# %% END

@@ -4,7 +4,7 @@ Core spectral bleed-through correction routines.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import json
@@ -41,13 +41,13 @@ from .picasso_impl import (
     validate_picasso_implementation,
     validate_source_sink_matrix,
 )
-
+# %% CONSTANTS
 ALPHA_MODES = {"fixed", "reference_t", "per_t"}
 SUPPORTED_UNMIX_METHODS = {"manual", *SUPPORTED_ALPHA_ESTIMATION_METHODS}
 SUPPORTED_PICASSO_METHODS = {"picasso"}
 PICASSO_ALPHA_MODES = {"reference_t", "per_t"}
 
-
+# %% INTERNAL HELPERS
 def report_path_from_output_path(output_path: str | Path) -> Path:
     """Return the JSON sidecar path used for reproducibility metadata."""
 
@@ -1388,3 +1388,4 @@ def unmix_ch0_from_ch1(*args, **kwargs) -> Path:
         stacklevel=2,
     )
     return unmix(*args, **kwargs)
+# %% END

@@ -4,7 +4,7 @@ Registration helpers for TZCYX microscopy stacks.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -14,11 +14,11 @@ from scipy.ndimage import median_filter, shift as ndi_shift
 from skimage.registration import phase_cross_correlation
 
 from .io import CANONICAL_AXIS_ORDER
-
+# %% CONSTANTS
 SUPPORTED_REGISTRATION_METHODS = {"phase_cross_correlation", "pystackreg"}
 SUPPORTED_INTRA_STACK_REFERENCE_MODES = {"neighbor", "full_projection"}
 
-
+# %% INTERNAL HELPERS
 def _normalize_registration_method(method: str) -> str:
     """Normalize and validate the requested inter-frame registration backend."""
 
@@ -417,10 +417,11 @@ def register_stack(
 
     return registered
 
-
+# %% PUBLIC API
 __all__ = [
     "SUPPORTED_INTRA_STACK_REFERENCE_MODES",
     "SUPPORTED_REGISTRATION_METHODS",
     "correct_intra_stack_z_drift",
     "register_stack",
 ]
+# %% END

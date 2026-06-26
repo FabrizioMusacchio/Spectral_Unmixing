@@ -4,7 +4,7 @@ Unit tests for alpha estimation helpers.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -19,7 +19,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from spectral_unmixing import estimate_alpha_from_volume
 
-
+# %% TEST CASES
 class EstimateAlphaTests(unittest.TestCase):
     def _make_random_signals(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         rng = np.random.default_rng(123)
@@ -119,6 +119,7 @@ class EstimateAlphaTests(unittest.TestCase):
                 background_percentile=0.0,
             )
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

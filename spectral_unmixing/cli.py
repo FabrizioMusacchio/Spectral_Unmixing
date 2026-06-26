@@ -4,14 +4,14 @@ Command-line interface for spectral unmixing.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import argparse
 
 from .unmixing import unmix
 
-
+# %% CLI PARSER AND ENTRY POINT
 def build_parser() -> argparse.ArgumentParser:
     """
     Build the command-line parser for the two-channel unmixing workflow.
@@ -223,3 +223,4 @@ def main(argv: list[str] | None = None) -> int:
         verbose=not args.quiet,
     )
     return 0
+# %% END

@@ -4,7 +4,7 @@ Napari viewer helpers for spectral unmixing results.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,10 +13,10 @@ from typing import Any
 import numpy as np
 
 from .io import _configure_omio_runtime_environment, load_stack_with_omio
-
+# %% CONSTANTS
 _VIEWER = None
 
-
+# %% INTERNAL HELPERS
 def import_napari():
     """
     Import napari after configuring a writable runtime environment.
@@ -181,3 +181,4 @@ def show_unmixed_channels_in_napari(
         colormap=target_colormap,
     )
     return viewer
+# %% END

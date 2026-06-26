@@ -4,7 +4,7 @@ Unit tests for filtering and projection helpers.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -16,7 +16,7 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
+# %% IMPORTS FROM SPECTRAL_UNMIXING
 from spectral_unmixing.filters import (
     apply_filters,
     match_histograms_across_time,
@@ -151,6 +151,7 @@ class FilterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             match_histograms_across_time(stack)
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

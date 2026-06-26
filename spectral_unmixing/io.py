@@ -4,7 +4,7 @@ OMIO-based I/O helpers for spectral unmixing workflows.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import copy
@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-
+# %% CONSTANTS
 CANONICAL_AXIS_ORDER = "TZCYX"
 
-
+# %% INTERNAL HELPERS
 def _configure_omio_runtime_environment() -> Path:
     """
     Configure a writable cache location before importing OMIO.
@@ -243,3 +243,4 @@ def write_stack_with_omio(
             new_file.unlink(missing_ok=True)
 
     return final_path
+# %% END

@@ -4,7 +4,7 @@ Unit tests for registration helpers.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -20,7 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from spectral_unmixing.registration import register_stack
 
-
+# %% CLASS DEFINITION
 class RegistrationTests(unittest.TestCase):
     def _build_shifted_stack(self) -> np.ndarray:
         reference = np.zeros((2, 2, 32, 32), dtype=np.float32)
@@ -80,6 +80,7 @@ class RegistrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             register_stack(stack, registration_channel=0, verbose=False)
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END

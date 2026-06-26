@@ -4,7 +4,7 @@ Internal PICASSO-style unmixing implementations.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -19,7 +19,7 @@ from .estimation import (
     DEFAULT_RANDOM_STATE,
     mutual_information_1d,
 )
-
+# %% CONSTANTS
 SUPPORTED_PICASSO_IMPLEMENTATIONS = {
     "matlab_3c",
     "matlab_n",
@@ -35,7 +35,7 @@ DEFAULT_PICASSO_CLIP_EVERY_N_ITERATIONS = 50
 
 EPSILON = 1e-12
 
-
+# %% INTERNAL HELPERS
 def validate_picasso_implementation(implementation: str) -> str:
     """Normalize and validate the selected PICASSO implementation name."""
 
@@ -732,3 +732,4 @@ def apply_source_sink_parameters(
     if global_max > 0.0:
         corrected = corrected * global_max
     return corrected.astype(np.float32, copy=False)
+# %% END

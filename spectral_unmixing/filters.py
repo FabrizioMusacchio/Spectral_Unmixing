@@ -4,7 +4,7 @@ Filtering and projection helpers for spectral unmixing workflows.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -15,10 +15,11 @@ from skimage.exposure import match_histograms
 
 from .io import CANONICAL_AXIS_ORDER
 
+# %% DEFAULTS AND CONSTANTS
 SUPPORTED_FILTERS = {"median", "gaussian"}
 SECOND_CHANNEL_INDEX = 1
 
-
+# %% INTERNAL HELPERS
 def _normalize_filter_sequence(filters: str | Sequence[str]) -> list[str]:
     """Normalize one or more filter names into a validated execution sequence."""
 
@@ -428,7 +429,7 @@ def match_histograms_across_time(
 
     return matched
 
-
+# %% PUBLIC API
 __all__ = [
     "CANONICAL_AXIS_ORDER",
     "SUPPORTED_FILTERS",
@@ -436,3 +437,4 @@ __all__ = [
     "match_histograms_across_time",
     "max_z_project",
 ]
+# %% END

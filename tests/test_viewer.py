@@ -4,7 +4,7 @@ Unit tests for napari viewer helpers.
 Author: Fabrizio Musacchio
 Date: June 2026
 """
-
+# %% IMPORTS
 from __future__ import annotations
 
 import sys
@@ -20,7 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import spectral_unmixing.viewer as viewer_module
 
-
+# %% CLASS DEFINITION
 class FakeLayer:
     def __init__(self, data, name, scale, colormap, blending, opacity, contrast_limits):
         self.data = data
@@ -106,6 +106,7 @@ class ViewerTests(unittest.TestCase):
         np.testing.assert_allclose(viewer.layers[1].data, updated_stack[:, :, 1, :, :])
         self.assertEqual(viewer.layers[0].scale, (1.0, 2.0, 3.0, 4.0))
 
-
+# %% MAIN
 if __name__ == "__main__":
     unittest.main()
+# %% END
