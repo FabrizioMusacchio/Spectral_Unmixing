@@ -58,6 +58,7 @@ source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",
 }
+myst_heading_anchors = 3
 autosummary_generate = True
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
@@ -96,3 +97,4 @@ copybutton_selector = "div.highlight pre"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_static_path = ['_static']
+html_logo = "_static/spectra_unmixing_logo_transparent.png"

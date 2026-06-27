@@ -47,6 +47,13 @@ dev = [
   "pytest",
   "pytest-cov",
 ]
+docs = [
+  "sphinx>=8.0",
+  "sphinx-rtd-theme",
+  "myst-parser",
+  "sphinx-copybutton",
+  "sphinx-autodoc-typehints",
+]
 
 
 [project.urls]
