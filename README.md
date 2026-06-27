@@ -221,12 +221,13 @@ Three `alpha_mode` values are available:
 
 - `fixed`
   Use a user-provided scalar `alpha` for the full stack.
-- `reference_t`
-  Estimate one scalar `alpha` from a chosen reference time point, using all
-  z-slices at that time point.
-- `per_t`
-  Estimate one `alpha` value per time point, again using all z-slices for each
-  time point.
+- for $T\gt1$-stacks:
+  - `reference_t`
+    Estimate one scalar `alpha` from a chosen reference time point, using all
+    z-slices at that time point.
+  - `per_t`
+    Estimate one `alpha` value per time point, again using all z-slices for each
+    time point.
 
 `alpha_mode` answers the question:
 
