@@ -1003,6 +1003,12 @@ def unmix_picasso(
     """
     Perform PICASSO-family multi-channel blind unmixing.
 
+    This workflow is motivated by the PICASSO publication:
+    Seo, J., Sim, Y., Kim, J. et al. PICASSO allows ultra-multiplexed
+    fluorescence imaging of spatially overlapping proteins without reference
+    spectra measurements. Nature Communications 13, 2475 (2022).
+    https://doi.org/10.1038/s41467-022-30168-z
+
     Parameters
     ----------
     input_path : str or Path
