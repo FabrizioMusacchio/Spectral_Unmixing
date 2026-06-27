@@ -22,7 +22,8 @@ from spectral_unmixing import (
 In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
 automatically generated in a subfolder of the input file's parent directory.
 """
-INPUT_PATH = Path(r"/Users/husker/Science/Python/Projekte/Spectral Unmixing/example_data/PICASSO_examples/2_color_unmixing_validation.tif")
+# define the input path to the example dataset:
+INPUT_PATH = PROJECT_ROOT / "example_data" / "PICASSO_examples" / "2_color_unmixing_validation.tif"
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -52,7 +53,7 @@ When this is useful:
 - Most reproducible and scientifically preferred if acquisition settings are
 - stable across experiments.
 """
-
+# define the output path for the fixed-alpha unmixing result:
 OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
 
 fixed_output = unmix(
@@ -60,9 +61,10 @@ fixed_output = unmix(
     output_path=OUTPUT_FIXED,
     #source_channel=0,  # default: 0
     #target_channel=1,  # default: 1
+    method="manual",
     alpha=0.62,
-    alpha_mode="fixed",
-    method="manual")
+    alpha_mode="fixed", # only relevant for multi-time-point stacks
+    )
 
 show_unmixed_channels_in_napari(
     fixed_output,
@@ -71,8 +73,8 @@ show_unmixed_channels_in_napari(
     layer_prefix="Fixed alpha",
     source_colormap="cyan",
     target_colormap="yellow")
-# %% REFERENCE-TIME-POINT ALPHA EXAMPLE (mean-ratio)
-"""Estimate one alpha from a reference time point using the ``mean_ratio`` rule.
+# %% ALPHA EXAMPLE (mean-ratio)
+"""Estimate one alpha from an optional reference time point using the ``mean_ratio`` rule.
 
 Method summary:
 
@@ -104,6 +106,7 @@ Effect of these settings:
   changes over time.
 """
 
+# define the output path for the reference-time-point unmixing result:
 OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
 
 reference_output = unmix(
@@ -111,8 +114,8 @@ reference_output = unmix(
     output_path=OUTPUT_REFERENCE,
     #source_channel=0,  # default: 0
     #target_channel=1,  # default: 1
-    alpha_mode="reference_t",
     method="mean_ratio",
+    alpha_mode="reference_t",
     alpha_reference_t=0,
     signal_percentile=99.0,
     background_percentile=1.0)
@@ -123,8 +126,8 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference t0")
-# %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
-"""Estimate one alpha from a reference time point via masked least squares.
+# %% LINEAR-FIT EXAMPLE
+"""Estimate one alpha from an optional reference time point via masked least squares.
 
 Method summary:
 
@@ -150,6 +153,7 @@ Effect of these settings:
   have broad dynamic ranges.
 """
 
+# define the output path for the reference-time-point linear-fit unmixing result:
 OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
 
 reference_linear_fit_output = unmix(
@@ -169,7 +173,7 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference linear_fit")
-# %% REFERENCE-TIME-POINT CORR-MIN EXAMPLE
+# %% CORR-MIN EXAMPLE
 """Estimate alpha by minimizing residual correlation after correction.
 
 Method summary:
@@ -195,6 +199,7 @@ Effect of these settings:
   subtract true target signal together with bleed-through.
 """
 
+# define the output path for the reference-time-point corr-min unmixing result:
 OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
 
 reference_corr_min_output = unmix(
@@ -216,7 +221,7 @@ show_unmixed_channels_in_napari(
     target_channel=1,
     layer_prefix="Reference corr_min")
 
-# %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
+# %% MI-MIN EXAMPLE
 """Estimate forward coefficient by minimizing mutual information.
 
 Method summary:
@@ -234,6 +239,7 @@ What can be adjusted:
   Search bound for the forward optimization.
 """
 
+# define the output path for the reference-time-point mi-min unmixing result:
 OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
 
 reference_mi_min_output = unmix(
