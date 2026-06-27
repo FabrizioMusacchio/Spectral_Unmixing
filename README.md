@@ -217,30 +217,25 @@ optional `*_reverse` arguments. For every reverse parameter that is left at
 `None`, the corresponding forward value is reused.
 
 ### Alpha modes
-Three `alpha_mode` values are available:
+For $T\gt1$-stacks, three `alpha_mode` values are available:
 
 - `fixed`
   Use a user-provided scalar `alpha` for the full stack.
-- for $T\gt1$-stacks:
-  - `reference_t`
-    Estimate one scalar `alpha` from a chosen reference time point, using all
-    z-slices at that time point.
-  - `per_t`
-    Estimate one `alpha` value per time point, again using all z-slices for each
-    time point.
+- `reference_t`
+  Estimate one scalar `alpha` from a chosen reference time point, using all z-slices at that time point.
+- `per_t`
+  Estimate one `alpha` value per time point, again using all z-slices for each time point.
 
-`alpha_mode` answers the question:
+These modes answer the question:
 
-> From which part of the dataset should the coefficient be obtained?
+> From which part of a multi-time-point dataset should the coefficient be obtained?
 
-It does **not** determine how the coefficient is computed numerically.
+They do **not** determine how the coefficient is computed numerically. This can still be controlled with the `method` argument (see below).
 
-In bidirectional mode, the same `alpha_mode` is applied independently to the
-forward and reverse directions.
+In bidirectional mode, the same `alpha_mode` is applied independently to the forward and reverse directions.
 
 ### Alpha estimation methods
-`method` controls how `alpha` is estimated once the relevant source and target
-volumes have been chosen by `alpha_mode`.
+`method` controls how `alpha` is estimated once the relevant source and target volumes have been chosen by `alpha_mode`.
 
 Available methods are:
 

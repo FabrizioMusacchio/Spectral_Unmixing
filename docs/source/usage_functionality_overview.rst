@@ -53,16 +53,18 @@ Optionally:
 Main configuration dimensions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``alpha_mode`` controls **where** alpha is obtained from:
-  ``fixed``, ``reference_t``, or ``per_t``:
-    - `fixed`: Use a user-provided scalar `alpha` for the full stack.
-    - for $T\gt1$-stacks:
-      - `reference_t`: Estimate one scalar `alpha` from a chosen reference time point, using all z-slices at that time point.
-      - `per_t`: Estimate one `alpha` value per time point, again using all z-slices for each time point.
+- ``alpha_mode`` controls **where** alpha is obtained from in multi-time-point stacks:
+  ``fixed``, ``reference_t``, or ``per_t``.
+
+  - ``fixed`` uses a user-provided scalar ``alpha`` for the full stack.
+  - ``reference_t`` estimates one scalar ``alpha`` from a chosen reference time point, using all z-slices at that time point.
+  - ``per_t`` estimates one ``alpha`` value per time point, again using all z-slices for each time point.
+  
 - ``method`` controls **how** alpha is estimated:
   ``manual``, ``mean_ratio``, ``linear_fit``, ``corr_min``, or ``mi_min``.
 - ``source_channel`` and ``target_channel`` define the directed correction.
-- ``bidirectional=True`` enables simultaneous correction of both channels by solving a 2x2 linear mixing model.
+- ``bidirectional=True`` enables simultaneous correction of both channels by
+  solving a :math:`2 \times 2` linear mixing model.
 
 Alpha-estimation methods
 ^^^^^^^^^^^^^^^^^^^^^^^^
