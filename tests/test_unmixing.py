@@ -122,6 +122,97 @@ class UnmixingTests(unittest.TestCase):
             self.assertEqual(report["method_effective"], "manual")
             self.assertEqual(report["alpha_source"], "user_provided")
 
+    def test_default_alpha_mode_uses_fixed_when_alpha_is_provided(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "default_fixed_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return self.stack.copy(), self.metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, stack, metadata):
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    alpha=0.2,
+                    method="mean_ratio",
+                    verbose=False,
+                )
+
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["alpha_mode"], "fixed")
+            self.assertIsNone(report["alpha_mode_requested"])
+            self.assertTrue(report["alpha_mode_was_defaulted"])
+            self.assertEqual(report["method"], "mean_ratio")
+            self.assertEqual(report["method_effective"], "manual")
+
+    def test_default_alpha_mode_uses_reference_t_for_non_manual_without_alpha(self) -> None:
+        singleton_stack = np.zeros((1, 1, 2, 4, 5), dtype=np.float32)
+        singleton_stack[0, 0, 0, :, :] = np.array(
+            [
+                [4.0, 5.0, 6.0, 7.0, 8.0],
+                [5.0, 6.0, 7.0, 8.0, 9.0],
+                [6.0, 7.0, 8.0, 9.0, 10.0],
+                [7.0, 8.0, 9.0, 10.0, 11.0],
+            ],
+            dtype=np.float32,
+        )
+        singleton_stack[0, 0, 1, :, :] = 2.0 + 0.25 * singleton_stack[0, 0, 0, :, :]
+        metadata = {"axes": "TZCYX", "shape": singleton_stack.shape}
+        written = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "default_reference_output.tif"
+
+            def fake_load_stack_with_omio(_input_path):
+                return singleton_stack.copy(), metadata.copy()
+
+            def fake_write_stack_with_omio(output_path, stack, metadata):
+                written["stack"] = stack.copy()
+                return Path(output_path)
+
+            with (
+                patch(
+                    "spectral_unmixing.unmixing.load_stack_with_omio",
+                    side_effect=fake_load_stack_with_omio,
+                ),
+                patch(
+                    "spectral_unmixing.unmixing.write_stack_with_omio",
+                    side_effect=fake_write_stack_with_omio,
+                ),
+            ):
+                unmix(
+                    input_path="input.tif",
+                    output_path=output_path,
+                    method="mean_ratio",
+                    signal_percentile=50.0,
+                    background_percentile=0.0,
+                    min_mask_voxels=8,
+                    verbose=False,
+                )
+
+            np.testing.assert_allclose(written["stack"][0, 0, 1, :, :], 2.0, atol=1e-6)
+            report = json.loads(
+                report_path_from_output_path(output_path).read_text(encoding="utf-8")
+            )
+            self.assertEqual(report["alpha_mode"], "reference_t")
+            self.assertIsNone(report["alpha_mode_requested"])
+            self.assertTrue(report["alpha_mode_was_defaulted"])
+            self.assertAlmostEqual(report["alpha"], 0.25, places=6)
+
     def test_fixed_bidirectional_unmixing_recovers_both_channels(self) -> None:
         true_source = np.array(
             [
@@ -359,6 +450,41 @@ class UnmixingTests(unittest.TestCase):
                 output_path="other.tif",
                 alpha_mode="reference_t",
                 method="manual",
+            )
+
+    def test_manual_method_requires_alpha_when_alpha_mode_is_none(self) -> None:
+        with self.assertRaises(ValueError):
+            unmix(
+                input_path="input.tif",
+                output_path="other.tif",
+                alpha_mode=None,
+                method="manual",
+            )
+
+    def test_explicit_fixed_alpha_mode_still_requires_alpha(self) -> None:
+        def fake_load_stack_with_omio(_input_path):
+            return self.stack.copy(), self.metadata.copy()
+
+        def fake_write_stack_with_omio(output_path, stack, metadata):
+            return Path(output_path)
+
+        with (
+            patch(
+                "spectral_unmixing.unmixing.load_stack_with_omio",
+                side_effect=fake_load_stack_with_omio,
+            ),
+            patch(
+                "spectral_unmixing.unmixing.write_stack_with_omio",
+                side_effect=fake_write_stack_with_omio,
+            ),
+            self.assertRaises(ValueError),
+        ):
+            unmix(
+                input_path="input.tif",
+                output_path="other.tif",
+                alpha_mode="fixed",
+                method="mean_ratio",
+                verbose=False,
             )
 
     def test_unmix_picasso_preserves_shape_and_reduces_channel_dependence(self) -> None:
