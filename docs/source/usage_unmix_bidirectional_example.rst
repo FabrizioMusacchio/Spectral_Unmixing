@@ -77,10 +77,18 @@ This is the bidirectional analogue of the standard fixed-alpha workflow.
 
 The main parameters are:
 
-- ``bidirectional=True``
-- ``alpha`` for the forward direction
-- ``alpha_reverse`` for the reverse direction
-- optional ``source_channel`` and ``target_channel``
+- ``bidirectional=True``:
+  activates the two-direction model instead of the simpler one-way
+  source-to-target subtraction.
+- ``alpha``:
+  forward-direction bleed-through coefficient. Larger values remove more of the
+  forward contamination.
+- ``alpha_reverse``:
+  reverse-direction coefficient. Larger values remove more contamination in the
+  reverse direction.
+- optional ``source_channel`` and ``target_channel``:
+  define the forward direction; the reverse direction is inferred from that
+  pairing.
 
 This is the scientifically strongest option when both directional coefficients
 come from proper single-label controls.
@@ -99,9 +107,15 @@ the same reference time point.
 
 The most important settings are:
 
-- ``alpha_reference_t``
-- ``signal_percentile``
-- ``background_percentile``
+- ``alpha_reference_t``:
+  defines the reference time point from which both directional coefficients are
+  estimated.
+- ``signal_percentile``:
+  controls how selective the forward-direction source mask is. Higher values
+  keep only brighter source voxels; lower values include more voxels.
+- ``background_percentile``:
+  controls the percentile-based background subtraction used before estimation.
+  Higher values remove more baseline; lower values preserve more low signal.
 - optional ``target_low_percentile``
 - the commented ``*_reverse`` parameters if the reverse direction should use a
   different mask or method
@@ -148,7 +162,9 @@ correlation after correction.
 
 The settings most worth tuning are:
 
-- ``alpha_max``
+- ``alpha_max``:
+  upper bound for the forward optimization. Larger values allow stronger
+  subtraction; smaller values keep the fit more conservative.
 - optional ``alpha_max_reverse``
 - ``signal_percentile``
 - ``background_percentile``
@@ -171,7 +187,10 @@ both directions.
 
 The key settings are:
 
-- ``mi_bins``
+- ``mi_bins``:
+  histogram resolution for the mutual-information objective. Higher values can
+  capture finer structure but can become less stable; lower values are coarser
+  and often more robust.
 - optional ``mi_bins_reverse``
 - ``alpha_max``
 - optional ``alpha_max_reverse``

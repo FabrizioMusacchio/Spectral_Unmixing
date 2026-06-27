@@ -92,12 +92,27 @@ The corresponding cell consists of three main steps:
 
 The important knobs are:
 
-- ``method="manual"``: this tells the workflow to use a user-provided alpha value,
+- ``method="manual"``:
+  tells the workflow to use a user-provided alpha value instead of estimating
+  one from the data.
 - ``alpha``:
-  manually supplied bleed-through coefficient
-- ``alpha_mode="fixed"`` (relevant only for multi-time-point stacks)
-- optional ``source_channel`` and ``target_channel`` to define the directed correction; default is 0 and 1, respectively, which means that channel 1 is corrected for bleed-through from channel 0.
-- optional ``clip_negative``, ``output_dtype``, and ``verbose`` if you want to control clipping, output precision, or terminal reporting explicitly
+  manually supplied bleed-through coefficient. Larger values subtract more
+  source signal from the target channel; smaller values leave more residual
+  bleed-through behind.
+- ``alpha_mode="fixed"``:
+  keeps that same alpha for the whole stack. This is mainly relevant when the
+  data have multiple time points.
+- optional ``source_channel`` and ``target_channel``:
+  define the direction of correction. Changing them changes which channel is
+  treated as the contaminating source and which one is corrected.
+- optional ``clip_negative``:
+  if enabled, negative corrected intensities are clipped to zero after
+  subtraction.
+- optional ``output_dtype``:
+  controls the precision used for the written result. ``float32`` is the
+  sensible default for most workflows.
+- optional ``verbose``:
+  enables or suppresses terminal progress output and parameter reporting.
 - optional visualization colormaps for napari
 
 
@@ -119,17 +134,27 @@ divided by the mean source intensity within a mask that is defined by the
 
 Important parameters:
 
-- ``method="mean_ratio"``: this tells the workflow to estimate alpha from the ratio of means
+- ``method="mean_ratio"``:
+  estimates alpha as the ratio of mean target and mean source intensity inside
+  the selected source-dominant mask.
 - ``alpha_reference_t``:
-  which time point is used for estimation in case of multi-time-point stacks; otherwise ignored and single-time-point workflow is applied
+  defines the reference time point used for alpha estimation. Changing it
+  matters when brightness or biology changes over time.
 - ``signal_percentile``:
-  how strict the bright-source mask is
+  defines how strict the bright-source mask is. Higher values keep only the
+  brightest source voxels and make the estimate more selective; lower values
+  include more voxels but may mix in less source-specific regions.
 - ``background_percentile``:
-  low-percentile background subtraction for estimation
+  defines the low-percentile background level that is subtracted before alpha
+  estimation. Increasing it removes more low-intensity baseline; decreasing it
+  keeps more of the original dim signal.
 - optional ``target_low_percentile``:
-  further restrict the estimation mask to comparatively dim target voxels
+  further restricts the estimation mask to comparatively dim target voxels.
+  Lower values make this restriction stricter; higher values relax it.
 - optional ``preprocess_alpha_inputs``:
-  switch the percentile-based preprocessing used only for alpha estimation
+  switches the percentile-based background subtraction and clipping used only
+  for alpha estimation. Turning it off makes the estimate depend more directly
+  on the raw measured intensities.
 
 Increasing ``signal_percentile`` makes the mask more selective. Lowering it
 uses more voxels but may mix in less source-specific regions.
@@ -194,9 +219,12 @@ corrected target channel.
 Important user-tunable parameters:
 
 - ``mi_bins``:
-  histogram resolution for mutual-information estimation
+  histogram resolution for the mutual-information estimate. Higher values can
+  resolve finer structure but also become noisier; lower values are coarser and
+  usually more stable.
 - ``alpha_max``:
-  search interval bound
+  upper search bound for the optimized alpha. Larger values allow stronger
+  subtraction; smaller values constrain the optimizer more conservatively.
 - mask and background settings
 
 .. literalinclude:: ../../user_scripts/unmix_example.py

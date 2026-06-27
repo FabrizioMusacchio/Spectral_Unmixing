@@ -87,14 +87,33 @@ PICASSO iteration.
 
 The most influential settings are:
 
-- ``channels``
-- ``implementation="matlab_n"``
-- ``max_iter``
-- ``step_size``
-- ``qN``
-- ``pixel_bin_size``
-- ``alpha_clip``
-- optional ``negativity_threshold`` and ``clip_every_n_iterations``
+- ``channels``:
+  selects which measured channels participate in blind unmixing. Restricting
+  this list simplifies the problem; expanding it increases coupling between
+  channels.
+- ``implementation="matlab_n"``:
+  chooses the generalized MATLAB-style PICASSO iteration rather than another
+  blind-unmixing path.
+- ``max_iter``:
+  number of iterative update steps. More iterations can unmix more strongly but
+  may also amplify instability.
+- ``step_size``:
+  strength of each incremental update. Larger values make the updates more
+  aggressive; smaller values make them more conservative.
+- ``qN``:
+  quantization parameter used in the MATLAB-style mutual-information
+  calculation. Larger values retain finer intensity detail; smaller values make
+  the estimate coarser.
+- ``pixel_bin_size``:
+  spatial binning factor before mutual-information evaluation. Larger values
+  smooth and compress the data more strongly; smaller values preserve more
+  spatial detail.
+- ``alpha_clip``:
+  hard clipping bound for pairwise coefficients. Larger values allow stronger
+  pairwise subtraction; smaller values stabilize the iteration.
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``:
+  control how aggressively intermediate negative values are monitored and how
+  often positivity enforcement is applied.
 
 Even though some shared API options such as ``mi_bins`` and ``alpha_max`` are
 still present in the call, the MATLAB-like implementation is primarily driven
@@ -114,12 +133,22 @@ cross-talk graph.
 
 The most relevant settings are:
 
-- ``sink_channels``
-- ``neutral_channels``
-- optional ``source_sink_matrix``
-- ``alpha_max``
-- ``mi_bins``
-- ``max_alpha_voxels``
+- ``sink_channels``:
+  defines which channels should be corrected as sinks.
+- ``neutral_channels``:
+  defines which channels should stay untouched and not be used as active
+  participants in the inferred source-sink graph.
+- optional ``source_sink_matrix``:
+  gives full manual control over the allowed source-to-sink relations.
+- ``alpha_max``:
+  upper bound for source-to-sink coefficients. Larger values allow stronger
+  subtraction; smaller values keep the estimate conservative.
+- ``mi_bins``:
+  histogram resolution for the mutual-information objective. Higher values can
+  be more expressive but also noisier.
+- ``max_alpha_voxels``:
+  optional cap on the number of voxels used for coefficient estimation.
+  Lowering it speeds up estimation; raising it uses more data.
 
 For two-channel data this is often the easier PICASSO-family mode to reason
 about, because the user can state very directly which channel should be treated

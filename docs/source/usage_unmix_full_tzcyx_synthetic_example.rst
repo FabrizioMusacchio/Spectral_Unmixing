@@ -65,8 +65,8 @@ What you would usually change here:
 - the output directory or filename pattern.
 
 
-Spectral unmixing with a manually set alpha
--------------------------------------------
+Manually set alpha
+------------------
 
 .. literalinclude:: ../../user_scripts/unmix_full_TZCYX_synthetic_example.py
    :language: python
@@ -78,10 +78,15 @@ applied across all time points and all z-slices.
 
 The most relevant parameters are:
 
-- ``method="manual"``
-- ``alpha``
-- optional ``source_channel`` and ``target_channel``
-- optional ``clip_negative``
+- ``method="manual"``:
+  uses the user-provided alpha directly instead of estimating it from the data.
+- ``alpha``:
+  sets the subtraction strength. Larger values remove more source contribution;
+  smaller values leave more residual bleed-through.
+- optional ``source_channel`` and ``target_channel``:
+  define the direction of correction through the full ``TZCYX`` stack.
+- optional ``clip_negative``:
+  clips negative corrected intensities to zero after subtraction.
 
 This is the best starting point when you already have a coefficient from a
 proper control measurement or an empirical estimate from a similar dataset. 
@@ -101,14 +106,25 @@ z-slices belonging to that time point.
 
 The parameters that matter most are:
 
-- ``alpha_reference_t``: defines the reference time point for alpha estimation
-- ``signal_percentile``: defines the  ...
-- ``background_percentile``: ...
-- ``target_low_percentile``: ...
-- ``preprocess_alpha_inputs``: ...
-
-This example is especially useful because it shows how those parameters behave
-when the input really is a full time-lapse z-stack rather than just a 2D image.
+- ``alpha_reference_t``:
+  defines the reference time point used for alpha estimation. Changing it
+  matters when the stack changes in brightness, content, or other properties 
+  such as SNR over time.
+- ``signal_percentile``:
+  defines how selective the bright-source mask is. Higher values keep only the
+  brightest source voxels; lower values include more voxels and therefore more
+  mixed regions.
+- ``background_percentile``:
+  defines the low-intensity background estimate subtracted before alpha
+  estimation. Higher values remove more baseline; lower values preserve more of
+  the dim signal.
+- ``target_low_percentile``:
+  can further restrict the estimation mask to target-dim voxels. Lower values
+  make that restriction stricter, higher values relax it.
+- ``preprocess_alpha_inputs``:
+  controls whether the percentile-based preprocessing is applied before
+  estimating alpha. Turning it off makes the estimate more directly dependent
+  on the raw stack intensities.
 
 
 ``linear_fit`` on a full ``TZCYX`` stack
@@ -145,7 +161,9 @@ corrected target becomes minimal.
 
 The most relevant tuning parameters are:
 
-- ``alpha_max``
+- ``alpha_max``:
+  upper search bound for the optimization. Larger values allow more aggressive
+  subtraction; smaller values constrain the estimator more conservatively.
 - ``signal_percentile``
 - ``background_percentile``
 - optional ``target_low_percentile``
@@ -168,7 +186,10 @@ This method uses the two-channel PICASSO-like mutual-information criterion.
 
 The most important settings are:
 
-- ``mi_bins``
+- ``mi_bins``:
+  histogram resolution for the mutual-information objective. Higher values can
+  capture finer structure but often become noisier; lower values are coarser
+  and usually more stable.
 - ``alpha_max``
 - ``signal_percentile``
 - ``background_percentile``
@@ -194,8 +215,13 @@ applies each value to the corresponding time slice.
 
 The key settings are:
 
-- ``alpha_mode="per_t"``
-- ``method``
+- ``alpha_mode="per_t"``:
+  estimates a separate alpha for every time point instead of using one global
+  coefficient.
+- ``method``:
+  selects the estimator used at each time point. ``mean_ratio`` is the most
+  direct starting point; the fit- and optimization-based methods behave as in
+  the earlier sections.
 - ``signal_percentile``
 - ``background_percentile``
 - optional ``target_low_percentile``

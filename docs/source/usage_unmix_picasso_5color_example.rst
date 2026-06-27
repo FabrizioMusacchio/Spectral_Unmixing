@@ -80,14 +80,26 @@ PICASSO iteration to all five selected channels.
 
 The settings that matter most are:
 
-- ``channels``
-- ``implementation="matlab_n"``
-- ``max_iter``
-- ``step_size``
-- ``qN``
-- ``pixel_bin_size``
-- ``alpha_clip``
-- optional ``negativity_threshold`` and ``clip_every_n_iterations``
+- ``channels``:
+  selects which measured channels are included in the blind-unmixing run.
+- ``implementation="matlab_n"``:
+  chooses the generalized MATLAB-style iteration for the selected channels.
+- ``max_iter``:
+  number of iteration steps. More iterations can unmix more strongly but may
+  also increase instability.
+- ``step_size``:
+  strength of each update step. Larger values make the update more aggressive;
+  smaller values make it gentler.
+- ``qN``:
+  quantization parameter for the MATLAB-style mutual-information estimate.
+- ``pixel_bin_size``:
+  spatial binning factor before the mutual-information calculation. Larger
+  values smooth more strongly; smaller values preserve more detail.
+- ``alpha_clip``:
+  clipping bound for pairwise coefficients. Larger values allow stronger
+  pairwise subtraction.
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``:
+  control negativity handling during the iterative updates.
 
 This is usually the best choice when you want a broad, symmetric blind-unmixing
 strategy across many channels without encoding a very explicit source-sink
@@ -106,12 +118,21 @@ This method uses the more explicit source-sink formulation.
 
 The most important settings are:
 
-- ``sink_channels``
-- ``neutral_channels``
-- optional ``source_sink_matrix``
-- ``alpha_max``
-- ``mi_bins``
-- ``max_alpha_voxels``
+- ``sink_channels``:
+  defines which channels should actually be corrected as sinks.
+- ``neutral_channels``:
+  defines which channels should stay untouched and be excluded from active
+  correction roles.
+- optional ``source_sink_matrix``:
+  gives explicit manual control over the allowed source-to-sink graph.
+- ``alpha_max``:
+  upper bound for source-to-sink coefficients. Larger values allow stronger
+  subtraction; smaller values keep the estimate more conservative.
+- ``mi_bins``:
+  histogram resolution for the mutual-information objective.
+- ``max_alpha_voxels``:
+  optional cap on the voxel count used for coefficient estimation. Lower values
+  speed up estimation; higher values use more of the image data.
 
 For real five-channel data this mode is often attractive because it lets you
 move from a broad first-pass model to a more selective graph once you have a

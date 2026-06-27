@@ -76,14 +76,28 @@ This method keeps the MATLAB-style iterative logic, but uses the generalized
 
 The settings that matter most are:
 
-- ``channels``
-- ``implementation="matlab_n"``
-- ``max_iter``
-- ``step_size``
-- ``qN``
-- ``pixel_bin_size``
-- ``alpha_clip``
-- optional ``negativity_threshold`` and ``clip_every_n_iterations``
+- ``channels``:
+  selects which measured channels participate in the blind-unmixing run.
+- ``implementation="matlab_n"``:
+  chooses the generalized MATLAB-style path rather than the strict
+  three-channel port.
+- ``max_iter``:
+  number of iterative updates. More iterations can unmix more strongly but may
+  also become less stable.
+- ``step_size``:
+  strength of each update step. Larger values are more aggressive; smaller
+  values are more conservative.
+- ``qN``:
+  quantization parameter for the MATLAB-style mutual-information estimate.
+- ``pixel_bin_size``:
+  spatial binning factor before the mutual-information calculation. Larger
+  values smooth more strongly; smaller values preserve more detail.
+- ``alpha_clip``:
+  clipping bound for pairwise coefficients. Larger values allow stronger
+  pairwise subtraction.
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``:
+  control how intermediate negativity is monitored and how often positivity
+  enforcement is applied.
 
 This is the best choice when you want MATLAB-like behavior but also want the
 same conceptual workflow to scale to larger channel counts.
@@ -125,12 +139,20 @@ through graph.
 
 The most relevant settings are:
 
-- ``sink_channels``
-- ``neutral_channels``
-- optional ``source_sink_matrix``
-- ``alpha_max``
-- ``mi_bins``
-- ``max_alpha_voxels``
+- ``sink_channels``:
+  defines which channels should be corrected as sinks.
+- ``neutral_channels``:
+  defines which channels should remain untouched and not act as sinks.
+- optional ``source_sink_matrix``:
+  gives explicit manual control over the allowed bleed-through graph.
+- ``alpha_max``:
+  upper bound for source-to-sink coefficients. Larger values allow stronger
+  subtraction; smaller values constrain the fit more strongly.
+- ``mi_bins``:
+  histogram resolution for the mutual-information objective.
+- ``max_alpha_voxels``:
+  optional cap on the number of voxels used for coefficient estimation. Lower
+  values speed up the fit; higher values use more data.
 
 This is often the easiest mode to reason about biologically, because the user
 can describe which channels should actually be cleaned and which channels
