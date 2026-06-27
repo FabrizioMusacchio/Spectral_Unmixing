@@ -94,7 +94,8 @@ show_unmixed_channels_in_napari(
 Method summary:
 
 - ``alpha_mode="reference_t"`` estimates one scalar alpha from a selected time
-  point and reuses it for the full stack.
+  point and reuses it for the full stack. Set this to ``per_t`` if you want to 
+  estimate one alpha per time point instead.
 - ``method="mean_ratio"`` computes alpha as the mean target intensity divided
   by the mean source intensity within bright source voxels.
 - All z-slices of the chosen reference time point contribute to that estimate.
@@ -102,7 +103,8 @@ Method summary:
 What can be adjusted:
 
 - ``alpha_reference_t``:
-  Chooses which time point is used for alpha estimation.
+  Chooses which time point is used for alpha estimation. Only relevant for 
+  ``alpha_mode="reference_t"``; default: 0.
 - ``signal_percentile``:
   Defines how bright source voxels must be to enter the estimation mask.
   Higher values focus more strongly on the brightest source signal.
@@ -131,7 +133,7 @@ reference_output = unmix(
     alpha_mode="reference_t",
     # alpha_mode="per_t",  # use the same estimator separately at each time point
     method="mean_ratio",
-    alpha_reference_t=0,
+    alpha_reference_t=0, # only relevant for alpha_mode="reference_t"
     signal_percentile=50.5,
     target_low_percentile=96.0,
     background_percentile=0.5,
@@ -163,7 +165,8 @@ What can be adjusted:
 - ``background_percentile``:
   Influences the background-subtracted data used before fitting.
 - ``alpha_reference_t``:
-  Selects the time point from which the fit is derived.
+  Selects the time point from which the fit is derived. Only relevant for 
+  ``alpha_mode="reference_t"``; default: 0.
 
 Effect of these settings:
 

@@ -63,7 +63,7 @@ fixed_output = unmix(
     # target_channel=1,  # default: 1
     method="manual",
     alpha=0.62,
-    alpha_mode="fixed",  # only relevant for multi-time-point stacks
+    # alpha_mode="fixed",  # only relevant for multi-time-point stacks; default: None; other options: "reference_t", "per_t"
     # clip_negative=True,  # default: True
     # output_dtype="float32",  # default: "float32"
     # verbose=True,  # default: True
@@ -81,16 +81,18 @@ show_unmixed_channels_in_napari(
 
 Method summary:
 
-- ``alpha_mode="reference_t"`` estimates one scalar alpha from a selected time
-  point and reuses it for the full stack.
 - ``method="mean_ratio"`` computes alpha as the mean target intensity divided
   by the mean source intensity within bright source voxels.
 - All z-slices of the chosen reference time point contribute to that estimate.
 
 What can be adjusted:
 
+- ``alpha_mode="reference_t"`` can be set in case of, e.g., multi-time point stacks. 
+  This mode estimates one coefficient per direction from a chosen reference time point 
+  and then applies both coefficients to the whole stack.
 - ``alpha_reference_t``:
-  Chooses which time point is used for alpha estimation.
+  Reference time point used for both directions. Only relevant for multi-time-point stacks; 
+  default: 0.
 - ``signal_percentile``:
   Defines how bright source voxels must be to enter the estimation mask.
   Higher values focus more strongly on the brightest source signal.
@@ -106,7 +108,7 @@ Effect of these settings:
 - A higher ``signal_percentile`` usually makes alpha estimation more selective
   but also reduces the number of voxels used.
 - A different ``alpha_reference_t`` matters when bleed-through or biology
-  changes over time.
+  changes over time (in multi-time-point stacks).
 """
 
 # define the output path for the reference-time-point unmixing result:

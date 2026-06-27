@@ -31,6 +31,7 @@ The recommended workflow is:
 3. compare the three different blind-unmixing implementations on the same
    stack.
 
+The subsections below follow the same order as the script.
 
 Imports
 -------
@@ -81,9 +82,25 @@ The settings that matter most are:
 - ``implementation="matlab_n"``:
   chooses the generalized MATLAB-style path rather than the strict
   three-channel port.
+- ``background_percentile``:
+  low-percentile background estimate used during preprocessing before the
+  update sequence is estimated.
+- ``preprocess_alpha_inputs``:
+  enables or disables that shared preprocessing step.
+- ``mi_bins``:
+  retained in the shared API and JSON report for compatibility, but not used by
+  the MATLAB-like implementation itself.
+- ``alpha_max``:
+  likewise retained in the shared API and JSON report, but not used directly by
+  the MATLAB-like implementation.
 - ``max_iter``:
   number of iterative updates. More iterations can unmix more strongly but may
   also become less stable.
+- ``tolerance``:
+  convergence threshold for the iterative update sequence.
+- ``max_alpha_voxels``:
+  optional voxel cap for large stacks. Lower values speed up the run; higher
+  values use more of the measured image data.
 - ``step_size``:
   strength of each update step. Larger values are more aggressive; smaller
   values are more conservative.
@@ -98,6 +115,18 @@ The settings that matter most are:
 - optional ``negativity_threshold`` and ``clip_every_n_iterations``:
   control how intermediate negativity is monitored and how often positivity
   enforcement is applied.
+- ``random_state``:
+  random seed used whenever voxel subsampling is needed.
+- ``clip_negative``:
+  clips final negative values in the written output to zero.
+- ``output_dtype``:
+  controls the saved data type of the unmixed stack.
+- ``verbose``:
+  enables terminal progress output during the run.
+- ``alpha_mode`` and ``alpha_reference_t``:
+  become relevant for real multi-time-point stacks. ``reference_t`` estimates
+  one update sequence from one chosen time point; ``per_t`` estimates one
+  sequence per time point.
 
 This is the best choice when you want MATLAB-like behavior but also want the
 same conceptual workflow to scale to larger channel counts.
@@ -119,11 +148,28 @@ is more important than having a unified N-channel code path.
 
 The main settings remain the MATLAB-style iteration parameters:
 
+- ``channels``:
+  same role as above, but here exactly three selected channels are required.
+- ``implementation="matlab_3c"``
+- ``background_percentile``
+- ``preprocess_alpha_inputs``
+- ``mi_bins`` and ``alpha_max``:
+  same shared API parameters as above; recorded but not used directly by the
+  MATLAB-like implementation
 - ``max_iter``
+- ``tolerance``
+- ``max_alpha_voxels``
 - ``step_size``
 - ``qN``
 - ``pixel_bin_size``
 - ``alpha_clip``
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``
+- ``random_state``
+- ``clip_negative``
+- ``output_dtype``
+- ``verbose``
+- ``alpha_mode`` and ``alpha_reference_t`` for multi-time-point stacks:
+  same behavior as in the ``matlab_n`` example above
 
 
 ``source_sink_n`` blind unmixing
@@ -139,20 +185,43 @@ through graph.
 
 The most relevant settings are:
 
+- ``channels``:
+  as above, selects which measured channels participate in the explicit
+  source-sink run.
+- ``implementation="source_sink_n"``:
+  chooses the source-sink PICASSO-family workflow rather than the MATLAB-like
+  implementations.
 - ``sink_channels``:
   defines which channels should be corrected as sinks.
 - ``neutral_channels``:
   defines which channels should remain untouched and not act as sinks.
 - optional ``source_sink_matrix``:
   gives explicit manual control over the allowed bleed-through graph.
+- ``background_percentile``:
+  same role as above, but now used in source-sink coefficient estimation.
+- ``preprocess_alpha_inputs``:
+  same shared preprocessing switch as above.
 - ``alpha_max``:
-  upper bound for source-to-sink coefficients. Larger values allow stronger
-  subtraction; smaller values constrain the fit more strongly.
+  now actively used as the upper bound for source-to-sink coefficients.
 - ``mi_bins``:
-  histogram resolution for the mutual-information objective.
+  now actively used as the histogram resolution for the mutual-information
+  objective.
+- ``max_iter``:
+  as above, controls the maximum number of update passes.
+- ``tolerance``:
+  as above, controls convergence of the iterative update sequence.
 - ``max_alpha_voxels``:
-  optional cap on the number of voxels used for coefficient estimation. Lower
-  values speed up the fit; higher values use more data.
+  same optional voxel cap as above.
+- ``random_state``:
+  same random seed used for optional voxel subsampling.
+- ``clip_negative``:
+  same final clipping behavior as above.
+- ``output_dtype``:
+  same output dtype control as above.
+- ``verbose``:
+  same terminal verbosity control as above.
+- ``alpha_mode`` and ``alpha_reference_t``:
+  same time-axis controls as above for real multi-time-point stacks.
 
 This is often the easiest mode to reason about biologically, because the user
 can describe which channels should actually be cleaned and which channels

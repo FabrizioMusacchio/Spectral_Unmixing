@@ -29,6 +29,7 @@ The recommended workflow is:
 3. compare the blind-unmixing output against the simpler directed workflow if
    you have already worked through :doc:`usage_unmix_example`.
 
+The subsections below follow the same order as the script.
 
 What this tutorial covers
 -------------------------
@@ -92,11 +93,29 @@ The most influential settings are:
   this list simplifies the problem; expanding it increases coupling between
   channels.
 - ``implementation="matlab_n"``:
-  chooses the generalized MATLAB-style PICASSO iteration rather than another
-  blind-unmixing path.
+  sets which PICASSO-family workflow is used. Here, we use the MATLAB-N generalization
+  (``matlab_n``); the other options are ``matlab_3c`` and ``source_sink_n``.
+- ``background_percentile``:
+  low-percentile background estimate used during preprocessing before the
+  MATLAB-style update sequence is estimated.
+- ``preprocess_alpha_inputs``:
+  enables or disables that preprocessing step. It is part of the shared API
+  and is recorded in the JSON report.
+- ``mi_bins``:
+  retained in the shared API and JSON report for compatibility, but not used by
+  the MATLAB-like implementation itself.
+- ``alpha_max``:
+  likewise retained in the shared API and JSON report, but not used directly by
+  the MATLAB-like implementation.
 - ``max_iter``:
   number of iterative update steps. More iterations can unmix more strongly but
   may also amplify instability.
+- ``tolerance``:
+  convergence threshold for the iterative updates. Smaller values require a
+  smaller change before the iteration is considered stable.
+- ``max_alpha_voxels``:
+  optional voxel cap used during estimation on large stacks. Lower values speed
+  up the run; higher values use more image information.
 - ``step_size``:
   strength of each incremental update. Larger values make the updates more
   aggressive; smaller values make them more conservative.
@@ -114,10 +133,31 @@ The most influential settings are:
 - optional ``negativity_threshold`` and ``clip_every_n_iterations``:
   control how aggressively intermediate negative values are monitored and how
   often positivity enforcement is applied.
+- ``random_state``:
+  random seed used whenever voxel subsampling is needed.
+- ``clip_negative``:
+  clips final negative values in the saved output stack to zero.
+- ``output_dtype``:
+  controls the data type used when the unmixed output is written.
+- ``verbose``:
+  enables terminal progress output and report printing during the run.
 
-Even though some shared API options such as ``mi_bins`` and ``alpha_max`` are
-still present in the call, the MATLAB-like implementation is primarily driven
-by the MATLAB-style iteration parameters listed above.
+The example script shown here uses a stack with only one time point, so
+``alpha_mode`` and ``alpha_reference_t`` are left commented out in the code. For 
+real multi-time-point stacks, you would usually
+set ``alpha_mode="reference_t"`` explicitly when one shared coefficient per
+direction should be estimated from a chosen reference time point, or
+``alpha_mode="per_t"`` when one forward and one reverse coefficient should be
+estimated separately for each time point. In these cases, additional relevant parameters 
+are:
+
+- ``alpha_mode``: ``reference_t`` or ``per_t`` for multi-time-point stacks.
+  The former estimates one update sequence from the chosen reference time
+  point and then applies it to the full stack; the latter estimates one update
+  sequence per time point.
+- ``alpha_reference_t``:
+  defines the reference time point from which the update sequence is
+  estimated. Only relevant when ``alpha_mode="reference_t"``.
 
 
 ``source_sink_n`` blind unmixing
@@ -133,6 +173,11 @@ cross-talk graph.
 
 The most relevant settings are:
 
+- ``channels``:
+  as above, selects which measured channels participate in the explicit
+  source-sink run.
+- ``implementation="source_sink_n"``:
+  sets which PICASSO-family workflow is used. Here, we use the source-sink-N generalization.
 - ``sink_channels``:
   defines which channels should be corrected as sinks.
 - ``neutral_channels``:
@@ -140,15 +185,38 @@ The most relevant settings are:
   participants in the inferred source-sink graph.
 - optional ``source_sink_matrix``:
   gives full manual control over the allowed source-to-sink relations.
+
+
+Many of the other parameters are shared with the MATLAB-N workflow and have the 
+same meaning. The main differences are that the source-sink-N workflow uses
+``alpha_max`` and ``mi_bins`` actively, whereas the MATLAB-N workflow does not. Here is
+a summary of all remaining parameters that are relevant for the source-sink-N workflow:
+
+- ``background_percentile``:
+  same role as above, but now used in the source-sink coefficient estimation.
+- ``preprocess_alpha_inputs``:
+  same shared preprocessing switch as above.
 - ``alpha_max``:
-  upper bound for source-to-sink coefficients. Larger values allow stronger
-  subtraction; smaller values keep the estimate conservative.
+  now actively used as the upper bound for source-to-sink coefficients.
 - ``mi_bins``:
-  histogram resolution for the mutual-information objective. Higher values can
-  be more expressive but also noisier.
+  now actively used as the histogram resolution for the mutual-information
+  objective.
+- ``max_iter``:
+  as above, controls the maximum number of update passes.
+- ``tolerance``:
+  as above, controls convergence of the iterative update sequence.
 - ``max_alpha_voxels``:
-  optional cap on the number of voxels used for coefficient estimation.
-  Lowering it speeds up estimation; raising it uses more data.
+  same optional voxel cap as above.
+- ``random_state``:
+  same random seed used for optional voxel subsampling.
+- ``clip_negative``:
+  same final clipping behavior as above.
+- ``output_dtype``:
+  same output dtype control as above.
+- ``verbose``:
+  same terminal verbosity control as above.
+- ``alpha_mode`` and ``alpha_reference_t``:
+  same time-axis controls as above for real multi-time-point stacks.
 
 For two-channel data this is often the easier PICASSO-family mode to reason
 about, because the user can state very directly which channel should be treated

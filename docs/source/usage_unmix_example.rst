@@ -101,7 +101,10 @@ The important knobs are:
   bleed-through behind.
 - ``alpha_mode="fixed"``:
   keeps that same alpha for the whole stack. This is mainly relevant when the
-  data have multiple time points.
+  data have multiple time points. You can also leave ``alpha_mode`` unset or
+  pass ``None`` here, because ``None`` is the default and the pipeline will
+  internally resolve to ``fixed`` whenever ``method="manual"`` is used together
+  with a user-provided ``alpha``.
 - optional ``source_channel`` and ``target_channel``:
   define the direction of correction. Changing them changes which channel is
   treated as the contaminating source and which one is corrected.
@@ -139,7 +142,9 @@ Important parameters:
   the selected source-dominant mask.
 - ``alpha_reference_t``:
   defines the reference time point used for alpha estimation. Changing it
-  matters when brightness or biology changes over time.
+  matters when brightness or biology changes over time. Only relevant when ``alpha_mode="reference_t"``
+  and the stack has multiple time points. For single-time-point stacks, the only valid reference 
+  time point is ``0`` or omit this argument entirely (the default is ``0`` anyways).
 - ``signal_percentile``:
   defines how strict the bright-source mask is. Higher values keep only the
   brightest source voxels and make the estimate more selective; lower values

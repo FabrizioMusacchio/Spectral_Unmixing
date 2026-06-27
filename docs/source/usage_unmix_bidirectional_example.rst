@@ -20,8 +20,7 @@ The recommended workflow is:
 2. run the cells from top to bottom,
 3. adapt the forward and reverse settings to your own dataset.
 
-The sections below follow the same order, but the emphasis is on the different
-bidirectional estimation strategies rather than on the cells themselves.
+The subsections below follow the same order as the script.
 
 
 Core idea
@@ -71,7 +70,7 @@ Bidirectional unmixing with fixed coefficients
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
    :start-after: # define the output path for the fixed bidirectional unmixing result:
-   :end-before: # %% REFERENCE-TIME-POINT MEAN-RATIO EXAMPLE
+   :end-before: # %% MEAN-RATIO EXAMPLE
 
 This is the bidirectional analogue of the standard fixed-alpha workflow.
 
@@ -100,19 +99,10 @@ Bidirectional ``mean_ratio``
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
    :start-after: # define the output path for the bidirectional reference-time-point mean-ratio result:
-   :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
-
-This method estimates one forward coefficient and one reverse coefficient from
-the same reference time point (``alpha_mode="reference_t"``) or from each time point 
-separately (``alpha_mode="per_t"``) – if your stack is $T>1$ (otherwise)
+   :end-before: # %% LINEAR-FIT EXAMPLE
 
 The most important settings are:
 
-- ``alpha_mode``: ``reference_t`` or ``per_t``. The former estimates one alpha from the 
-  reference time point; the latter estimates one alpha per time point.
-- ``alpha_reference_t``:
-  defines the reference time point from which both directional coefficients are
-  estimated. Only relevant when ``alpha_mode="reference_t"``.
 - ``signal_percentile``:
   controls how selective the forward-direction source mask is. Higher values
   keep only brighter source voxels; lower values include more voxels.
@@ -127,6 +117,32 @@ This is usually the easiest automatic bidirectional mode to start with because
 all reverse-direction settings inherit the forward values unless you override
 them explicitly.
 
+.. note::
+
+  The bidirectional workflow generally accepts a different estimation method. 
+  If you want to use a different method in the reverse direction, you can set
+  ``method_reverse`` to one of the supported methods. If it is left at ``None`` 
+  or omitted, the reverse direction will inherit the forward method. The same inheritance
+  applies to other parameters as well.
+
+The example script shown here uses a stack with only one time point, so
+``alpha_mode`` and ``alpha_reference_t`` are left commented out in the code. For 
+real multi-time-point stacks, you would usually
+set ``alpha_mode="reference_t"`` explicitly when one shared coefficient per
+direction should be estimated from a chosen reference time point, or
+``alpha_mode="per_t"`` when one forward and one reverse coefficient should be
+estimated separately for each time point. In these cases, additional relevant parameters 
+are:
+
+- ``alpha_mode``: ``reference_t`` or ``per_t`` for multi-time-point stacks.
+  The former estimates one alpha from the reference time point; the latter
+  estimates one alpha per time point. In the present ``T=1`` example, these
+  arguments are commented out because the default ``reference_t`` behavior with
+  ``t=0`` is already sufficient.
+- ``alpha_reference_t``:
+  defines the reference time point from which both directional coefficients are
+  estimated. Only relevant when ``alpha_mode="reference_t"``.
+
 
 Bidirectional ``linear_fit``
 ----------------------------
@@ -137,7 +153,7 @@ Bidirectional ``linear_fit``
    :end-before: # %% REFERENCE-TIME-POINT CORR-MIN EXAMPLE
 
 This variant estimates forward and reverse coefficients with masked least
-squares.
+squares. 
 
 The most relevant settings are:
 
@@ -161,7 +177,8 @@ Bidirectional ``corr_min``
    :end-before: # %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
 
 Here the forward and reverse coefficients are chosen by minimizing residual
-correlation after correction.
+correlation after correction. 
+
 
 The settings most worth tuning are:
 
@@ -186,7 +203,7 @@ Bidirectional ``mi_min``
    :end-before: # %% END
 
 This method uses the two-channel PICASSO-like mutual-information criterion in
-both directions.
+both directions. 
 
 The key settings are:
 

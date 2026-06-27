@@ -54,11 +54,13 @@ Main configuration dimensions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``alpha_mode`` controls **where** alpha is obtained from in multi-time-point stacks:
-  ``fixed``, ``reference_t``, or ``per_t``.
+  ``fixed``, ``reference_t``, or ``per_t``. If ``alpha_mode=None`` or the
+  argument is omitted, the pipeline resolves the effective mode automatically.
 
   - ``fixed`` uses a user-provided scalar ``alpha`` for the full stack. This is relevant for both single-time-point and multi-time-point stacks whenever one manually chosen coefficient should be applied everywhere. It is the natural companion of ``method="manual"``.
-  - ``reference_t`` estimates one scalar ``alpha`` from a chosen reference time point, using all z-slices at that time point. Relevant for multi-time-point stacks and for any estimation method.
-  - ``per_t`` estimates one ``alpha`` value per time point, again using all z-slices for each time point. Relevant for multi-time-point stacks and for any estimation method.
+  - ``reference_t`` estimates one scalar ``alpha`` from a chosen reference time point, using all z-slices at that time point. This also works naturally for ``T=1`` stacks, where the only valid reference time point is ``0``.
+  - ``per_t`` estimates one ``alpha`` value per time point, again using all z-slices for each time point. For ``T=1`` this simply produces one estimated value.
+  - ``None`` means: if ``alpha`` is provided, the pipeline behaves as ``fixed``; if ``alpha`` is missing and ``method="manual"``, a clear error is raised; otherwise the pipeline defaults to ``reference_t`` with ``alpha_reference_t=0``.
 
 - ``method`` controls **how** alpha is estimated:
   ``manual``, ``mean_ratio``, ``linear_fit``, ``corr_min``, or ``mi_min``.

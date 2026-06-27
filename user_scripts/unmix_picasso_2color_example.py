@@ -27,7 +27,6 @@ INPUT_NAME = INPUT_PATH.stem
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
 # %% INSPECT PREPARED STACKS IN NAPARI
 # inspect the stack in Napari:
 show_all_channels_in_napari(INPUT_PATH, layer_prefix="2-color simulation")
@@ -41,8 +40,6 @@ Method summary:
 - each iteration estimates pairwise subtraction coefficients and applies the
   same MATLAB-style incremental update logic used by the original 3-channel
   code
-- ``alpha_mode="reference_t"`` means that the update sequence is estimated once
-  from the chosen reference time point and then applied to the full stack
 
 What can be adjusted:
 
@@ -70,18 +67,24 @@ What can be adjusted:
   Two-dimensional binning factor applied before mutual-information estimation.
 - ``alpha_clip``:
   Hard bound applied to each pairwise coefficient before update.
+- ``alpha_mode="reference_t"`` can be set in case of, e.g., multi-time point stacks. 
+  This mode means that the update sequence is estimated once
+  from the chosen reference time point and then applied to the full stack
+- ``alpha_reference_t``:
+  Reference time point used for the update sequence. Only relevant for 
+  multi-time-point stacks and ``alpha_mode="reference_t"``; default: 0.
 """
 # define the output path for the PICASSO MATLAB-N unmixing result:
-OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / f"{INPUT_NAME}_picasso_matlab_n_reference_t0.tif"
+OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / f"{INPUT_NAME}_picasso_matlab_n.tif"
 
 picasso_matlab_n_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_N,
     channels=[0, 1],
-    # method="picasso",  # default
+    # method="picasso",  # default;
     implementation="matlab_n",  # "matlab_3c" or "matlab_n" or "source_sink_n"
-    alpha_mode="reference_t",
-    alpha_reference_t=0,
+    #alpha_mode="reference_t",
+    #alpha_reference_t=0,
     background_percentile=1.0,
     # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
@@ -143,7 +146,7 @@ For this specific 2-channel example we use the targeted configuration in which
 """
 
 # define the output path for the PICASSO source-sink-N unmixing result:
-OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / f"{INPUT_NAME}_picasso_source_sink_reference_t0.tif"
+OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / f"{INPUT_NAME}_picasso_source_sink.tif"
 
 sink_channels = [1]
 neutral_channels = []
@@ -154,8 +157,8 @@ picasso_source_sink_output = unmix_picasso(
     channels=[0, 1],
     # method="picasso",  # default
     implementation="source_sink_n",
-    alpha_mode="reference_t",
-    alpha_reference_t=0,
+    # alpha_mode="reference_t",
+    # alpha_reference_t=0,
     sink_channels=sink_channels,
     neutral_channels=neutral_channels,
     # source_sink_matrix=[[1, 0], [-1, 1]],

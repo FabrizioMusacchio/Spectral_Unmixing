@@ -1,5 +1,5 @@
 Full 3D+t unmixing example
-=========================
+==========================
 
 This tutorial documents the interactive script
 ``user_scripts/unmix_full_TZCYX_synthetic_example.py``. It extends the basic
@@ -83,6 +83,10 @@ The most relevant parameters are:
 - ``alpha``:
   sets the subtraction strength. Larger values remove more source contribution;
   smaller values leave more residual bleed-through.
+- ``alpha_mode``:
+  can be set explicitly to ``fixed``, but this is not required. The default is
+  ``None``. When ``alpha_mode=None`` and a user-provided ``alpha`` is present,
+  the pipeline internally resolves to ``fixed``.
 - optional ``source_channel`` and ``target_channel``:
   define the direction of correction through the full ``TZCYX`` stack.
 - optional ``clip_negative``:
@@ -100,20 +104,29 @@ proper control measurement or an empirical estimate from a similar dataset.
    :start-after: # define the output path for the reference-time-point unmixing result:
    :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 
-This is the simplest automatic estimator on a given dataset. It computes the ratio of mean 
+This is the simplest automatic estimator on a given dataset. It computes the ratio of mean
 intensities inside a bright-source mask.
 
-In this script the method is demonstrated with ``alpha_mode="reference_t"``, 
-where one alpha is estimated from the selected reference time point, using all z-slices 
-belonging to that time point, and then applied to all time points. The same ``mean_ratio`` 
-estimator can also be combined with ``alpha_mode="per_t"`` when you want one separately 
-estimated coefficient per time point.
+If ``alpha_mode`` is left unset or explicitly set to ``None``, the pipeline
+does not stay in a hidden fixed mode. Instead, because no manual ``alpha`` is
+provided here and ``method!="manual"``, the workflow automatically falls back
+to ``alpha_mode="reference_t"`` with ``alpha_reference_t=0``. That default
+works for both ``T=1`` and ``T>1`` stacks.
+
+In this script the method is demonstrated explicitly with
+``alpha_mode="reference_t"``, where one alpha is estimated from the selected
+reference time point, using all z-slices belonging to that time point, and
+then applied to all time points. The same ``mean_ratio`` estimator can also be
+combined with ``alpha_mode="per_t"`` when you want one separately estimated
+coefficient per time point.
 
 The parameters that matter most are:
 
 - ``alpha_mode``: 
-  ``reference_t`` or ``per_t``. The former estimates one alpha from the reference time point; 
-  the latter estimates one alpha per time point.
+  ``reference_t`` or ``per_t``. The former estimates one alpha from the reference time point;
+  the latter estimates one alpha per time point. If this argument is omitted or set to ``None``,
+  the pipeline defaults to ``reference_t`` with ``alpha_reference_t=0`` for non-manual methods
+  such as the present ``mean_ratio`` example.
 - ``alpha_reference_t``:
   defines the reference time point used for alpha estimation using ``alpha_mode="reference_t"``.
   Changing it matters when the stack changes in brightness, content, or other properties 
@@ -133,6 +146,16 @@ The parameters that matter most are:
   controls whether the percentile-based preprocessing is applied before
   estimating alpha. Turning it off makes the estimate more directly dependent
   on the raw stack intensities.
+
+.. note::
+
+   If you explicitly set ``alpha_mode="reference_t"`` on a stack that
+   effectively has only one time point (``T=1``), the pipeline simply uses
+   ``t=0`` as the only valid reference time point. If you explicitly set
+   ``alpha_mode="per_t"`` on a ``T=1`` stack, the pipeline does not fail
+   either: it just estimates one alpha value for that single time point. In
+   other words, both modes remain valid for ``T=1`` data; they just collapse to
+   the only available time index.
 
 
 ``linear_fit`` on a full ``TZCYX`` stack
@@ -220,4 +243,3 @@ estimate at every time point.
 Compared with the simpler estimators, this is often the slowest option, but it
 can be useful when residual dependence remains visible after simpler
 corrections.
-
