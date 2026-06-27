@@ -88,7 +88,7 @@ The corresponding cell consists of three main steps:
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
    :start-after: # define the output path for the fixed-alpha unmixing result:
-   :end-before: # %% ALPHA EXAMPLE (mean-ratio)
+   :end-before: # %% MEAN-RATIO EXAMPLE
 
 The important knobs are:
 

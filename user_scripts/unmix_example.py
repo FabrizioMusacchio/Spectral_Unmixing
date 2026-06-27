@@ -76,7 +76,7 @@ show_unmixed_channels_in_napari(
     layer_prefix="Fixed alpha",
     source_colormap="cyan",
     target_colormap="yellow")
-# %% ALPHA EXAMPLE (mean-ratio)
+# %% MEAN-RATIO EXAMPLE
 """Estimate one alpha from an optional reference time point using the ``mean_ratio`` rule.
 
 Method summary:
@@ -118,8 +118,8 @@ reference_output = unmix(
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
     method="mean_ratio",
-    alpha_mode="reference_t",
-    alpha_reference_t=0,
+    #alpha_mode="reference_t",
+    #alpha_reference_t=0,
     signal_percentile=99.0,
     background_percentile=1.0,
     # target_low_percentile=95.0,

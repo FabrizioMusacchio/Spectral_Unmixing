@@ -86,7 +86,7 @@ show_unmixed_channels_in_napari(
     layer_prefix="Bidirectional fixed",
     source_colormap="cyan",
     target_colormap="yellow")
-# %% REFERENCE-TIME-POINT MEAN-RATIO EXAMPLE
+# %% MEAN-RATIO EXAMPLE
 """Estimate one forward and one reverse alpha from the same reference time point.
 
 Method summary:
@@ -121,9 +121,9 @@ reference_output = unmix(
     bidirectional=True,
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
-    alpha_mode="reference_t",
+    #alpha_mode="reference_t",
+    #alpha_reference_t=0,
     method="mean_ratio",
-    alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
     # target_low_percentile=95.0,
@@ -143,7 +143,7 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Bidirectional reference mean_ratio")
-# %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
+# %% LINEAR-FIT EXAMPLE
 """Estimate forward and reverse coefficients with masked least-squares fitting.
 
 Method summary:
@@ -172,9 +172,9 @@ reference_linear_fit_output = unmix(
     bidirectional=True,
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
-    alpha_mode="reference_t",
     method="linear_fit",
-    alpha_reference_t=0,
+    alpha_mode="reference_t",
+    #alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
     # target_low_percentile=95.0,

@@ -27,7 +27,7 @@ bidirectional estimation strategies rather than on the cells themselves.
 Core idea
 ---------
 
-In bidirectional mode, the package models:
+In bidirectional mode, our package models:
 
 .. math::
 
@@ -60,7 +60,7 @@ Define input and output paths
    :start-after: # define the input path to the example dataset:
    :end-before: # %% FIXED BIDIRECTIONAL ALPHA EXAMPLE
 
-As in the simpler examples, the main thing you would change here is
+As in the other examples, the main thing you would change here is
 ``INPUT_PATH``. The script automatically writes results into an ``unmixed``
 subfolder next to the input file.
 
@@ -103,13 +103,16 @@ Bidirectional ``mean_ratio``
    :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 
 This method estimates one forward coefficient and one reverse coefficient from
-the same reference time point.
+the same reference time point (``alpha_mode="reference_t"``) or from each time point 
+separately (``alpha_mode="per_t"``) – if your stack is $T>1$ (otherwise)
 
 The most important settings are:
 
+- ``alpha_mode``: ``reference_t`` or ``per_t``. The former estimates one alpha from the 
+  reference time point; the latter estimates one alpha per time point.
 - ``alpha_reference_t``:
   defines the reference time point from which both directional coefficients are
-  estimated.
+  estimated. Only relevant when ``alpha_mode="reference_t"``.
 - ``signal_percentile``:
   controls how selective the forward-direction source mask is. Higher values
   keep only brighter source voxels; lower values include more voxels.
