@@ -10,6 +10,14 @@ It is the most direct comparison point between:
 - the explicit N-channel generalization,
 - and the source-sink formulation.
 
+The PICASSO-family methods documented here are motivated by the original
+PICASSO paper:
+
+   Seo, J., Sim, Y., Kim, J. et al. *PICASSO allows ultra-multiplexed
+   fluorescence imaging of spatially overlapping proteins without reference
+   spectra measurements*. Nature Communications 13, 2475 (2022).
+   https://doi.org/10.1038/s41467-022-30168-z
+
 
 Cell 1: Imports, paths, and first inspection
 --------------------------------------------

@@ -434,6 +434,14 @@ The package additionally provides a separate function:
 from spectral_unmixing import unmix_picasso
 ```
 
+The PICASSO-family workflows implemented here are motivated by the original
+PICASSO publication:
+
+> Seo, J., Sim, Y., Kim, J. et al. *PICASSO allows ultra-multiplexed
+> fluorescence imaging of spatially overlapping proteins without reference
+> spectra measurements*. Nature Communications 13, 2475 (2022).
+> https://doi.org/10.1038/s41467-022-30168-z
+
 This function is separate from the simpler two-channel `unmix(...)` workflow
 and is meant for blind multi-channel unmixing under the assumption that:
 

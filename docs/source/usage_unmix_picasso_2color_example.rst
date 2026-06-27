@@ -8,6 +8,14 @@ Even for two-channel data, ``unmix_picasso(...)`` can be useful when you want
 to compare a blind-unmixing workflow against the standard directed
 ``unmix(...)`` approach.
 
+The PICASSO-family blind-unmixing logic used here is motivated by the original
+PICASSO paper:
+
+   Seo, J., Sim, Y., Kim, J. et al. *PICASSO allows ultra-multiplexed
+   fluorescence imaging of spatially overlapping proteins without reference
+   spectra measurements*. Nature Communications 13, 2475 (2022).
+   https://doi.org/10.1038/s41467-022-30168-z
+
 
 Cell 1: Imports and path setup
 ------------------------------

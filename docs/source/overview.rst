@@ -250,9 +250,16 @@ Blind unmixing in the PICASSO family
 ------------------------------------
 
 In addition to direct linear correction, the package provides
-``unmix_picasso(...)`` for PICASSO-family blind unmixing. In this context,
-"blind" means that mixing relations are estimated from the measured data rather
-than supplied as fixed reference spectra.
+``unmix_picasso(...)`` for PICASSO-family blind unmixing, motivated by the original
+PICASSO publication:
+
+   Seo, J., Sim, Y., Kim, J. et al. *PICASSO allows ultra-multiplexed
+   fluorescence imaging of spatially overlapping proteins without reference
+   spectra measurements*. Nature Communications 13, 2475 (2022).
+   https://doi.org/10.1038/s41467-022-30168-z
+
+In this context, "blind" means that mixing relations are estimated from 
+the measured data rather than supplied as fixed reference spectra.
 
 Three implementation paths are available:
 
