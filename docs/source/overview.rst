@@ -89,7 +89,8 @@ multi-dimensional microscopy stacks. It supports:
 Stack model and file formats
 ----------------------------
 
-The package assumes that OMIO returns stacks in canonical ``TZCYX`` order:
+The package uses `OMIO <https://omio.readthedocs.io/en/latest/>`_ to read
+ and write image stacks, which are returned in canonical OME-order ``TZCYX``:
 
 - ``T``: time
 - ``Z``: z-plane
@@ -107,7 +108,7 @@ This means the workflows support:
 Input is intentionally format-agnostic on the package side. Any microscopy file
 format currently supported by `OMIO <https://omio.readthedocs.io/en/latest/>`_
 can be used as input. Output stacks are written back through OMIO, typically as
-TIFF or OME-TIFF.
+OME-TIFF.
 
 
 Spectral unmixing model

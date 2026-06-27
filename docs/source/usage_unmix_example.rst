@@ -42,7 +42,7 @@ examples.
 
 What a user typically changes here:
 
-- ``INPUT_PATH`` to point to a new OMIO-readable microscopy stack,
+- ``INPUT_PATH`` to point to a new `OMIO <https://omio.readthedocs.io/en/latest/>`_-readable microscopy stack,
 - the output directory or naming scheme,
 - and, if desired, the source/target channel assumptions in later cells.
 

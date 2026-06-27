@@ -1,31 +1,31 @@
 # How to Contribute
 
-Thank you for your interest in contributing to OMIO. This project welcomes improvements to the code, documentation, tests, and overall usability. The goal of OMIO is to provide a robust, transparent, and reproducible interface for reading, standardizing, and converting microscopy image data, with a strong focus on OME-compatible metadata handling and downstream interoperability.
+Thank you for your interest in contributing to Spectral Unmixing. This project welcomes improvements to the code, documentation, tests, and overall usability. The goal of Spectral Unmixing is to provide a robust, transparent, and reproducible interface for reading, standardizing, and converting microscopy image data, with a strong focus on OME-compatible metadata handling and downstream interoperability.
 
 ## Before you start
 Please check the GitHub issue tracker to see whether your idea, bug report, or enhancement has already been discussed:
 
-[https://github.com/FabrizioMusacchio/omio/issues](https://github.com/FabrizioMusacchio/omio/issues)
+[https://github.com/FabrizioMusacchio/spectral_unmixing/issues](https://github.com/FabrizioMusacchio/spectral_unmixing/issues)
 
 * If a related issue exists, comment there to indicate your interest or to add relevant technical details.
 * If no issue exists, open a new one with a short description of:
   * what you would like to change or add
-  * why it is useful in the context of OMIO
+  * why it is useful in the context of Spectral Unmixing
   * any thoughts on implementation, edge cases, or testing
 
 For small fixes such as typos or minor documentation improvements, opening a pull request directly is fine.
 
 ## Development environment
-OMIO requires **Python 3.12 or newer** and builds on standard scientific Python packages commonly used in microscopy workflows, including NumPy, tifffile, zarr, and related libraries for metadata handling.
+Spectral Unmixing requires **Python 3.12 or newer** and builds on standard scientific Python packages commonly used in microscopy workflows, including NumPy, tifffile, zarr, and related libraries for metadata handling.
 
 A typical development setup using `conda` looks like this:
 
 ```sh
-git clone https://github.com/FabrizioMusacchio/omio.git
-cd omio
+git clone https://github.com/FabrizioMusacchio/spectral_unmixing.git
+cd spectral_unmixing
 
-conda create -n omio-dev -c conda-forge python=3.12
-conda activate omio-dev
+conda create -n spectral-unmixing-dev -c conda-forge python=3.12
+conda activate spectral-unmixing-dev
 
 pip install -e .
 ````
@@ -73,7 +73,7 @@ Example:
 `fix: handle paginated TIFF files with mixed photometric interpretations`
 
 ## Testing
-OMIO uses `pytest` for automated testing. To run the full test suite locally:
+Spectral Unmixing uses `pytest` for automated testing. To run the full test suite locally:
 
 ```sh
 pytest
@@ -85,7 +85,7 @@ Tests should remain small and self-contained. Large microscopy datasets should n
 
 
 ## Notes for JOSS-related contributions  *(new)*
-OMIO is developed with the requirements of the *Journal of Open Source Software (JOSS)* in mind. Contributions should therefore respect the following principles, which are routinely evaluated during JOSS review:
+Spectral Unmixing is developed with the requirements of the *Journal of Open Source Software (JOSS)* in mind. Contributions should therefore respect the following principles, which are routinely evaluated during JOSS review:
 
 * **Reproducibility**
   Behavior should be deterministic given identical inputs and parameters. Any non-deterministic behavior must be explicitly documented.
@@ -98,20 +98,20 @@ OMIO is developed with the requirements of the *Journal of Open Source Software 
 * **Explicit limitations**
   Known limitations or unsupported cases should be documented rather than implicitly ignored.
 
-Following these guidelines helps ensure that OMIO remains reviewable, maintainable, and suitable for long-term archival publication.
+Following these guidelines helps ensure that Spectral Unmixing remains reviewable, maintainable, and suitable for long-term archival publication.
 
 
 ## OME policy decisions and design constraints
-OMIO makes a number of explicit policy decisions when reading and converting microscopy data to OME-compatible representations. These decisions are intentional and are meant to favor robustness and downstream interoperability over implicit heuristics.
+Spectral Unmixing makes a number of explicit policy decisions when reading and converting microscopy data to OME-compatible representations. These decisions are intentional and are meant to favor robustness and downstream interoperability over implicit heuristics.
 
 Key principles include:
 
 * **Canonical axis normalization**
-  OMIO internally normalizes image data to the canonical OME axis order `TZCYX`. Missing axes may be inserted with length 1, but ambiguous or non-OME axis labels are not silently reinterpreted.
+  Spectral Unmixing internally normalizes image data to the canonical OME axis order `TZCYX`. Missing axes may be inserted with length 1, but ambiguous or non-OME axis labels are not silently reinterpreted.
 * **Single-series default behavior**
-  For multi-series TIFF files, OMIO currently processes only the first series by default. This behavior is recorded in the output metadata and is considered a policy decision rather than a technical limitation.
+  For multi-series TIFF files, Spectral Unmixing currently processes only the first series by default. This behavior is recorded in the output metadata and is considered a policy decision rather than a technical limitation.
 * **Metadata preservation over inference**
-  Existing OME-XML and ImageJ metadata are preserved wherever possible. OMIO avoids inventing or guessing metadata fields that are not present in the source file.
+  Existing OME-XML and ImageJ metadata are preserved wherever possible. Spectral Unmixing avoids inventing or guessing metadata fields that are not present in the source file.
 * **Explicit handling of unsupported metadata**
   Metadata fields that are detected but not yet supported are reported explicitly rather than silently ignored. This is intended to make limitations visible and reproducible.
 
@@ -121,25 +121,25 @@ Contributions that alter or extend these policy decisions should be discussed in
 ## Reporting bugs
 Please report bugs via the GitHub issue tracker:
 
-[https://github.com/FabrizioMusacchio/omio/issues](https://github.com/FabrizioMusacchio/omio/issues)
+[https://github.com/FabrizioMusacchio/spectral_unmixing/issues](https://github.com/FabrizioMusacchio/spectral_unmixing/issues)
 
 Include the following information if possible:
 
-* OMIO version (`pip show omio`)
+* Spectral Unmixing version (`pip show spectral-unmixing`)
 * Python version
 * Operating system
 * Minimal steps or code snippet to reproduce the issue
 * If applicable, a small synthetic or cropped example file illustrating the problem
 
 ## Requests for new file formats and reader extensions
-In addition to direct code contributions via pull requests, users are encouraged to request support for additional microscopy file formats or format variants that are not yet covered by OMIO.
+In addition to direct code contributions via pull requests, users are encouraged to request support for additional microscopy file formats or format variants that are not yet covered by Spectral Unmixing.
 
 Such requests should be submitted via the GitHub issue tracker and include:
 
 * a clear description of the file format or variant in question
-* how the file differs from formats already supported by OMIO
+* how the file differs from formats already supported by Spectral Unmixing
 * which part of the reader pipeline fails or behaves unexpectedly
-* if available, relevant OMIO output such as warnings, parsed metadata, or axis interpretations
+* if available, relevant Spectral Unmixing output such as warnings, parsed metadata, or axis interpretations
 
 Support for new formats or variants can only be added if a **representative example file** is made available. This is essential to ensure correct parsing, reproducibility, and long-term test coverage.
 
@@ -148,7 +148,7 @@ Example files can be shared via:
 * publicly accessible repositories or archives
 * other means that allow the developers to locally inspect and test the data
 
-Without access to an example file, reader extensions are generally not feasible, as OMIO deliberately avoids speculative or heuristic-based format inference.
+Without access to an example file, reader extensions are generally not feasible, as Spectral Unmixing deliberately avoids speculative or heuristic-based format inference.
 
 If sharing full datasets is not possible, users are encouraged to provide the smallest possible cropped or anonymized file that still reproduces the issue.
 
