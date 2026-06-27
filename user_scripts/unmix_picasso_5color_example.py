@@ -20,7 +20,7 @@ from spectral_unmixing.viewer import show_all_channels_in_napari
 In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be
 automatically generated in a subfolder of the input file's parent directory.
 """
-
+# define the input path to the example dataset:
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "5_color_unmixing_simulation.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -67,17 +67,18 @@ What can be adjusted:
 - ``alpha_clip``:
   Hard bound applied to each pairwise coefficient before update.
 """
-
+# define the output path for the PICASSO MATLAB-N unmixing result:
 OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "5_color_unmixing_simulation_picasso_matlab_n_reference_t0.tif"
-
 picasso_matlab_n_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_N,
     channels=[0, 1, 2, 3, 4],
-    implementation="matlab_n", # "matlab_3c" or "matlab_n" or "source_sink_n"
+    # method="picasso",  # default
+    implementation="matlab_n",  # "matlab_3c" or "matlab_n" or "source_sink_n"
     alpha_mode="reference_t",
     alpha_reference_t=0,
     background_percentile=1.0,
+    # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
@@ -87,10 +88,13 @@ picasso_matlab_n_output = unmix_picasso(
     qn=100,
     pixel_bin_size=16,
     alpha_clip=0.5,
+    # negativity_threshold=0.0009,
+    # clip_every_n_iterations=50,
     random_state=42,
     clip_negative=True,
     output_dtype="float32",
-    verbose=True)
+    verbose=True,
+)
 print(picasso_matlab_n_output)
 print(report_path_from_output_path(picasso_matlab_n_output).read_text(encoding="utf-8"))
 show_all_channels_in_napari(
@@ -143,6 +147,7 @@ targeted run, simply restrict ``sink_channels`` or add channels to
 ``neutral_channels``.
 """
 
+# define the output path for the PICASSO source-sink-N unmixing result:
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "5_color_unmixing_simulation_picasso_source_sink_reference_t0.tif"
 
 sink_channels = [0, 1, 2, 3, 4]
@@ -157,12 +162,21 @@ picasso_source_sink_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_SOURCE_SINK,
     channels=[0, 1, 2, 3, 4],
+    # method="picasso",  # default
     implementation="source_sink_n",
     alpha_mode="reference_t",
     alpha_reference_t=0,
     sink_channels=sink_channels,
     neutral_channels=neutral_channels,
+    # source_sink_matrix=[
+    #     [1, -1, 0, 0, 0],
+    #     [0, 1, 0, -1, 0],
+    #     [0, 0, 1, 0, 0],
+    #     [0, -1, 0, 1, 0],
+    #     [0, 0, 0, 0, 1],
+    # ],
     background_percentile=1.0,
+    # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
@@ -171,7 +185,8 @@ picasso_source_sink_output = unmix_picasso(
     random_state=42,
     clip_negative=True,
     output_dtype="float32",
-    verbose=True)
+    verbose=True,
+)
 print(picasso_source_sink_output)
 print(report_path_from_output_path(picasso_source_sink_output).read_text(encoding="utf-8"))
 show_all_channels_in_napari(picasso_source_sink_output, layer_prefix="PICASSO source-sink-N unmixed 5-color simulation")

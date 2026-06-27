@@ -1,11 +1,27 @@
-Tutorial: ``unmix_bidirectional_example.py``
-============================================
+Bidirectional unmixing example
+==============================
 
 This tutorial documents the interactive script
 ``user_scripts/unmix_bidirectional_example.py``.
 
 It covers the case in which bleed-through can occur in both directions between
 two channels, so a simple one-way subtraction is no longer sufficient.
+
+
+How to use this tutorial
+------------------------
+
+The script is designed for cell-based execution in an interactive Python
+environment.
+
+The recommended workflow is:
+
+1. open ``user_scripts/unmix_bidirectional_example.py``,
+2. run the cells from top to bottom,
+3. adapt the forward and reverse settings to your own dataset.
+
+The sections below follow the same order, but the emphasis is on the different
+bidirectional estimation strategies rather than on the cells themselves.
 
 
 Core idea
@@ -21,11 +37,14 @@ In bidirectional mode, the package models:
 
    I_1 = S_1 + \alpha_{01} S_0
 
-and solves the corresponding 2x2 linear system jointly.
+and solves the corresponding :math:`2 \times 2` linear system jointly.
+
+This is preferable to sequential subtraction, because sequential subtraction
+would depend on the order in which the two corrections are applied.
 
 
-Cell 1: Imports
----------------
+Imports
+-------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
@@ -33,91 +52,141 @@ Cell 1: Imports
    :end-before: # %% INPUT AND OUTPUT PATHS
 
 
-Cell 2: Input and output paths
-------------------------------
+Define input and output paths
+-----------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% INPUT AND OUTPUT PATHS
+   :start-after: # define the input path to the example dataset:
    :end-before: # %% FIXED BIDIRECTIONAL ALPHA EXAMPLE
 
-This cell defines the example dataset and the output paths for each
-bidirectional variant.
+As in the simpler examples, the main thing you would change here is
+``INPUT_PATH``. The script automatically writes results into an ``unmixed``
+subfolder next to the input file.
 
 
-Cell 3: Fixed bidirectional coefficients
-----------------------------------------
+Bidirectional unmixing with fixed coefficients
+----------------------------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% FIXED BIDIRECTIONAL ALPHA EXAMPLE
+   :start-after: # define the output path for the fixed bidirectional unmixing result:
    :end-before: # %% REFERENCE-TIME-POINT MEAN-RATIO EXAMPLE
 
-This cell is the most direct bidirectional analogue of the standard fixed-alpha
-workflow.
+This is the bidirectional analogue of the standard fixed-alpha workflow.
 
-Important parameters:
+The main parameters are:
 
 - ``bidirectional=True``
-- ``alpha``:
-  forward coefficient
-- ``alpha_reverse``:
-  reverse coefficient
+- ``alpha`` for the forward direction
+- ``alpha_reverse`` for the reverse direction
+- optional ``source_channel`` and ``target_channel``
 
-If ``alpha_reverse`` is omitted, the package can reuse the forward alpha, but
-that should only be done when you have a reason to believe the two directions
-are comparable.
+This is the scientifically strongest option when both directional coefficients
+come from proper single-label controls.
 
 
-Cell 4: Reference-time-point ``mean_ratio``
--------------------------------------------
+Bidirectional ``mean_ratio``
+----------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% REFERENCE-TIME-POINT MEAN-RATIO EXAMPLE
+   :start-after: # define the output path for the bidirectional reference-time-point mean-ratio result:
    :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 
-This cell estimates one forward and one reverse coefficient from the same
-reference time point.
+This method estimates one forward coefficient and one reverse coefficient from
+the same reference time point.
+
+The most important settings are:
+
+- ``alpha_reference_t``
+- ``signal_percentile``
+- ``background_percentile``
+- optional ``target_low_percentile``
+- the commented ``*_reverse`` parameters if the reverse direction should use a
+  different mask or method
+
+This is usually the easiest automatic bidirectional mode to start with because
+all reverse-direction settings inherit the forward values unless you override
+them explicitly.
 
 
-Cell 5: Reference-time-point ``linear_fit``
--------------------------------------------
+Bidirectional ``linear_fit``
+----------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
+   :start-after: # define the output path for the bidirectional reference-time-point linear-fit result:
    :end-before: # %% REFERENCE-TIME-POINT CORR-MIN EXAMPLE
 
 This variant estimates forward and reverse coefficients with masked least
 squares.
 
+The most relevant settings are:
 
-Cell 6: Reference-time-point ``corr_min``
------------------------------------------
+- ``signal_percentile``
+- ``background_percentile``
+- optional ``target_low_percentile``
+- optional ``method_reverse``
+- optional reverse-direction mask parameters such as
+  ``signal_percentile_reverse``
+
+This is a good choice when you want a fit-based estimate in both directions but
+still want to retain the same reference-time-point logic.
+
+
+Bidirectional ``corr_min``
+--------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% REFERENCE-TIME-POINT CORR-MIN EXAMPLE
+   :start-after: # define the output path for the bidirectional reference-time-point corr-min result:
    :end-before: # %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
 
+Here the forward and reverse coefficients are chosen by minimizing residual
+correlation after correction.
 
-Cell 7: Reference-time-point ``mi_min``
----------------------------------------
+The settings most worth tuning are:
+
+- ``alpha_max``
+- optional ``alpha_max_reverse``
+- ``signal_percentile``
+- ``background_percentile``
+- optional ``method_reverse``
+
+This can be more aggressive than ratio- or fit-based estimation, especially
+when the two channels are themselves biologically correlated.
+
+
+Bidirectional ``mi_min``
+------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_bidirectional_example.py
    :language: python
-   :start-after: # %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
+   :start-after: # define the output path for the bidirectional reference-time-point mi-min result:
    :end-before: # %% END
 
-This cell uses the PICASSO-like two-channel mutual-information criterion in
+This method uses the two-channel PICASSO-like mutual-information criterion in
 both directions.
 
+The key settings are:
 
-What to tune
-------------
+- ``mi_bins``
+- optional ``mi_bins_reverse``
+- ``alpha_max``
+- optional ``alpha_max_reverse``
+- mask and preprocessing settings for each direction
 
-The most important bidirectional controls are:
+This is the most flexible of the scalar bidirectional estimators, but also the
+slowest and potentially the most aggressive if the channels are biologically
+linked.
+
+
+What to tune most often
+-----------------------
+
+For real bidirectional datasets, the most important additional controls beyond
+the standard one-way workflow are:
 
 - ``alpha_reverse``
 - ``method_reverse``
@@ -128,4 +197,6 @@ The most important bidirectional controls are:
 - ``mi_bins_reverse``
 
 Any reverse parameter left at ``None`` falls back to the corresponding forward
-setting.
+setting. That inheritance model is convenient for a first pass, but for real
+data it is often worth checking whether the reverse direction deserves its own
+masking or optimization settings.

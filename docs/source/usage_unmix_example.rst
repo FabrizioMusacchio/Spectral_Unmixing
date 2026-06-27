@@ -88,7 +88,7 @@ The corresponding cell consists of three main steps:
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
    :start-after: # define the output path for the fixed-alpha unmixing result:
-   :end-before: # %% REFERENCE-TIME-POINT ALPHA EXAMPLE (mean-ratio)
+   :end-before: # %% ALPHA EXAMPLE (mean-ratio)
 
 The important knobs are:
 
@@ -97,23 +97,25 @@ The important knobs are:
   manually supplied bleed-through coefficient
 - ``alpha_mode="fixed"`` (relevant only for multi-time-point stacks)
 - optional ``source_channel`` and ``target_channel`` to define the directed correction; default is 0 and 1, respectively, which means that channel 1 is corrected for bleed-through from channel 0.
+- optional ``clip_negative``, ``output_dtype``, and ``verbose`` if you want to control clipping, output precision, or terminal reporting explicitly
 - optional visualization colormaps for napari
 
 
 ``mean_ratio`` method
 ---------------------
 
-By changing the method to ``mean_ratio``, the workflow estimates alpha from a selected reference 
-time point (in case of a multi-time-point stack; otherwise single-time-point workflow is applied) 
-and applies it to the full stack. Alpha is computed as the mean target intensity divided
-by the mean source intensity within a mask that is defined by the ``signal_percentile`` and
- ``background_percentile`` parameters:
+By changing the method to ``mean_ratio``, the workflow estimates alpha from a
+selected reference time point, in case of a multi-time-point stack, and applies
+it to the full stack. For single-time-point data, the same estimator is applied
+without a time-selection step. Alpha is computed as the mean target intensity
+divided by the mean source intensity within a mask that is defined by the
+``signal_percentile`` and ``background_percentile`` parameters:
 
 
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
    :start-after: # define the output path for the reference-time-point unmixing result:
-   :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
+   :end-before: # %% LINEAR-FIT EXAMPLE
 
 Important parameters:
 
@@ -124,6 +126,10 @@ Important parameters:
   how strict the bright-source mask is
 - ``background_percentile``:
   low-percentile background subtraction for estimation
+- optional ``target_low_percentile``:
+  further restrict the estimation mask to comparatively dim target voxels
+- optional ``preprocess_alpha_inputs``:
+  switch the percentile-based preprocessing used only for alpha estimation
 
 Increasing ``signal_percentile`` makes the mask more selective. Lowering it
 uses more voxels but may mix in less source-specific regions.
@@ -141,7 +147,13 @@ previous cell:
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
    :start-after: # define the output path for the reference-time-point linear-fit unmixing result:
-   :end-before: # %% REFERENCE-TIME-POINT CORR-MIN EXAMPLE
+   :end-before: # %% CORR-MIN EXAMPLE
+
+Useful optional controls are the same as for ``mean_ratio``:
+
+- ``target_low_percentile``
+- ``preprocess_alpha_inputs``
+- ``clip_negative``
 
 
 ``corr_min`` method
@@ -162,7 +174,14 @@ source and target channels are biologically correlated:
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
    :start-after: # define the output path for the reference-time-point corr-min unmixing result:
-   :end-before: # %% REFERENCE-TIME-POINT MI-MIN EXAMPLE
+   :end-before: # %% MI-MIN EXAMPLE
+
+Additional optional controls worth knowing are:
+
+- ``target_low_percentile``
+- ``preprocess_alpha_inputs``
+- ``max_alpha_voxels``
+- ``random_state``
 
 
 ``mi_min`` method
@@ -184,6 +203,13 @@ Important user-tunable parameters:
    :language: python
    :start-after: # define the output path for the reference-time-point mi-min unmixing result:
    :end-before: # %% END
+
+Further optional controls are:
+
+- ``target_low_percentile``
+- ``preprocess_alpha_inputs``
+- ``max_alpha_voxels``
+- ``random_state``
 
 
 What to change for your own data

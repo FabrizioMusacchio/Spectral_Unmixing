@@ -1,5 +1,5 @@
-Tutorial: ``unmix_picasso_5color_example.py``
-=============================================
+PICASSO 5-color example
+=======================
 
 This tutorial documents the interactive script
 ``user_scripts/unmix_picasso_5color_example.py``.
@@ -16,64 +16,103 @@ PICASSO paper:
    https://doi.org/10.1038/s41467-022-30168-z
 
 
-Cell 1: Imports, paths, and inspection
---------------------------------------
+How to use this tutorial
+------------------------
+
+The script is intended for interactive execution in a cell-based editor.
+
+The recommended workflow is:
+
+1. open ``user_scripts/unmix_picasso_5color_example.py``,
+2. inspect the measured channels first,
+3. compare the generalized MATLAB-style path with the source-sink path.
+
+
+What this tutorial is good for
+------------------------------
+
+This is the best public example in the repository for understanding how the
+package behaves when there are many channels and when the cross-talk graph is
+not obvious in advance.
+
+
+Imports
+-------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_5color_example.py
    :language: python
    :start-after: # %% IMPORTS
-   :end-before: # %% PICASSO MATLAB-N EXAMPLE
-
-This block defines the measured 5-channel example and opens it in napari with
-one layer per channel.
-
-The current file is already stored in canonical ``TZCYX`` order with the
-measured images on the channel axis, so no special preparation step is needed.
+   :end-before: # %% INPUT AND OUTPUT PATHS
 
 
-Cell 2: ``matlab_n`` on five channels
--------------------------------------
+Define input and output paths
+-----------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_5color_example.py
    :language: python
-   :start-after: # %% PICASSO MATLAB-N EXAMPLE
+   :start-after: # define the input path to the example dataset:
+   :end-before: # inspect the stack in Napari:
+
+
+Inspect the measured channels
+-----------------------------
+
+.. literalinclude:: ../../user_scripts/unmix_picasso_5color_example.py
+   :language: python
+   :start-after: # inspect the stack in Napari:
+   :end-before: # %% PICASSO MATLAB-N EXAMPLE
+
+As in the smaller PICASSO tutorials, it is worth inspecting the raw measured
+channels first before deciding which blind-unmixing strategy is the better fit
+for the dataset.
+
+
+``matlab_n`` blind unmixing on five channels
+--------------------------------------------
+
+.. literalinclude:: ../../user_scripts/unmix_picasso_5color_example.py
+   :language: python
+   :start-after: # define the output path for the PICASSO MATLAB-N unmixing result:
    :end-before: # %% PICASSO SOURCE-SINK-N EXAMPLE
 
-This cell demonstrates the explicit N-channel generalization of the MATLAB
-PICASSO workflow on five channels.
+This method applies the explicit N-channel generalization of the MATLAB-style
+PICASSO iteration to all five selected channels.
 
-The most influential parameters are:
+The settings that matter most are:
 
+- ``channels``
+- ``implementation="matlab_n"``
 - ``max_iter``
 - ``step_size``
 - ``qN``
 - ``pixel_bin_size``
 - ``alpha_clip``
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``
 
-These control how aggressively and how stably the iterative blind-unmixing
-updates proceed.
+This is usually the best choice when you want a broad, symmetric blind-unmixing
+strategy across many channels without encoding a very explicit source-sink
+model yourself.
 
 
-Cell 3: ``source_sink_n`` on five channels
-------------------------------------------
+``source_sink_n`` blind unmixing on five channels
+-------------------------------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_5color_example.py
    :language: python
-   :start-after: # %% PICASSO SOURCE-SINK-N EXAMPLE
+   :start-after: # define the output path for the PICASSO source-sink-N unmixing result:
    :end-before: # %% END
 
-This cell shows the broadest source-sink formulation on the full five-channel
-example.
+This method uses the more explicit source-sink formulation.
 
-The script starts from a permissive configuration:
+The most important settings are:
 
-- all selected channels are allowed as sinks,
-- no channels are declared neutral.
+- ``sink_channels``
+- ``neutral_channels``
+- optional ``source_sink_matrix``
+- ``alpha_max``
+- ``mi_bins``
+- ``max_alpha_voxels``
 
-For real datasets, this should often be narrowed down. The most important user
-decisions are therefore:
-
-- which channels actually need correction,
-- which channels should be protected as neutral,
-- and whether a more explicit source-sink matrix is preferable for the
-  biological problem at hand.
+For real five-channel data this mode is often attractive because it lets you
+move from a broad first-pass model to a more selective graph once you have a
+better idea which channels are plausible sinks and which should remain neutral.

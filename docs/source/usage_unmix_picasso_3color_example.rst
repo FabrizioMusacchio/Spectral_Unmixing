@@ -1,5 +1,5 @@
-Tutorial: ``unmix_picasso_3color_example.py``
-=============================================
+PICASSO 3-color example
+=======================
 
 This tutorial documents the interactive script
 ``user_scripts/unmix_picasso_3color_example.py``.
@@ -19,63 +19,119 @@ PICASSO paper:
    https://doi.org/10.1038/s41467-022-30168-z
 
 
-Cell 1: Imports, paths, and first inspection
---------------------------------------------
+How to use this tutorial
+------------------------
+
+The script is designed for interactive execution.
+
+The recommended workflow is:
+
+1. open ``user_scripts/unmix_picasso_3color_example.py``,
+2. inspect the measured channels first,
+3. compare the three different blind-unmixing implementations on the same
+   stack.
+
+
+Imports
+-------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
    :language: python
    :start-after: # %% IMPORTS
+   :end-before: # %% INPUT AND OUTPUT PATHS
+
+
+Define input and output paths
+-----------------------------
+
+.. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
+   :language: python
+   :start-after: # define the input path to the example dataset:
+   :end-before: # %% INSPECT PREPARED STACKS IN NAPARI
+
+
+Inspect the measured channels
+-----------------------------
+
+.. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
+   :language: python
+   :start-after: # inspect the stack in Napari:
    :end-before: # %% PICASSO MATLAB-N EXAMPLE
 
-This block imports the necessary helpers, defines the input/output paths, and
-opens the measured 3-channel stack in napari.
+Before any unmixing is applied, the script opens the measured stack in napari.
+This is useful for confirming channel order and for building intuition about
+which channels appear to contaminate which others.
 
 
-Cell 2: ``matlab_n``
---------------------
+``matlab_n`` blind unmixing
+---------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
    :language: python
-   :start-after: # %% PICASSO MATLAB-N EXAMPLE
+   :start-after: # define the output path for the PICASSO MATLAB-N unmixing result:
    :end-before: # %% PICASSO MATLAB-3C EXAMPLE
 
-This cell runs the general N-channel version of the MATLAB-style workflow on
-three channels.
+This method keeps the MATLAB-style iterative logic, but uses the generalized
+``matlab_n`` implementation rather than the strict 3-channel port.
 
-Use this mode when you want the MATLAB-style iterative logic but prefer to keep
-the same code path across both 3-channel and larger-N examples.
+The settings that matter most are:
+
+- ``channels``
+- ``implementation="matlab_n"``
+- ``max_iter``
+- ``step_size``
+- ``qN``
+- ``pixel_bin_size``
+- ``alpha_clip``
+- optional ``negativity_threshold`` and ``clip_every_n_iterations``
+
+This is the best choice when you want MATLAB-like behavior but also want the
+same conceptual workflow to scale to larger channel counts.
 
 
-Cell 3: ``matlab_3c``
----------------------
+``matlab_3c`` blind unmixing
+----------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
    :language: python
-   :start-after: # %% PICASSO MATLAB-3C EXAMPLE
+   :start-after: # define the output path for the PICASSO MATLAB-3C unmixing result:
    :end-before: # %% PICASSO SOURCE-SINK-N EXAMPLE
 
-This cell runs the explicit 3-channel MATLAB port.
+This is the closest available Python analogue of the original MATLAB
+three-channel workflow.
 
-This is the implementation to use when you want the closest available Python
-analogue of the original 3-channel MATLAB code.
+Use this mode when exact three-channel comparison to the classic PICASSO logic
+is more important than having a unified N-channel code path.
+
+The main settings remain the MATLAB-style iteration parameters:
+
+- ``max_iter``
+- ``step_size``
+- ``qN``
+- ``pixel_bin_size``
+- ``alpha_clip``
 
 
-Cell 4: ``source_sink_n``
--------------------------
+``source_sink_n`` blind unmixing
+--------------------------------
 
 .. literalinclude:: ../../user_scripts/unmix_picasso_3color_example.py
    :language: python
-   :start-after: # %% PICASSO SOURCE-SINK-N EXAMPLE
+   :start-after: # define the output path for the PICASSO source-sink-N unmixing result:
    :end-before: # %% END
 
-This cell demonstrates source-sink configuration on a realistic 3-channel case.
+This variant uses an explicit source-sink description of the expected bleed-
+through graph.
 
-The important idea here is that the user can describe the expected bleed-through
-graph in a readable way:
+The most relevant settings are:
 
-- which channels should be corrected as sinks,
-- which channels should remain neutral,
-- and which channels are therefore allowed to act as sources.
+- ``sink_channels``
+- ``neutral_channels``
+- optional ``source_sink_matrix``
+- ``alpha_max``
+- ``mi_bins``
+- ``max_alpha_voxels``
 
-This is often easier to reason about than writing the full source-sink matrix
-manually.
+This is often the easiest mode to reason about biologically, because the user
+can describe which channels should actually be cleaned and which channels
+should remain untouched or act only as sources.

@@ -20,13 +20,14 @@ from spectral_unmixing.viewer import show_all_channels_in_napari
 In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
 automatically generated in a subfolder of the input file's parent directory.
 """
-
+# define the input path to the example dataset:
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "3_color_data.tif")
 #INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "m1_e0_GFAPgreenDRAQmagenta.tif")
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # %% INSPECT PREPARED STACKS IN NAPARI
+# inspect the stack in Napari:
 show_all_channels_in_napari(INPUT_PATH, layer_prefix="3-color simulation")
 # %% PICASSO MATLAB-N EXAMPLE
 """Run the explicit N-channel generalization of the MATLAB PICASSO workflow.
@@ -44,7 +45,7 @@ Method summary:
 What can be adjusted:
 
 - ``channels``:
-  Explicitly choose a subset of channels if you do not want to unmix all five
+  Explicitly choose a subset of channels if you do not want to unmix all three
   at once.
 - ``implementation``:
   Keep ``"matlab_n"`` here for the five-channel simulation. The default
@@ -68,17 +69,18 @@ What can be adjusted:
 - ``alpha_clip``:
   Hard bound applied to each pairwise coefficient before update.
 """
-
+# define the output path for the PICASSO MATLAB-N unmixing result:
 OUTPUT_PICASSO_MATLAB_N = OUTPUT_DIR / "3-color unmixing simulation_picasso_matlab_n_reference_t0.tif"
-
 picasso_matlab_n_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_N,
     channels=[0, 1, 2],
-    implementation="matlab_n", # "matlab_3c" or "matlab_n" or "source_sink_n"
+    # method="picasso",  # default
+    implementation="matlab_n",  # "matlab_3c" or "matlab_n" or "source_sink_n"
     alpha_mode="reference_t",
     alpha_reference_t=0,
     background_percentile=1.0,
+    # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
@@ -88,10 +90,13 @@ picasso_matlab_n_output = unmix_picasso(
     qn=100,
     pixel_bin_size=16,
     alpha_clip=0.5,
+    # negativity_threshold=0.0009,
+    # clip_every_n_iterations=50,
     random_state=42,
     clip_negative=True,
     output_dtype="float32",
-    verbose=True)
+    verbose=True,
+)
 print(picasso_matlab_n_output)
 print(report_path_from_output_path(picasso_matlab_n_output).read_text(encoding="utf-8"))
 show_all_channels_in_napari(picasso_matlab_n_output, layer_prefix="PICASSO MATLAB-N unmixed 3-color simulation")
@@ -100,8 +105,8 @@ show_all_channels_in_napari(picasso_matlab_n_output, layer_prefix="PICASSO MATLA
 
 Method summary:
 
-- ``implementation="matlab_n"`` generalizes the original MATLAB 3-channel
-  PICASSO routine to an arbitrary number of channels
+- ``implementation="matlab_3c"`` is the closest Python port of the original
+  MATLAB 3-channel PICASSO routine
 - each iteration estimates pairwise subtraction coefficients and applies the
   same MATLAB-style incremental update logic used by the original 3-channel
   code
@@ -111,12 +116,11 @@ Method summary:
 What can be adjusted:
 
 - ``channels``:
-  Explicitly choose a subset of channels if you do not want to unmix all five
+  For this implementation you must keep exactly three selected channels
   at once.
 - ``implementation``:
-  Keep ``"matlab_n"`` here for the five-channel simulation. The default
-  ``"matlab_3c"`` is intentionally stricter and only works with exactly three
-  selected channels.
+  Keep ``"matlab_3c"`` here when you want the explicit 3-channel MATLAB-style
+  path.
 - ``alpha_max``:
   Not used by the MATLAB-like implementation, but retained in the shared API
   and JSON report.
@@ -136,16 +140,18 @@ What can be adjusted:
   Hard bound applied to each pairwise coefficient before update.
 """
 
+# define the output path for the PICASSO MATLAB-3C unmixing result:
 OUTPUT_PICASSO_MATLAB_3C = OUTPUT_DIR / "3-color unmixing simulation_picasso_matlab_3c_reference_t0.tif"
-
 picasso_matlab_3c_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_MATLAB_3C,
     channels=[0, 1, 2],
-    implementation="matlab_3c", # "matlab_3c" or "matlab_n" or "source_sink_n"
+    # method="picasso",  # default
+    implementation="matlab_3c",  # "matlab_3c" or "matlab_n" or "source_sink_n"
     alpha_mode="reference_t",
     alpha_reference_t=0,
     background_percentile=1.0,
+    # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
@@ -155,10 +161,13 @@ picasso_matlab_3c_output = unmix_picasso(
     qn=100,
     pixel_bin_size=16,
     alpha_clip=0.5,
+    # negativity_threshold=0.0009,
+    # clip_every_n_iterations=50,
     random_state=42,
     clip_negative=True,
     output_dtype="float32",
-    verbose=True)
+    verbose=True,
+)
 print(picasso_matlab_3c_output)
 print(report_path_from_output_path(picasso_matlab_3c_output).read_text(encoding="utf-8"))
 show_all_channels_in_napari(picasso_matlab_3c_output, layer_prefix="PICASSO MATLAB-3C unmixed 3-color simulation")
@@ -196,16 +205,15 @@ This mode is not the original MATLAB PICASSO algorithm. It is a more direct
 source-sink formulation that is often easier to reason about when explicit
 cross-talk relations are known or suspected.
 
-For this specific 3-channel example we assume:
-
-- ``channel 1`` is the sink that should be cleaned
-- ``channel 0`` definitely bleeds into ``channel 1``
-- ``channel 2`` may optionally also bleed into ``channel 1``
+For this specific 3-channel example we use the targeted configuration in which
+``channel 1`` is treated as the sink that should be cleaned, while
+``channel 0`` and ``channel 2`` are allowed to act as possible sources.
 """
 
+# define the output path for the PICASSO source-sink-N unmixing result:
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / "3-color unmixing simulation_picasso_source_sink_reference_t0.tif"
 
-sink_channels = [0,1,2]
+sink_channels = [1]
 neutral_channels = []
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution
@@ -218,12 +226,15 @@ picasso_source_sink_output = unmix_picasso(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PICASSO_SOURCE_SINK,
     channels=[0, 1, 2],
+    # method="picasso",  # default
     implementation="source_sink_n",
     alpha_mode="reference_t",
     alpha_reference_t=0,
     sink_channels=sink_channels,
     neutral_channels=neutral_channels,
+    # source_sink_matrix=[[1, 0, 0], [-1, 1, -1], [0, 0, 1]],
     background_percentile=1.0,
+    # preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
@@ -232,7 +243,8 @@ picasso_source_sink_output = unmix_picasso(
     random_state=42,
     clip_negative=True,
     output_dtype="float32",
-    verbose=True)
+    verbose=True,
+)
 print(picasso_source_sink_output)
 print(report_path_from_output_path(picasso_source_sink_output).read_text(encoding="utf-8"))
 show_all_channels_in_napari(picasso_source_sink_output, layer_prefix="PICASSO source-sink-N unmixed 3-color simulation")

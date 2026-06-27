@@ -22,7 +22,7 @@ from spectral_unmixing import (
 In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
 automatically generated in a subfolder of the input file's parent directory.
 """
-
+# define the input path to the example dataset:
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "bidirectional_example.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -55,24 +55,27 @@ Why this is useful:
 - Best choice when both directional coefficients were measured from proper
   single-label controls acquired with the same imaging settings.
 """
-
+# define the output path for the fixed bidirectional unmixing result:
 OUTPUT_FIXED = OUTPUT_DIR / "bidirectional_unmixed_fixed_alpha.tif"
 
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
     bidirectional=True,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha=0.60,
     alpha_reverse=0.50,
     alpha_mode="fixed",
     method="manual",
-    # alpha_reverse=0.08,
     # method_reverse="manual",
     # signal_percentile_reverse=99.0,
     # background_percentile_reverse=1.0,
     # target_low_percentile_reverse=None,
     # alpha_max_reverse=1.0,
     # mi_bins_reverse=64,
+    # clip_negative=True,  # default: True
+    # output_dtype="float32",  # default: "float32"
 )
 print(fixed_output)
 print(report_path_from_output_path(fixed_output).read_text(encoding="utf-8"))
@@ -109,21 +112,25 @@ Effect of these settings:
 - This is the easiest automatic bidirectional mode to start with, because all
   reverse-direction settings inherit the forward values unless overridden.
 """
-
+# define the output path for the bidirectional reference-time-point mean-ratio result:
 OUTPUT_REFERENCE = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mean_ratio.tif"
 
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
     bidirectional=True,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mean_ratio",
     alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
     # alpha_reverse=None,
     # method_reverse="mean_ratio",
-    #signal_percentile_reverse=99.0,
+    # signal_percentile_reverse=99.0,
     # background_percentile_reverse=0.5,
     # target_low_percentile_reverse=95.0,
     # alpha_max_reverse=1.0,
@@ -156,18 +163,22 @@ What can be adjusted:
 - ``background_percentile`` and ``background_percentile_reverse``:
   Optional direction-specific preprocessing percentiles.
 """
-
+# define the output path for the bidirectional reference-time-point linear-fit result:
 OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_linear_fit.tif"
 
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
     bidirectional=True,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="linear_fit",
     alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
     # alpha_reverse=None,
     # method_reverse="linear_fit",
     # signal_percentile_reverse=98.0,
@@ -205,18 +216,25 @@ What can be adjusted:
 """
 
 
+# define the output path for the bidirectional reference-time-point corr-min result:
 OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_corr_min.tif"
 
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
     bidirectional=True,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="corr_min",
     alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
     alpha_max=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
     # alpha_reverse=None,
     # method_reverse="corr_min",
     # signal_percentile_reverse=99.0,
@@ -251,13 +269,15 @@ What can be adjusted:
 - ``alpha_max`` and ``alpha_max_reverse``:
   Search bounds for the forward and reverse optimizations.
 """
-
+# define the output path for the bidirectional reference-time-point mi-min result:
 OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / "bidirectional_unmixed_reference_t0_mi_min.tif"
 
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_MI_MIN,
     bidirectional=True,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mi_min",
     alpha_reference_t=0,
@@ -265,6 +285,10 @@ reference_mi_min_output = unmix(
     background_percentile=1.0,
     alpha_max=1.0,
     mi_bins=64,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
     # alpha_reverse=None,
     # method_reverse="mi_min",
     # signal_percentile_reverse=99.0,

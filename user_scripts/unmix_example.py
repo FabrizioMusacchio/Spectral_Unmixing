@@ -59,12 +59,15 @@ OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     method="manual",
     alpha=0.62,
-    alpha_mode="fixed", # only relevant for multi-time-point stacks
-    )
+    alpha_mode="fixed",  # only relevant for multi-time-point stacks
+    # clip_negative=True,  # default: True
+    # output_dtype="float32",  # default: "float32"
+    # verbose=True,  # default: True
+)
 
 show_unmixed_channels_in_napari(
     fixed_output,
@@ -112,13 +115,17 @@ OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.t
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     method="mean_ratio",
     alpha_mode="reference_t",
     alpha_reference_t=0,
     signal_percentile=99.0,
-    background_percentile=1.0)
+    background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # clip_negative=True,  # default: True
+)
 print(reference_output)
 print(report_path_from_output_path(reference_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -159,13 +166,17 @@ OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_l
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="linear_fit",
     alpha_reference_t=0,
     signal_percentile=99.0,
-    background_percentile=1.0)
+    background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # clip_negative=True,  # default: True
+)
 print(reference_linear_fit_output)
 print(report_path_from_output_path(reference_linear_fit_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -205,14 +216,19 @@ OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_cor
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="corr_min",
     alpha_reference_t=0,
     signal_percentile=99.0,
     background_percentile=1.0,
-    alpha_max=1.0)
+    alpha_max=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
+)
 print(reference_corr_min_output)
 print(report_path_from_output_path(reference_corr_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -245,13 +261,20 @@ OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_mi
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_MI_MIN,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mi_min",
     alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
     alpha_max=1.0,
-    mi_bins=64)
+    mi_bins=64,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
+)
 print(reference_mi_min_output)
 print(report_path_from_output_path(reference_mi_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(

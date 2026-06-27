@@ -18,7 +18,7 @@ The imported functions cover:
 - ``show_unmixed_channels_in_napari(...)`` for reusing one napari viewer and
   updating its layers after each run.
 """
-
+# import the required helper functions:
 import sys
 from pathlib import Path
 
@@ -34,6 +34,7 @@ from spectral_unmixing import (
 In fact, you just need to set ``INPUT_PATH`` to your own data and the rest will be 
 automatically generated in a subfolder of the input file's parent directory.
 """
+# define the input path to the example dataset:
 INPUT_PATH = PROJECT_ROOT / "example_data" / "synthetic_data" / "synthetic_bleedthrough_T9_Z20_C2.tif"
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
@@ -64,17 +65,21 @@ When this is useful:
 - Most reproducible and scientifically preferred if acquisition settings are
 - stable across experiments.
 """
-
+# define the output path for the fixed-alpha unmixing result:
 OUTPUT_FIXED = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_fixed_alpha.tif"
 
 fixed_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_FIXED,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha=0.62,
     alpha_mode="fixed",
-    method="manual")
+    method="manual",
+    # clip_negative=True,  # default: True
+    # output_dtype="float32",  # default: "float32"
+    # verbose=True,  # default: True
+)
 
 show_unmixed_channels_in_napari(
     fixed_output,
@@ -115,14 +120,14 @@ Effect of these settings:
 - A different ``alpha_reference_t`` matters when bleed-through or biology
   changes over time.
 """
-
+# define the output path for the reference-time-point unmixing result:
 OUTPUT_REFERENCE = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mean_ratio.tif"
 
 reference_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mean_ratio",
     alpha_reference_t=0,
@@ -130,7 +135,8 @@ reference_output = unmix(
     target_low_percentile=96.0,
     background_percentile=0.5,
     preprocess_alpha_inputs=False,
-    clip_negative=True)
+    clip_negative=True,
+)
 print(reference_output)
 print(report_path_from_output_path(reference_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -164,17 +170,23 @@ Effect of these settings:
   least-squares estimate and can behave differently when masked intensities
   have broad dynamic ranges.
 """
-
+# define the output path for the reference-time-point linear-fit unmixing result:
 OUTPUT_REFERENCE_LINEAR_FIT = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_linear_fit.tif"
 
 reference_linear_fit_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="linear_fit",
     alpha_reference_t=0,
     signal_percentile=99.0,
-    background_percentile=1.0)
+    background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # clip_negative=True,  # default: True
+)
 print(reference_linear_fit_output)
 print(report_path_from_output_path(reference_linear_fit_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -207,21 +219,25 @@ Effect of these settings:
 - If source and target channels are biologically correlated, this method may
   subtract true target signal together with bleed-through.
 """
-
+# define the output path for the reference-time-point corr-min unmixing result:
 OUTPUT_REFERENCE_CORR_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_corr_min.tif"
 
 reference_corr_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_CORR_MIN,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="corr_min",
     alpha_reference_t=0,
     signal_percentile=95.0,
     background_percentile=0.5,
     alpha_max=1.0,
-    preprocess_alpha_inputs=True)
+    preprocess_alpha_inputs=True,
+    # target_low_percentile=95.0,
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
+)
 print(reference_corr_min_output)
 print(report_path_from_output_path(reference_corr_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -258,14 +274,14 @@ Effect of these settings:
 - It is also the slowest of the scalar alpha estimators and can be sensitive to
   histogram settings.
 """
-
+# define the output path for the reference-time-point mi-min unmixing result:
 OUTPUT_REFERENCE_MI_MIN = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_reference_t0_mi_min.tif"
 
 reference_mi_min_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_REFERENCE_MI_MIN,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="reference_t",
     method="mi_min",
     alpha_reference_t=0,
@@ -273,7 +289,11 @@ reference_mi_min_output = unmix(
     background_percentile=1.0,
     preprocess_alpha_inputs=False,
     alpha_max=1.0,
-    mi_bins=64)
+    mi_bins=64,
+    # target_low_percentile=95.0,
+    # max_alpha_voxels=500_000,  # default
+    # random_state=0,  # default
+)
 print(reference_mi_min_output)
 print(report_path_from_output_path(reference_mi_min_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
@@ -309,18 +329,22 @@ Effect of these settings:
 - More flexible, but it can introduce time-dependent artifacts if biology
   changes in a way that biases the alpha estimate.
 """
-
+# define the output path for the per-time-point unmixing result:
 OUTPUT_PER_T = OUTPUT_DIR / f"{INPUT_NAME}_unmixed_per_t_mean_ratio.tif"
 
 per_t_output = unmix(
     input_path=INPUT_PATH,
     output_path=OUTPUT_PER_T,
-    #source_channel=0,  # default: 0
-    #target_channel=1,  # default: 1
+    # source_channel=0,  # default: 0
+    # target_channel=1,  # default: 1
     alpha_mode="per_t",
     method="mean_ratio",
     signal_percentile=99.0,
-    background_percentile=1.0)
+    background_percentile=1.0,
+    # target_low_percentile=95.0,
+    # preprocess_alpha_inputs=True,  # default: True
+    # clip_negative=True,  # default: True
+)
 print(per_t_output)
 print(report_path_from_output_path(per_t_output).read_text(encoding="utf-8"))
 show_unmixed_channels_in_napari(
