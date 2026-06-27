@@ -217,7 +217,7 @@ optional `*_reverse` arguments. For every reverse parameter that is left at
 `None`, the corresponding forward value is reused.
 
 ### Alpha modes
-For $T\gt1$-stacks, three `alpha_mode` values are available:
+Three explicit `alpha_mode` values are available:
 
 - `fixed`
   Use a user-provided scalar `alpha` for the full stack.
@@ -225,6 +225,14 @@ For $T\gt1$-stacks, three `alpha_mode` values are available:
   Estimate one scalar `alpha` from a chosen reference time point, using all z-slices at that time point.
 - `per_t`
   Estimate one `alpha` value per time point, again using all z-slices for each time point.
+
+In addition, `alpha_mode=None` is the default. In that case:
+
+- if `alpha` is provided, the pipeline behaves as `alpha_mode="fixed"`
+- if `alpha` is not provided and `method="manual"`, a clear error is raised
+- otherwise the pipeline defaults to `alpha_mode="reference_t"` with `alpha_reference_t=0`
+
+This default works for both `T=1` and `T>1` stacks.
 
 These modes answer the question:
 
@@ -241,7 +249,7 @@ Available methods are:
 
 - `manual`
   Use a user-provided `alpha`. This is only meaningful for
-  `alpha_mode="fixed"`.
+  an effective `alpha_mode="fixed"`.
 - `mean_ratio`
   Estimate `alpha` as the ratio of mean target and source intensities inside a
   bright-source mask.

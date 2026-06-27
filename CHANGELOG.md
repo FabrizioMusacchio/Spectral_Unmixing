@@ -9,6 +9,25 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ---
 
+## 🚧 spectral-unmixing v0.0.3
+
+Planned next release.
+
+### Unmixing API refinement
+
+- Changed the default `unmix(...)` behavior from an implicit `alpha_mode="fixed"` to `alpha_mode=None`.
+- Added automatic alpha-mode resolution for `unmix(...)`:
+  - if `alpha` is provided, the effective mode becomes `fixed`
+  - if `alpha` is omitted and `method="manual"`, the pipeline now raises a clear error
+  - if `alpha` is omitted and `method!="manual"`, the effective mode becomes `reference_t` with `alpha_reference_t=0`
+- Preserved explicit user intent:
+  - explicitly setting `alpha_mode="fixed"` still requires a user-provided `alpha`
+  - explicitly setting `alpha_mode="reference_t"` or `alpha_mode="per_t"` still behaves exactly as requested
+- Extended the JSON sidecar report with the requested and effective alpha-mode information to make this default resolution reproducible.
+- Updated tests and documentation to describe the new `alpha_mode=None` default and its behavior for both `T=1` and `T>1` stacks.
+
+---
+
 ## 🚀 spectral-unmixing v0.0.2
 
 June 26, 2026

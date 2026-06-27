@@ -31,13 +31,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--alpha",
         type=float,
         default=None,
-        help="Fixed bleed-through coefficient. Required for alpha_mode='fixed'.",
+        help="Fixed bleed-through coefficient. Required when the effective alpha mode is 'fixed'.",
     )
     parser.add_argument(
         "--alpha-mode",
         choices=["fixed", "reference_t", "per_t"],
-        default="fixed",
-        help="How alpha should be obtained.",
+        default=None,
+        help=(
+            "How alpha should be obtained. If omitted, a provided --alpha implies "
+            "'fixed'; otherwise non-manual methods default to 'reference_t'."
+        ),
     )
     parser.add_argument(
         "--alpha-reference-t",

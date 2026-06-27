@@ -74,7 +74,7 @@ def _validate_channel_index(name: str, channel: int, channel_count: int) -> int:
 
 
 def _validate_alpha_mode(alpha_mode: str) -> str:
-    """Normalize and validate a scalar-alpha application mode."""
+    """Normalize and validate an explicitly requested scalar-alpha mode."""
 
     alpha_mode = str(alpha_mode).strip().lower()
     if alpha_mode not in ALPHA_MODES:
@@ -82,6 +82,51 @@ def _validate_alpha_mode(alpha_mode: str) -> str:
             f"alpha_mode must be one of {sorted(ALPHA_MODES)}. Got {alpha_mode!r}."
         )
     return alpha_mode
+
+
+def _resolve_unmix_alpha_mode(
+    *,
+    alpha_mode,
+    alpha,
+    method: str,
+    alpha_reference_t: int,
+    verbose: bool,
+) -> tuple[str | None, str]:
+    """
+    Resolve the effective alpha mode for ``unmix(...)``.
+
+    If ``alpha_mode`` is ``None``, the workflow uses ``"fixed"`` whenever a
+    user-provided ``alpha`` is available. Otherwise, ``method="manual"``
+    raises an error and all other methods default to ``"reference_t"`` with
+    the supplied ``alpha_reference_t``.
+    """
+
+    if alpha_mode is not None:
+        normalized_mode = _validate_alpha_mode(alpha_mode)
+        return normalized_mode, normalized_mode
+
+    if alpha is not None:
+        _print_verbose(
+            verbose,
+            "alpha_mode was not provided; using alpha_mode='fixed' because alpha was provided.",
+        )
+        return None, "fixed"
+
+    if method == "manual":
+        raise ValueError(
+            "method='manual' requires a user-provided alpha when alpha_mode is None. "
+            "Provide alpha or set alpha_mode='reference_t' or alpha_mode='per_t'."
+        )
+
+    _print_verbose(
+        verbose,
+        (
+            "alpha_mode was not provided; using alpha_mode='reference_t' with "
+            f"alpha_reference_t={int(alpha_reference_t)} because no alpha was provided "
+            f"and method='{method}'."
+        ),
+    )
+    return None, "reference_t"
 
 
 def _validate_picasso_alpha_mode(alpha_mode: str) -> str:
@@ -548,7 +593,7 @@ def unmix(
     input_path,
     output_path,
     alpha=None,
-    alpha_mode="fixed",
+    alpha_mode=None,
     alpha_reference_t=0,
     source_channel=0,
     target_channel=1,
@@ -585,12 +630,15 @@ def unmix(
         Path to the output stack to be written via OMIO. A JSON sidecar report
         with the same name plus ``.json`` is written alongside it.
     alpha : float or None, optional
-        User-provided bleed-through coefficient. Required when
-        ``alpha_mode="fixed"``.
-    alpha_mode : {"fixed", "reference_t", "per_t"}, optional
+        User-provided bleed-through coefficient. Required when the effective
+        alpha mode is ``"fixed"``.
+    alpha_mode : {"fixed", "reference_t", "per_t"} or None, optional
         Strategy that determines whether alpha is taken directly from ``alpha``,
         estimated once from a reference time point, or estimated separately for
-        each time point.
+        each time point. If ``None``, a provided ``alpha`` implies
+        ``"fixed"``; otherwise ``method="manual"`` raises an error and the
+        remaining methods default to ``"reference_t"`` with the supplied
+        ``alpha_reference_t``.
     alpha_reference_t : int, optional
         Reference time point used when ``alpha_mode="reference_t"``.
     source_channel : int, optional
@@ -613,8 +661,8 @@ def unmix(
         If ``True``, print processing progress and estimated coefficients.
     method : {"manual", "mean_ratio", "linear_fit", "corr_min", "mi_min"}, optional
         Method used to obtain alpha. ``"manual"`` is meaningful only together
-        with ``alpha_mode="fixed"``; the other methods estimate alpha from the
-        data.
+        with an effective ``alpha_mode="fixed"``; the other methods estimate
+        alpha from the data.
     bidirectional : bool, optional
         If ``True``, estimate or use coefficients for both
         ``source_channel -> target_channel`` and
@@ -688,8 +736,14 @@ def unmix(
             "Refusing to overwrite the input file. Please choose a different output_path."
         )
 
-    alpha_mode = _validate_alpha_mode(alpha_mode)
     method = _validate_unmix_method(method)
+    alpha_mode_requested, alpha_mode = _resolve_unmix_alpha_mode(
+        alpha_mode=alpha_mode,
+        alpha=alpha,
+        method=method,
+        alpha_reference_t=int(alpha_reference_t),
+        verbose=bool(verbose),
+    )
     alpha_max, mi_bins, min_mask_voxels = _validate_common_estimation_parameters(
         alpha_max=alpha_max,
         mi_bins=mi_bins,
@@ -882,6 +936,8 @@ def unmix(
         "output_path": str(actual_output_path),
         "report_path": str(report_path),
         "alpha_mode": alpha_mode,
+        "alpha_mode_requested": alpha_mode_requested,
+        "alpha_mode_was_defaulted": bool(alpha_mode_requested is None),
         "method": method,
         "method_effective": method_effective,
         "alpha_source": alpha_source,
