@@ -56,7 +56,7 @@ Main configuration dimensions
 - ``alpha_mode`` controls **where** alpha is obtained from in multi-time-point stacks:
   ``fixed``, ``reference_t``, or ``per_t``.
 
-  - ``fixed`` uses a user-provided scalar ``alpha`` for the full stack. Only relevant for single-time-point stacks and for ``method="manual"``.
+  - ``fixed`` uses a user-provided scalar ``alpha`` for the full stack. This is relevant for both single-time-point and multi-time-point stacks whenever one manually chosen coefficient should be applied everywhere. It is the natural companion of ``method="manual"``.
   - ``reference_t`` estimates one scalar ``alpha`` from a chosen reference time point, using all z-slices at that time point. Relevant for multi-time-point stacks and for any estimation method.
   - ``per_t`` estimates one ``alpha`` value per time point, again using all z-slices for each time point. Relevant for multi-time-point stacks and for any estimation method.
 

@@ -100,15 +100,23 @@ proper control measurement or an empirical estimate from a similar dataset.
    :start-after: # define the output path for the reference-time-point unmixing result:
    :end-before: # %% REFERENCE-TIME-POINT LINEAR-FIT EXAMPLE
 
-This is the simplest automatic estimator on the synthetic full stack. One alpha
-is estimated from the selected reference time point, but that estimate uses all
-z-slices belonging to that time point.
+This is the simplest automatic estimator on a given dataset. It computes the ratio of mean 
+intensities inside a bright-source mask.
+
+In this script the method is demonstrated with ``alpha_mode="reference_t"``, 
+where one alpha is estimated from the selected reference time point, using all z-slices 
+belonging to that time point, and then applied to all time points. The same ``mean_ratio`` 
+estimator can also be combined with ``alpha_mode="per_t"`` when you want one separately 
+estimated coefficient per time point.
 
 The parameters that matter most are:
 
+- ``alpha_mode``: 
+  ``reference_t`` or ``per_t``. The former estimates one alpha from the reference time point; 
+  the latter estimates one alpha per time point.
 - ``alpha_reference_t``:
-  defines the reference time point used for alpha estimation. Changing it
-  matters when the stack changes in brightness, content, or other properties 
+  defines the reference time point used for alpha estimation using ``alpha_mode="reference_t"``.
+  Changing it matters when the stack changes in brightness, content, or other properties 
   such as SNR over time.
 - ``signal_percentile``:
   defines how selective the bright-source mask is. Higher values keep only the
@@ -147,6 +155,10 @@ the mask and preprocessing parameters:
 - optional ``target_low_percentile``
 - optional ``preprocess_alpha_inputs``
 
+The script shows the ``reference_t`` version, but the same ``linear_fit``
+estimator can also be used with ``alpha_mode="per_t"`` if one fitted alpha per
+time point is more appropriate for your data.
+
 
 ``corr_min`` on a full ``TZCYX`` stack
 --------------------------------------
@@ -168,6 +180,10 @@ The most relevant tuning parameters are:
 - ``background_percentile``
 - optional ``target_low_percentile``
 - optional ``max_alpha_voxels`` and ``random_state``
+
+Again, the example here uses ``alpha_mode="reference_t"`` for clarity. The
+same ``corr_min`` estimator can also be paired with ``alpha_mode="per_t"`` to
+optimize one separate coefficient per time point.
 
 Because the optimization is performed on the full-stack reference volume, this
 example is useful for seeing how aggressive correlation-minimization can become
@@ -196,37 +212,12 @@ The most important settings are:
 - optional ``target_low_percentile``
 - optional ``max_alpha_voxels`` and ``random_state``
 
+As in the previous sections, the script demonstrates the ``reference_t``
+version first. The same ``mi_min`` estimator can also be combined with
+``alpha_mode="per_t"`` if you want a separate mutual-information-based alpha
+estimate at every time point.
+
 Compared with the simpler estimators, this is often the slowest option, but it
 can be useful when residual dependence remains visible after simpler
 corrections.
 
-
-Per-time-point alpha estimation
--------------------------------
-
-.. literalinclude:: ../../user_scripts/unmix_full_TZCYX_synthetic_example.py
-   :language: python
-   :start-after: # define the output path for the per-time-point unmixing result:
-   :end-before: # %% END
-
-This is the main extra method-specific feature of this tutorial. Instead of
-estimating one global alpha, the script derives one alpha per time point and
-applies each value to the corresponding time slice.
-
-The key settings are:
-
-- ``alpha_mode="per_t"``:
-  estimates a separate alpha for every time point instead of using one global
-  coefficient.
-- ``method``:
-  selects the estimator used at each time point. ``mean_ratio`` is the most
-  direct starting point; the fit- and optimization-based methods behave as in
-  the earlier sections.
-- ``signal_percentile``
-- ``background_percentile``
-- optional ``target_low_percentile``
-
-Use this when one global coefficient seems too rigid because brightness or gain
-changes over time. At the same time, be careful: if the underlying biology also
-changes over time, the alpha estimate itself can become time-dependent in a way
-that is not purely optical.
