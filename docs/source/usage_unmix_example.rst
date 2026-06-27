@@ -1,4 +1,4 @@
-Basic usage example
+Basic unmixing example
 ==============================
 
 This tutorial documents the interactive script

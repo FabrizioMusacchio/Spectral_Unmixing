@@ -1,5 +1,5 @@
-Full 3D+t example
-=================
+Full 3D+t unmixing example
+=========================
 
 This tutorial documents the interactive script
 ``user_scripts/unmix_full_TZCYX_synthetic_example.py``. It extends the basic
