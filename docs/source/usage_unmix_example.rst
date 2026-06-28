@@ -119,15 +119,40 @@ The important knobs are:
 - optional visualization colormaps for napari
 
 
+.. figure:: _static/basic_example_raw.jpg
+   :alt: Raw two-channel example stack used in this tutorial
+   :align: center
+   :figwidth: 100%
+
+   The raw two-channel example stack used in this tutorial. Channel 0 (cyan) bleeds
+   into channel 1 (magenta) and is thus the source channel. Channel 1 is the target channel 
+   that we want to correct.
+
+.. figure:: _static/basic_example_unmixed.jpg
+   :alt: Result of unmixing with a fixed alpha of 0.62
+   :align: center
+   :figwidth: 100%
+
+   Both channels after unmixing with a fixed alpha of 0.62. The bleed-through from channel 
+   0 into channel 1 is largely removed, while the original signal in channel 1 is preserved.
+
+.. figure:: _static/basic_example_compare.jpg
+   :alt: Comparison of raw and unmixed channels
+   :align: center
+   :figwidth: 100%
+
+   Composite comparison of the raw (left) and unmixed (right) stack. The bleed-through from 
+   channel 0 into channel 1 is clearly visible in the raw data, while it is largely removed 
+   in the unmixed result and, thus, a more accurate representation of the true signal in channel 
+   1 is obtained.
+
+
 ``mean_ratio`` method
 ---------------------
 
-By changing the method to ``mean_ratio``, the workflow estimates alpha from a
-selected reference time point, in case of a multi-time-point stack, and applies
-it to the full stack. For single-time-point data, the same estimator is applied
-without a time-selection step. Alpha is computed as the mean target intensity
-divided by the mean source intensity within a mask that is defined by the
-``signal_percentile`` and ``background_percentile`` parameters:
+By changing the method to ``mean_ratio``, alpha is computed as the mean target 
+intensity divided by the mean source intensity within a mask that is defined by 
+the ``signal_percentile`` and ``background_percentile`` parameters:
 
 
 .. literalinclude:: ../../user_scripts/unmix_example.py
@@ -140,11 +165,6 @@ Important parameters:
 - ``method="mean_ratio"``:
   estimates alpha as the ratio of mean target and mean source intensity inside
   the selected source-dominant mask.
-- ``alpha_reference_t``:
-  defines the reference time point used for alpha estimation. Changing it
-  matters when brightness or biology changes over time. Only relevant when ``alpha_mode="reference_t"``
-  and the stack has multiple time points. For single-time-point stacks, the only valid reference 
-  time point is ``0`` or omit this argument entirely (the default is ``0`` anyways).
 - ``signal_percentile``:
   defines how strict the bright-source mask is. Higher values keep only the
   brightest source voxels and make the estimate more selective; lower values
@@ -160,19 +180,44 @@ Important parameters:
   switches the percentile-based background subtraction and clipping used only
   for alpha estimation. Turning it off makes the estimate depend more directly
   on the raw measured intensities.
+- ``alpha_mode`` and ``alpha_reference_t``:
+  become relevant for real multi-time-point stacks. ``reference_t`` estimates
+  one alpha from the selected reference time point and applies it to all time
+  points. The same ``mean_ratio`` estimator can also be combined with
+  ``alpha_mode="per_t"`` when you want one separately estimated coefficient per
+  time point. Please refer to the dedicated multi-time-point tutorial :doc:`usage_unmix_full_tzcyx_synthetic_example`
+  for more details on that workflow.
 
 Increasing ``signal_percentile`` makes the mask more selective. Lowering it
 uses more voxels but may mix in less source-specific regions.
 
+.. figure:: _static/basic_example_unmixed_mean_ratio.jpg
+   :alt: Result of unmixing with the mean-ratio method
+   :align: center
+   :figwidth: 100%
+
+   Both channels after unmixing with the mean-ratio method. The bleed-through 
+   from channel 0 into channel 1 is largely removed, while the original signal 
+   in channel 1 is preserved. Note that the estimated alpha is slightly different 
+   from the fixed value of 0.62 used in the previous example, as it is computed 
+   from the data itself. Thus, the resulting unmixed image slightly differs in 
+   the quality of bleed-through removal and the preservation of the original signal 
+   in channel 1.
+
+.. figure:: _static/basic_example_compare_mean_ratio.jpg
+   :alt: Comparison of raw and unmixed channels
+   :align: center
+   :figwidth: 100%
+
+   Composite comparison of the raw (left) and unmixed (right) stack. 
 
 ``linear_fit`` method
 ---------------------
 
 This variant estimates alpha via masked least squares without an intercept.
-
 Use this when you want a fit-based coefficient rather than the simpler ratio of
-means. It relies on the same reference-time-point (if relevant) and mask concept as the
-previous cell:
+means. It relies on the same mask and preprocessing parameters as the ``mean_ratio`` 
+method:
 
 .. literalinclude:: ../../user_scripts/unmix_example.py
    :language: python
@@ -185,6 +230,23 @@ Useful optional controls are the same as for ``mean_ratio``:
 - ``preprocess_alpha_inputs``
 - ``clip_negative``
 
+.. figure:: _static/basic_example_unmixed_linfit.jpg
+   :alt: Result of unmixing with the linear-fit method
+   :align: center
+   :figwidth: 100%
+
+   Both channels after unmixing with the linear-fit method. Here, alpha is 
+   estimated via masked least squares, which can provide a more robust estimate 
+   in the presence of noise or outliers compared to the mean-ratio method. 
+   The bleed-through from channel 0 into channel 1 is effectively removed, 
+   while the original signal in channel 1 is preserved.
+
+.. figure:: _static/basic_example_compare_linfit.jpg
+   :alt: Comparison of raw and unmixed channels
+   :align: center
+   :figwidth: 100%
+
+   Composite comparison of the raw (left) and unmixed (right) stack. 
 
 ``corr_min`` method
 -------------------
@@ -212,6 +274,23 @@ Additional optional controls worth knowing are:
 - ``preprocess_alpha_inputs``
 - ``max_alpha_voxels``
 - ``random_state``
+
+
+.. figure:: _static/basic_example_unmixed_corrmin.jpg
+   :alt: Result of unmixing with the corr-min method
+   :align: center
+   :figwidth: 100%
+
+   Both channels after unmixing with the corr-min method. Here, alpha is 
+   estimated via correlation minimization, which can be particularly effective 
+   when the source and target channels are biologically correlated.
+
+.. figure:: _static/basic_example_compare_corrmin.jpg
+   :alt: Comparison of raw and unmixed channels
+   :align: center
+   :figwidth: 100%
+
+   Composite comparison of the raw (left) and unmixed (right) stack. 
 
 
 ``mi_min`` method
@@ -243,6 +322,23 @@ Further optional controls are:
 - ``preprocess_alpha_inputs``
 - ``max_alpha_voxels``
 - ``random_state``
+
+
+.. figure:: _static/basic_example_unmixed_mimin.jpg
+   :alt: Result of unmixing with the mi-min method
+   :align: center
+   :figwidth: 100%
+
+   Both channels after unmixing with the mi-min method. Here, alpha is 
+   estimated via mutual information minimization, which can be particularly effective 
+   when the source and target channels are biologically correlated.
+
+.. figure:: _static/basic_example_compare_mimin.jpg
+   :alt: Comparison of raw and unmixed channels
+   :align: center
+   :figwidth: 100%
+
+   Composite comparison of the raw (left) and unmixed (right) stack. 
 
 
 What to change for your own data

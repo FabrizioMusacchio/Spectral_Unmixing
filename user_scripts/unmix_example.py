@@ -27,6 +27,9 @@ INPUT_PATH = PROJECT_ROOT / "example_data" / "PICASSO_examples" / "2_color_unmix
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# %% OPTIONAL: INSPECT PREPARED STACKS IN NAPARI
+from spectral_unmixing.viewer import show_all_channels_in_napari
+show_all_channels_in_napari(INPUT_PATH, layer_prefix="2-channel example")
 # %% FIXED ALPHA EXAMPLE
 """Run unmixing with a manually chosen fixed bleed-through coefficient.
 
@@ -134,7 +137,7 @@ show_unmixed_channels_in_napari(
     reference_output,
     source_channel=0,
     target_channel=1,
-    layer_prefix="Reference t0")
+    layer_prefix="mean_ratio")
 # %% LINEAR-FIT EXAMPLE
 """Estimate one alpha from an optional reference time point via masked least squares.
 
@@ -170,9 +173,9 @@ reference_linear_fit_output = unmix(
     output_path=OUTPUT_REFERENCE_LINEAR_FIT,
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
-    alpha_mode="reference_t",
+    # alpha_mode="reference_t",
+    # alpha_reference_t=0,
     method="linear_fit",
-    alpha_reference_t=0,
     signal_percentile=99.0,
     background_percentile=1.0,
     # target_low_percentile=95.0,
@@ -220,9 +223,9 @@ reference_corr_min_output = unmix(
     output_path=OUTPUT_REFERENCE_CORR_MIN,
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
-    alpha_mode="reference_t",
+    # alpha_mode="reference_t",
+    # alpha_reference_t=0,
     method="corr_min",
-    alpha_reference_t=0,
     signal_percentile=99.0,
     background_percentile=1.0,
     alpha_max=1.0,
@@ -238,7 +241,6 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Reference corr_min")
-
 # %% MI-MIN EXAMPLE
 """Estimate forward coefficient by minimizing mutual information.
 
@@ -265,9 +267,9 @@ reference_mi_min_output = unmix(
     output_path=OUTPUT_REFERENCE_MI_MIN,
     # source_channel=0,  # default: 0
     # target_channel=1,  # default: 1
-    alpha_mode="reference_t",
+    # alpha_mode="reference_t",
+    # alpha_reference_t=0,
     method="mi_min",
-    alpha_reference_t=0,
     signal_percentile=50.0,
     background_percentile=1.0,
     alpha_max=1.0,
