@@ -31,6 +31,8 @@ OUTPUT_PATH = OUTPUT_DIR / f"{INPUT_NAME}_registered.tif"
 # %% LOAD STACK WITH OMIO
 stack, metadata = load_stack_with_omio(INPUT_PATH)
 print(f"Loaded stack: {stack.shape}, axes={metadata.get('axes')}")
+# %% INSPECT STACK IN NAPARI
+om.open_in_napari(stack, metadata, "Unregistered |")
 # %% CORRECT INTRA-STACK Z-DRIFT
 z_corrected_stack = correct_intra_stack_z_drift(
     stack,

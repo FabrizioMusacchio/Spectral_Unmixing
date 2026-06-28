@@ -107,6 +107,14 @@ This is a good early sanity check. Before any processing is applied, confirm
 that the stack shape is what you expect and that the metadata report canonical
 ``TZCYX`` axes.
 
+.. figure:: _static/filtering_raw.jpg
+   :alt: Raw two-channel example stack (3D+t) used in this tutorial. Shown is slice z=12 at t=3.
+   :align: center
+   :figwidth: 100%
+
+   Raw two-channel example stack (3D+t) used in this tutorial. Shown is slice z=12
+   at t=3.
+
 
 Correct intra-stack z-drift
 ---------------------------
@@ -149,6 +157,13 @@ The most important settings here are:
 The napari calls in this cell are useful for visually comparing the original
 and z-corrected stacks before continuing.
 
+:: note
+
+   Since the underlying example stack is already well-aligned in z, we omitted
+   this step here. The same is true for the subsequently discussed registration across time.
+   In practice, you will usually want to run movement corrections 
+   before any further processing, since even small misalignments can affect downstream 
+   interpretation and analysis.
 
 Register the stack across time
 ------------------------------
@@ -202,6 +217,15 @@ The key setting is:
 This is useful when slow brightness drift would otherwise make later
 comparisons or visualizations harder to interpret.
 
+.. figure:: _static/filtering_reg_histomatch.jpg
+   :alt: Histogram-matched two-channel example stack (3D+t) used in this tutorial. Shown is slice z=12 at t=3.
+   :align: center
+   :figwidth: 100%
+
+   Histogram-matched two-channel example stack (3D+t). Histogram matching is
+   useful when slow brightness drift would otherwise make later comparisons or
+   visualizations harder to interpret. Shown is slice z=12 at t=3.
+
 
 Filter the registered stack
 ---------------------------
@@ -230,6 +254,16 @@ The main settings are:
 This stage is often useful for reducing noise slice-wise for each time point,
 in order to improve downstream visualization or analysis. 
 
+.. figure:: _static/filtering_reg_histomatch_3Dfilter.jpg
+   :alt: Histogram-matched two-channel example stack (3D+t) after slice-wise 2D filtering.
+   :align: center
+   :figwidth: 100%
+
+   Histogram-matched two-channel example stack (3D+t) after slice-wise 2D filtering. 
+   Filtering is often useful for reducing noise slice-wise for each time point, 
+   in order to improve downstream visualization or analysis. Shown is slice z=12 at t=3.
+
+
 Project along z
 ---------------
 
@@ -251,6 +285,16 @@ The key setting is:
 Restricting the z-range can be useful when only part of the stack contains the
 structures of interest and the remaining slices would mainly add blur or
 background.
+
+.. figure:: _static/filtering_reg_histomatch_3Dfilter_projected.jpg
+   :alt: 2D maximum-intensity projection of the histogram-matched two-channel example stack (3D+t) after slice-wise 2D filtering. 
+   :align: center
+   :figwidth: 100%
+
+   2D maximum-intensity projection of the histogram-matched two-channel example stack (3D+t)
+   after slice-wise 2D filtering. The projection is computed along the z-axis over a cropped
+   z-range. Restricting the z-range can be useful when only part of the stack contains the
+   structures of interest and the remaining slices would mainly add blur or background.
 
 
 Filter the projected stack again
@@ -276,6 +320,16 @@ Here, the most important adjustable parameters are again:
 - ``apply_3d``:
   still kept at ``False`` because the projected stack is already effectively
   two-dimensional along z.
+
+.. figure:: _static/filtering_reg_histomatch_3Dfilter_projected_2Dfilter.jpg
+   :alt: Final 2D+t result after post-projection filtering of the maximum-intensity projection of the histogram-matched two-channel example stack (3D+t).
+   :align: center
+   :figwidth: 100%
+
+   Final 2D+t result after post-projection filtering of the maximum-intensity projection 
+   of the histogram-matched two-channel example stack (3D+t).
+   Filtering the projected stack again can be useful because a projected image may
+   benefit from slightly stronger smoothing than the original 3D stack.
 
 
 Save the processed stack
