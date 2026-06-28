@@ -48,6 +48,7 @@ Main runtime dependencies include:
 - `scipy`
 - `scikit-image`
 - `pystackreg`
+- `ipykernel`
 
 ## What is bleed-through and why is it a problem?
 In fluorescence microscopy, bleed-through (also called crosstalk or spectral spillover) occurs when signal from one fluorophore is detected in the measurement channel of another fluorophore. A common reason is spectral overlap between fluorophore emission and the selected detection windows, but the the problem also depends on the optical filters, detector settings, and the overall imaging setup.
