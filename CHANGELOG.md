@@ -9,12 +9,15 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ---
 
-## 🚧 spectral-unmixing v0.0.3
+## 🚀 spectral-unmixing v0.0.3
 
-Planned next release.
+June 28, 2026
 
-### Changes
-#### Unmixing API refinement
+Documentation, dataset, and API refinement release for **spectral-unmixing**.
+
+This release provides:
+
+### Unmixing API refinement
 
 - Changed the default `unmix(...)` behavior from an implicit `alpha_mode="fixed"` to `alpha_mode=None`.
 - Added automatic alpha-mode resolution for `unmix(...)`:
@@ -25,7 +28,38 @@ Planned next release.
   - explicitly setting `alpha_mode="fixed"` still requires a user-provided `alpha`
   - explicitly setting `alpha_mode="reference_t"` or `alpha_mode="per_t"` still behaves exactly as requested
 - Extended the JSON sidecar report with the requested and effective alpha-mode information to make this default resolution reproducible.
-- Updated tests and documentation to describe the new `alpha_mode=None` default and its behavior for both `T=1` and `T>1` stacks.
+
+### Documentation
+
+- Added a full Sphinx / Read the Docs documentation tree for the package.
+- Expanded the overview and functionality pages with more complete mathematical and workflow descriptions.
+- Added a broad tutorial collection covering:
+  - standard two-channel unmixing
+  - full `TZCYX` synthetic-stack unmixing
+  - bidirectional unmixing
+  - PICASSO-family blind unmixing for 2-channel, 3-channel, and 5-channel examples
+  - filtering, registration, histogram matching, and projection helper workflows
+- Improved tutorial style and consistency across the interactive scripts and the corresponding documentation pages.
+- Added dataset provenance and license documentation for the public tutorial datasets.
+
+### Public tutorial datasets
+
+- Published a dedicated public example-dataset release on Zenodo for reproducing the tutorials:
+  - Musacchio, F. (2026). *Example datasets for the spectral-unmixing pipeline* [Data set]. Zenodo. https://doi.org/10.5281/zenodo.20984021
+- Added transparent dataset-level README files for:
+  - `Gockel_Nieves_Rivera_2026`
+  - `PICASSO_examples`
+  - `synthetic_data`
+
+### Packaging and CI
+
+- Added `docs/requirements.txt` so that Read the Docs builds can install the documentation dependencies correctly.
+- Added and corrected a GitHub Actions test workflow for automated tests and Codecov integration.
+
+### Testing and docs synchronization
+
+- Updated unit tests to cover the new `alpha_mode=None` default behavior.
+- Updated the documentation to describe the new default behavior consistently for both `T=1` and `T>1` stacks.
 
 ---
 
