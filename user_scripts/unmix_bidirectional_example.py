@@ -26,6 +26,9 @@ automatically generated in a subfolder of the input file's parent directory.
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "bidirectional_example.tif")
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# %% OPTIONAL: INSPECT PREPARED STACKS IN NAPARI
+from spectral_unmixing.viewer import show_all_channels_in_napari
+show_all_channels_in_napari(INPUT_PATH, layer_prefix="Bidirectional example")
 # %% FIXED BIDIRECTIONAL ALPHA EXAMPLE
 """Run bidirectional unmixing with manually chosen fixed coefficients.
 
@@ -75,7 +78,7 @@ fixed_output = unmix(
     # target_channel=1,  # default: 1
     alpha=0.60,
     alpha_reverse=0.50,
-    alpha_mode="fixed",
+    #alpha_mode="fixed",
     method="manual",
     # clip_negative=True,  # default: True
     # output_dtype="float32",  # default: "float32"
@@ -87,8 +90,8 @@ show_unmixed_channels_in_napari(
     source_channel=0,
     target_channel=1,
     layer_prefix="Bidirectional fixed",
-    source_colormap="cyan",
-    target_colormap="yellow")
+    source_colormap="green",
+    target_colormap="magenta")
 # %% MEAN-RATIO EXAMPLE
 """Estimate one forward and one reverse alpha from the same reference time point.
 

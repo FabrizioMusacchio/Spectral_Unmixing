@@ -93,6 +93,81 @@ This is the scientifically strongest option when both directional coefficients
 come from proper single-label controls.
 
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/bidirectional_raw.png
+   :alt: Composite image of the raw synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/bidirectional_raw_ch0.png
+   :alt: Channel 0 of the raw synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/bidirectional_raw_ch1.png
+   :alt: Channel 1 of the raw synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+   Unlike in the previous one-way unmixing example, here both channels contain bleed-through 
+   from the other channel. Top shows the composite view of the raw synthetic stack; center and 
+   bottom show the individual channels. ``spectral_unmixing`` offers a bidirectional workflow to 
+   correct both channels simultaneously. The forward and reverse coefficients can be set manually 
+   or estimated  from single-label controls.
+   
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/bidirectional_unmixed_fixed_alpha.png
+   :alt: Composite image of the unmixed synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/bidirectional_unmixed_fixed_alpha_ch0.png
+   :alt: Channel 0 of the unmixed synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/bidirectional_unmixed_fixed_alpha_ch1.png
+   :alt: Channel 1 of the unmixed synthetic two-channel stack in Napari.
+   :align: center
+   :figwidth: 100%
+
+   Results of the fixed bidirectional unmixing. The forward and reverse coefficients were 
+   set manually to 0.6 and 0.5, respectively. The bleed-through in both channels is effectively 
+   removed. The subsequent examples show how to estimate these coefficients automatically from 
+   the data, always resulting in a similar final output (and therefore omitted here
+   for brevity).
+   
+
+
+
 Bidirectional ``mean_ratio``
 ----------------------------
 

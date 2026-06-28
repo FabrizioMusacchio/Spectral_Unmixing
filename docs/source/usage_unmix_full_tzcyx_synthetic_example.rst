@@ -152,7 +152,9 @@ proper control measurement or an empirical estimate from a similar dataset.
 
    Results of the fixed-alpha unmixing on the synthetic stack, showing the source (top) 
    and target (bottom) channels in Napari's 3D view. The bleed-through from the source to the 
-   target channel has been corrected.
+   target channel has been corrected. The subsequent examples show how to estimate alpha 
+   automatically from the data, always resulting in a similar final output (and therefore 
+   omitted here for brevity).
    
 
 
