@@ -67,6 +67,80 @@ As in the other PICASSO tutorials, it is worth inspecting the raw measured
 channels first before deciding which blind-unmixing strategy is the better fit
 for the dataset.
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw.jpg
+   :alt: Raw composite view of the five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw_ch0.jpg
+   :alt: Channel 0 of the raw five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw_ch1.jpg
+   :alt: Channel 1 of the raw five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw_ch2.jpg
+   :alt: Channel 2 of the raw five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw_ch3.jpg
+   :alt: Channel 3 of the raw five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_raw_ch4.jpg
+   :alt: Channel 4 of the raw five-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+   Composite view of the raw five-channel stack (top). Channel 0 
+   is shown in cyan (top center), Channel 1 in magenta (center), Channel 2 
+   in yellow (bottom center), Channel 3 in green (bottom), and Channel 4 in red (top right). 
+   The channels clearly exhibit cross-talk.
+   
+
 
 ``matlab_n`` blind unmixing on five channels
 --------------------------------------------
@@ -134,6 +208,82 @@ This is usually the best choice when you want a broad, symmetric blind-unmixing
 strategy across many channels without encoding a very explicit source-sink
 model yourself.
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn.jpg
+   :alt: Unmixed composite view of the five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn_ch0.jpg
+   :alt: Channel 0 of the unmixed five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn_ch1.jpg
+   :alt: Channel 1 of the unmixed five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn_ch2.jpg
+   :alt: Channel 2 of the unmixed five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn_ch3.jpg
+   :alt: Channel 3 of the unmixed five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_matlabn_ch4.jpg
+   :alt: Channel 4 of the unmixed five-channel stack using MATLAB-style iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+   Results of the MATLAB-N blind-unmixing run on the five-channel stack.
+   The workflow did a decent job of removing cross-talk between the channels, but not for 
+   all of them. For instance, channel 1 still exhibits some cross-talk from channel 0, 
+   and channel 3 still exhibits some cross-talk from channel 2. The same is true for channel 4, 
+   which still exhibits some cross-talk from channel 3. Further tuning of the parameters may 
+   improve the results, but it is also possible that a more explicit source-sink model is needed 
+   to achieve better separation of the channels.
+   
 
 ``source_sink_n`` blind unmixing on five channels
 -------------------------------------------------
@@ -189,3 +339,78 @@ The most important settings are:
 For real five-channel data this mode is often attractive because it lets you
 move from a broad first-pass model to a more selective graph once you have a
 better idea which channels are plausible sinks and which should remain neutral.
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn.jpg
+   :alt: Unmixed composite view of the five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn_ch0.jpg
+   :alt: Channel 0 of the unmixed five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn_ch1.jpg
+   :alt: Channel 1 of the unmixed five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn_ch2.jpg
+   :alt: Channel 2 of the unmixed five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn_ch3.jpg
+   :alt: Channel 3 of the unmixed five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_5color_unmixed_sinkn_ch4.jpg
+   :alt: Channel 4 of the unmixed five-channel stack using source-sink-N iteration.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+   THis time, channel 0 and 1 are clearly separated. The same is true for channel 4.
+   However, cross-talk remains between channel 1, 2 and 3. Further tuning of the parameters 
+   may improve the results, but it is also possible that a more explicit source-sink model 
+   is needed to achieve better separation of the channels.
+   

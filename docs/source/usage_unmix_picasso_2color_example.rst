@@ -75,6 +75,45 @@ This inspection step is worth keeping in your own scripts. It lets you verify
 that the channels were loaded as expected before any blind-unmixing is applied.
 
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_raw.jpg
+   :alt: Raw composite view of the two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_raw_ch0.jpg
+   :alt: Channel 0 of the raw two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/picasso_2d_raw_ch1.jpg
+   :alt: Channel 1 of the raw two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+   Composite view of the raw two-channel stack (top). Channel 0 
+   is shown in cyan (center) and Channel 1 in yellow (bottom).
+   Visual inspection of the raw measured channels is useful for confirming 
+   channel order and for building intuition about which channels appear to 
+   contaminate which others. Here, channel 0 is bleeding into channel 1, 
+   but not vice versa. The goal of the blind-unmixing workflows is to estimate 
+   the cross-talk coefficients and produce a corrected output stack in which the 
+   channels are as cleanly separated as possible.
+   
+
 ``matlab_n`` blind unmixing
 ---------------------------
 
@@ -141,6 +180,42 @@ The most influential settings are:
   controls the data type used when the unmixed output is written.
 - ``verbose``:
   enables terminal progress output and report printing during the run.
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_unmixed_matlabn.jpg
+   :alt: Composite image of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_unmixed_matlabn_ch0.jpg
+   :alt: Channel 0 of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/picasso_2d_unmixed_matlabn_ch1.jpg
+   :alt: Channel 1 of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+   Results of the MATLAB-N blind unmixing workflow. The composite view (top) shows 
+   the unmixed channels in cyan (center) and yellow (bottom). The MATLAB-N workflow 
+   is a direct generalization of the original PICASSO Matlab-3c logic. It is
+   often a good starting point for blind unmixing and does not require the user to define 
+   a source-sink graph explicitly.
 
 The example script shown here uses a stack with only one time point, so
 ``alpha_mode`` and ``alpha_reference_t`` are left commented out in the code. For 
@@ -219,8 +294,45 @@ a summary of all remaining parameters that are relevant for the source-sink-N wo
   same time-axis controls as above for real multi-time-point stacks.
 
 For two-channel data this is often the easier PICASSO-family mode to reason
-about, because the user can state very directly which channel should be treated
+about, because one can state very directly which channel should be treated
 as the sink and which one is allowed to act as the source.
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_unmixed_sinkn.jpg
+   :alt: Composite image of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_2d_unmixed_sinkn_ch0.jpg
+   :alt: Channel 0 of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/picasso_2d_unmixed_sinkn_ch1.jpg
+   :alt: Channel 1 of the unmixed two-channel stack.
+   :align: center
+   :figwidth: 100%
+
+   Results of the source-sink-N blind unmixing workflow. The composite view (top) shows the
+   unmixed channels in cyan (center) and yellow (bottom). The source-sink-N workflow is
+   often the easiest PICASSO-family mode to reason about biologically, because the user
+   can explicitly define which channels are allowed to act as sources and which
+   channels are allowed to act as sinks.
+
 
 .. note::
 

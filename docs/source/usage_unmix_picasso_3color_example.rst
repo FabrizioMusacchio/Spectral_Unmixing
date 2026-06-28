@@ -63,6 +63,57 @@ Before any unmixing is applied, the script opens the measured stack in napari.
 This is useful for confirming channel order and for building intuition about
 which channels appear to contaminate which others.
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_raw.jpg
+   :alt: Raw composite view of the three-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_raw_ch0.jpg
+   :alt: Channel 0 of the raw three-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_raw_ch1.jpg
+   :alt: Channel 1 of the raw three-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_raw_ch2.jpg
+   :alt: Channel 2 of the raw three-channel stack.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+   Composite view of the raw three-channel stack (top). Channel 0 
+   is shown in cyan (top center), Channel 1 in magenta (bottom center), and Channel 2 
+   in yellow (bottom). The channels are clearly contaminated by each other.
+   
+
 
 ``matlab_n`` blind unmixing
 ---------------------------
@@ -131,6 +182,51 @@ The settings that matter most are:
 This is the best choice when you want MATLAB-like behavior but also want the
 same conceptual workflow to scale to larger channel counts.
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlabn.jpg
+   :alt: Composite view of the unmixed three-channel stack after the MATLAB-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlabn_ch0.jpg
+   :alt: Channel 0 of the unmixed three-channel stack after the MATLAB-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlabn_ch1.jpg
+   :alt: Channel 1 of the unmixed three-channel stack after the MATLAB-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+.. figure:: _static/picasso_3c_unmixed_matlabn_ch2.jpg
+   :alt: Channel 2 of the unmixed three-channel stack after the MATLAB-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+   Composite view of the unmixed three-channel stack after the MATLAB-N blind-unmixing 
+   run (top). The MATLAB-N implementation has successfully removed most of the cross-talk 
+   between the channels, which are now cleanly separated. 
+
+
 
 ``matlab_3c`` blind unmixing
 ----------------------------
@@ -170,6 +266,52 @@ The main settings remain the MATLAB-style iteration parameters:
 - ``verbose``
 - ``alpha_mode`` and ``alpha_reference_t`` for multi-time-point stacks:
   same behavior as in the ``matlab_n`` example above
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlab3c.jpg
+   :alt: Composite view of the unmixed three-channel stack after the MATLAB-3C blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlab3c_ch0.jpg
+   :alt: Channel 0 of the unmixed three-channel stack after the MATLAB-3C blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_matlab3c_ch1.jpg
+   :alt: Channel 1 of the unmixed three-channel stack after the MATLAB-3C blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+.. figure:: _static/picasso_3c_unmixed_matlab3c_ch2.jpg
+   :alt: Channel 2 of the unmixed three-channel stack after the MATLAB-3C blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+   Also the MATLAB-3C implementation has successfully removed most of the cross-talk 
+   between the channels, which are now cleanly separated. The results are very similar 
+   to the MATLAB-N run above. In fact, the latter is a generalized version of the former, 
+   so the results are expected to be nearly identical.
 
 
 ``source_sink_n`` blind unmixing
@@ -226,3 +368,51 @@ The most relevant settings are:
 This is often the easiest mode to reason about biologically, because the user
 can describe which channels should actually be cleaned and which channels
 should remain untouched or act only as sources.
+
+
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_sinkn.jpg
+   :alt: Composite view of the unmixed three-channel stack after the source-sink-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_sinkn_ch0.jpg
+   :alt: Channel 0 of the unmixed three-channel stack after the source-sink-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/picasso_3c_unmixed_sinkn_ch1.jpg
+   :alt: Channel 1 of the unmixed three-channel stack after the source-sink-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+.. figure:: _static/picasso_3c_unmixed_sinkn_ch2.jpg
+   :alt: Channel 2 of the unmixed three-channel stack after the source-sink-N blind-unmixing run.
+   :align: center
+   :figwidth: 100%
+
+   This time, cross-talk was only successfully removed from the declared sink channel (channel 1). 
+   The other two channels were left untouched, as requested. This is the expected behavior of the 
+   source-sink-N formulation. The source-sink-N implementation is often the best choice when 
+   you want one or more dedicated sink channels to be cleaned, leaving other channels untouched, while
+   applying PICASSO-family blind unmixing logic to estimate the cross-talk coefficients.
+
