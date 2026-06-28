@@ -582,7 +582,7 @@ or update sequence are estimated from:
 
 For practical examples, see:
 
-- [user_scripts/unmix_picasso_5color_simulation.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_simulation.py)
+- [user_scripts/unmix_picasso_5color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_example.py)
 
 ### Output and reproducibility
 Each unmixing run writes a JSON sidecar report next to the output stack, for
@@ -621,6 +621,21 @@ functions for:
 These helper modules are meant to support follow-up image processing after unmixing. They are not the primary focus of the project, and their full documentation will be expanded later in Read the Docs.
 
 For now, see the tutorial-style user scripts provided in the `user_scripts` folder for practical examples of how to use these add-ons.
+
+## Example datasets
+We provide a dedicated example dataset on Zenodo so that users can replay the tutorial scripts used throughout the documentation:
+
+> Musacchio, F. (2026). *Example datasets for the spectral-unmixing pipeline* [Data set]. Zenodo. https://doi.org/10.5281/zenodo.20984021
+
+It includes:
+
+- public PICASSO-family example images (`CC BY 4.0`)
+- synthetic `TZCYX` bleed-through data generated within this repository (`CC BY 4.0`)
+- a cropped helper-workflow stack derived from the MotilA example dataset (`CC BY-SA 4.0`)
+
+For details on provenance, tutorial mapping, and licenses, please refer to the documentation page:
+
+- [docs/source/usage_example_datasets.rst](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/docs/source/usage_example_datasets.rst)
 
 ## Citation
 If you use *Spectral Unmixing* in scientific work, please cite:
