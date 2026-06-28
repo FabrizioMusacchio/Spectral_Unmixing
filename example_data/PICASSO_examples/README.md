@@ -3,7 +3,7 @@ This folder contains example microscopy images derived from the public example f
 
 Please download the data from Zenodo and place it in this folder before running the tutorials or tests:
 
-Musacchio, F. (2026). Example datasets for the `spectral-unmixing` pipeline [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.20984022>
+Musacchio, F. (2026). Example datasets for the spectral-unmixing pipeline [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.20984021>
 
 ## Contents
 Input example images include:
