@@ -637,6 +637,16 @@ For details on provenance, tutorial mapping, and licenses, please refer to the d
 
 - [docs/source/usage_example_datasets.rst](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/docs/source/usage_example_datasets.rst)
 
+## Modularity and contributions
+`spectral-unmixing` is intentionally organized as a modular package. The core two-channel unmixing routines, PICASSO-family blind-unmixing workflows, filtering helpers, registration helpers, projection helpers, viewer helpers, and I/O helpers are kept in separate reusable modules so that the package can be extended without having to restructure the whole pipeline. This is deliberate: It should be straightforward to add further spectral unmixing methods, additional alpha-estimation strategies, and new pre- or post-processing filters as the project evolves.
+
+Contributions are therefore very welcome. If you want to propose a feature, request an add-on workflow, report a bug, or discuss an extension, please see the [Contributing](docs/source/contributing.rst) page and use the GitHub issue tracker:
+
+- [GitHub issues](https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues)
+
+## License
+`spectral-unmixing` is released under the GNU General Public License v3.0 or later (`GPL-3.0-or-later`). See the repository's [`LICENSE` file](https://github.com/FabrizioMusacchio/Spectral_Unmixing?tab=GPL-3.0-1-ov-file) for the full license text.
+
 ## Citation
 If you use *Spectral Unmixing* in scientific work, please cite:
 
