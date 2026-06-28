@@ -8,6 +8,14 @@ We recommend creating a dedicated Python 3.12 conda environment first:
    conda create -n spectral-unmixing python=3.12
    conda activate spectral-unmixing
 
+.. note::
+
+   We have tested ``spectral-unmixing`` with Python 3.12. Newer versions may work but 
+   are not guaranteed to be compatible. Older Python versions are not supported,
+   as ``spectral-unmixing`` relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
+   reading microscopy data, and OMIO requires Python 3.12 or newer.
+
+
 
 Install from PyPI
 -----------------
@@ -58,8 +66,6 @@ Main runtime dependencies currently include:
 - ``scikit-image``
 - ``pystackreg``
 - ``ipykernel``
-
-No separate PyTorch installation is required for the package itself.
 
 
 Documentation build dependencies
