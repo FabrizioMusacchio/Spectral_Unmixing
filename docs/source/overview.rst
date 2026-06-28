@@ -438,12 +438,32 @@ channel assignments, estimated coefficients, and implementation settings. This
 makes the package suitable for transparent, script-based microscopy workflows.
 
 
+Modularity and contributions
+----------------------------
+
+``spectral-unmixing`` is intentionally built in a modular way. The core
+unmixing logic, blind-unmixing routines, filtering helpers, registration
+helpers, projection helpers, viewer helpers, and I/O helpers are separated into
+reusable package modules so that the pipeline can be extended without having to
+rewrite the overall workflow. This modular structure is intentional: It should 
+be straightforward to add further spectral-unmixing methods, additional 
+alpha-estimation strategies, and new pre-processing or post-processing 
+filters as the project evolves.
+Contributions are therefore very welcome. If you would like to suggest a new
+feature, propose an add-on workflow, improve the documentation, or contribute a
+new implementation, please see the :doc:`contributing` page and use the GitHub
+issue tracker for feature requests, bug reports, and discussion:
+
+`https://github.com/FabrizioMusacchio/spectral-unmixing/issues <https://github.com/FabrizioMusacchio/spectral-unmixing/issues>`_
+
+
 License
 -------
 
 ``spectral-unmixing`` is released under the GNU General Public License v3.0 or
-later (GPL-3.0-or-later). See the repository's ``LICENSE`` file for the full
-license text.
+later (GPL-3.0-or-later). See the repository's ``LICENSE`` file 
+(`link <https://github.com/FabrizioMusacchio/Spectral_Unmixing?tab=GPL-3.0-1-ov-file>`_) 
+for the full license text.
 
 
 Citation
