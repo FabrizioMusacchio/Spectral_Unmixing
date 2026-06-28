@@ -39,6 +39,9 @@ INPUT_PATH = PROJECT_ROOT / "example_data" / "synthetic_data" / "synthetic_bleed
 INPUT_NAME = INPUT_PATH.stem
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# %% OPTIONAL: INSPECT PREPARED STACKS IN NAPARI
+from spectral_unmixing.viewer import show_all_channels_in_napari
+show_all_channels_in_napari(INPUT_PATH, layer_prefix="3D+t synthetic simulation")
 # %% FIXED ALPHA EXAMPLE
 """Run unmixing with a manually chosen fixed bleed-through coefficient.
 

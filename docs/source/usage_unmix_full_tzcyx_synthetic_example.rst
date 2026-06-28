@@ -96,6 +96,66 @@ This is the best starting point when you already have a coefficient from a
 proper control measurement or an empirical estimate from a similar dataset. 
 
 
+.. raw:: html
+
+    <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/3Dt_raw_2D.png
+   :alt: Composite image of the raw synthetic stack, showing the source and target channels in Napari's 2D view.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+
+   </div>
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/3Dt_raw_3D.png
+   :alt: Composite image of the raw synthetic stack, showing the source and target channels in Napari's 3D view.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/3Dt_raw_3D_ch1.png
+   :alt: Target channel only, showing the bleed-through from the source channel in Napari's 3D view.
+   :align: center
+   :figwidth: 100%
+
+   Composite images of the raw synthetic stack, showing the source and target channels 
+   in Napari's 2D (top) and 3D views (center). The source channel is shown in cyan, and the target 
+   channel is shown in magenta. The images illustrate the bleed-through from the source to the 
+   target channel (bottom), which will be corrected by the unmixing process.
+   
+
+
+.. raw:: html
+
+   <div style="margin-bottom: 0.5em;">
+
+.. figure:: _static/3Dt_unmixed_fixed_alpha_ch0.png
+   :alt: 3D view of the source channel after fixed-alpha unmixing, showing that the source channel is preserved.
+   :align: center
+   :figwidth: 100%
+
+.. raw:: html
+   
+    </div>
+
+.. figure:: _static/3Dt_unmixed_fixed_alpha_ch1.png
+   :alt: 3D view of the target channel after fixed-alpha unmixing, showing that the bleed-through from the source channel has been corrected.
+   :align: center
+   :figwidth: 100%
+
+   Results of the fixed-alpha unmixing on the synthetic stack, showing the source (top) 
+   and target (bottom) channels in Napari's 3D view. The bleed-through from the source to the 
+   target channel has been corrected.
+   
+
+
 ``mean_ratio`` on a full ``TZCYX`` stack
 ----------------------------------------
 
