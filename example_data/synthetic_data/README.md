@@ -1,6 +1,9 @@
 # synthetic_data
-
 This folder contains synthetic example data generated specifically for the `spectral-unmixing` tutorials and tests.
+
+Please download the data from Zenodo and place it in this folder before running the tutorials or tests:
+
+Musacchio, F. (2026). Example datasets for the `spectral-unmixing` pipeline [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.20984022>
 
 ## Contents
 

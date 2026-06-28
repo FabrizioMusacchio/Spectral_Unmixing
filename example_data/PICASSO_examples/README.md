@@ -1,6 +1,9 @@
 # PICASSO_examples
-
 This folder contains example microscopy images derived from the public example figures shared alongside the PICASSO publication. They are used in the `spectral-unmixing` tutorials for blind unmixing and PICASSO-family workflows.
+
+Please download the data from Zenodo and place it in this folder before running the tutorials or tests:
+
+Musacchio, F. (2026). Example datasets for the `spectral-unmixing` pipeline [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.20984022>
 
 ## Contents
 Input example images include:

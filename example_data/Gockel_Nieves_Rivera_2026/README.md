@@ -1,6 +1,9 @@
 # Gockel_Nieves_Rivera_2026
-
 This folder contains a cropped example stack used in the helper tutorials of `spectral-unmixing`, in particular for registration, filtering, histogram matching, and projection workflows.
+
+Please download the data from Zenodo and place it in this folder before running the tutorials or tests:
+
+Musacchio, F. (2026). Example datasets for the `spectral-unmixing` pipeline [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.20984022>
 
 ## Contents
 
@@ -13,7 +16,7 @@ This folder contains a cropped example stack used in the helper tutorials of `sp
 ## Source
 The input stack in this folder is a cropped cut-out derived from:
 
-Gockel, N., Nieves-Rivera, N., Musacchio, F., Druart, M., Jaako, K., Fuhrmann, F., Rozkalne, R., Poll, S., Baiba, J., Fuhrmann, M., & Le Magueresse, C. (2025). *Example Datasets for Microglial Motility Analysis Using the MotilA Pipeline* [Data set]. Zenodo. https://doi.org/10.5281/zenodo.15061566
+Gockel, N., Nieves-Rivera, N., Musacchio, F., Druart, M., Jaako, K., Fuhrmann, F., Rozkalne, R., Poll, S., Baiba, J., Fuhrmann, M., & Le Magueresse, C. (2025). *Example Datasets for Microglial Motility Analysis Using the MotilA Pipeline* [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.15061566>
 
 ## License
 The source dataset is licensed under:
