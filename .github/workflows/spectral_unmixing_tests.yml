@@ -1,0 +1,57 @@
+name: Run Python tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.12"
+          activate-environment: spectralunmixing
+          auto-update-conda: true
+          miniforge-variant: Miniforge3
+          channels: conda-forge
+          conda-remove-defaults: true
+
+      - name: Install Spectral Unmixing and test dependencies
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate spectralunmixing
+          pip install -e ".[dev]"
+
+      - name: Debug Spectral Unmixing import
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate spectralunmixing
+          python -c "import spectral_unmixing; print('spectral_unmixing imported from:', spectral_unmixing.__file__)"
+
+      - name: Run tests
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate spectralunmixing
+          pytest --cov=spectral_unmixing --cov-branch --cov-report=term --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: coverage.xml
+          verbose: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          files: junit.xml
+          report_type: test_results
+          verbose: true
