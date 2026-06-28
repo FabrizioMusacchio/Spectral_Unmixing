@@ -21,13 +21,15 @@ how these functions are combined for real workflows.
    usage_unmix_picasso_2color_example
    usage_unmix_picasso_3color_example
    usage_unmix_picasso_5color_example
+   usage_filter_and_register_stack
 
 
 How to read the tutorials
 -------------------------
 
-Each tutorial page below is based on one interactive script from the
-repository. The documentation follows the script cell by cell and explains:
+Each tutorial page is based on one interactive script from the
+repository's ``user_scripts/`` folder. The documentation follows 
+the script cell by cell and explains:
 
 - what each cell does,
 - which parameters matter most,
@@ -35,17 +37,22 @@ repository. The documentation follows the script cell by cell and explains:
 - and how those changes affect the unmixing result.
 
 
-Suggested learning path
------------------------
+Recommended starting point
+--------------------------
 
 If you are new to the package, start in this order:
 
 1. :doc:`usage_unmix_example`
 2. :doc:`usage_unmix_full_tzcyx_synthetic_example`
-3. :doc:`usage_unmix_bidirectional_example`
-4. the PICASSO-family blind-unmixing tutorials
+3. :doc:`usage_filter_and_register_stack`
+4. :doc:`usage_unmix_bidirectional_example`
+5. the PICASSO-family blind-unmixing tutorials
 
 The standard two-channel tutorial introduces the core package logic with the
-least complexity. The synthetic ``TZCYX`` tutorial then shows the same logic on
-full time-lapse z-stacks. The PICASSO tutorials build on the same ideas but add
-blind coefficient estimation and multi-channel configuration.
+least complexity. The  ``TZCYX`` tutorial then shows the same logic on
+full time-lapse z-stacks. The helper tutorial then shows how filtering,
+registration, histogram matching, and projection can be chained after
+unmixing. The bidirectional tutorial adds a more advanced alpha-estimation
+strategy for cases where the cross-talk is not strictly unidirectional. The
+PICASSO tutorials build on the same ideas but add
+blind coefficient estimation and multi-channel (more than two) configuration.
