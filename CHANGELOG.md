@@ -13,7 +13,8 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 Planned next release.
 
-### Unmixing API refinement
+### Changes
+#### Unmixing API refinement
 
 - Changed the default `unmix(...)` behavior from an implicit `alpha_mode="fixed"` to `alpha_mode=None`.
 - Added automatic alpha-mode resolution for `unmix(...)`:
