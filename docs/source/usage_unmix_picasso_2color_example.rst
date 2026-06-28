@@ -221,3 +221,56 @@ a summary of all remaining parameters that are relevant for the source-sink-N wo
 For two-channel data this is often the easier PICASSO-family mode to reason
 about, because the user can state very directly which channel should be treated
 as the sink and which one is allowed to act as the source.
+
+.. note::
+
+   If you want to define ``source_sink_matrix`` manually, the package uses the
+   following convention:
+
+   - rows correspond to **source** channels
+   - columns correspond to **sink** channels
+   - the diagonal must always be ``1``
+   - an allowed source-to-sink relation is encoded as ``-1``
+   - all other off-diagonal entries must be ``0``
+
+   For the present 2-channel case with ``channels=[0, 1]``, if channel 0 is
+   allowed to bleed into channel 1 but not vice versa, the manual matrix is:
+
+   .. code-block:: python
+
+      source_sink_matrix = [
+          [1, -1],
+          [0,  1],
+      ]
+
+   Here, the entry in row 0, column 1 is ``-1`` because channel 0 acts as a
+   source for sink channel 1.
+
+   If both directions should be allowed in a 2-channel case, the matrix would
+   be:
+
+   .. code-block:: python
+
+      source_sink_matrix = [
+          [1, -1],
+          [-1, 1],
+      ]
+
+   For a 3-channel case with ``channels=[0, 1, 2]``, suppose channel 1 should
+   be cleaned and channels 0 and 2 are both allowed to contribute to it. Then
+   the matrix becomes:
+
+   .. code-block:: python
+
+      source_sink_matrix = [
+          [1, -1, 0],
+          [0,  1, 0],
+          [0, -1, 1],
+      ]
+
+   More generally, for ``N`` selected channels, you always start from the
+   identity matrix of size ``N x N`` and then place ``-1`` exactly at those
+   positions ``(i, j)`` for which source channel ``i`` should be allowed to
+   contribute to sink channel ``j``. If you do not want to build that matrix by
+   hand, the higher-level ``sink_channels`` and ``neutral_channels`` interface
+   is usually the more convenient option.
