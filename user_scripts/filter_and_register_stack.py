@@ -7,10 +7,8 @@ Date: June 2026
 # %% IMPORTS
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-# PATH SETUP:
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 from spectral_unmixing.io import load_stack_with_omio, write_stack_with_omio

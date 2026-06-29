@@ -7,19 +7,6 @@ Date: June 2026
 # %% IMPORTS
 from __future__ import annotations
 
-"""Import the helpers used throughout the interactive unmixing tutorial.
-
-This cell wires the repository root into ``sys.path`` so the local
-``spectral_unmixing`` package can be imported without installation.
-The imported functions cover:
-
-- ``unmix(...)`` for the actual spectral bleed-through correction.
-- ``report_path_from_output_path(...)`` for loading the JSON sidecar report.
-- ``show_unmixed_channels_in_napari(...)`` for reusing one napari viewer and
-  updating its layers after each run.
-"""
-# import the required helper functions:
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
