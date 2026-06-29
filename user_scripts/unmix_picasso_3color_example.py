@@ -234,7 +234,7 @@ For this specific 3-channel example we use the targeted configuration in which
 # define the output path for the PICASSO source-sink-N unmixing result:
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / f"{INPUT_NAME}_picasso_source_sink.tif"
 
-sink_channels = [1]
+sink_channels = [0,1,2]
 neutral_channels = []
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution
@@ -265,7 +265,7 @@ picasso_source_sink_output = unmix_picasso(
     source_sink_max_background=0.2,
     source_sink_n_restarts=6,
     source_sink_joint_optimization=True,
-    random_state=0,
+    random_state=32,
     clip_negative=True,
     output_dtype="float32",
     verbose=True,

@@ -105,7 +105,7 @@ that the channels were loaded as expected before any blind-unmixing is applied.
    :figwidth: 100%
 
    Composite view of the raw two-channel stack (top). Channel 0 
-   is shown in cyan (center) and Channel 1 in yellow (bottom).
+   is shown in cyan (center) and Channel 1 in magenta (bottom).
    Visual inspection of the raw measured channels is useful for confirming 
    channel order and for building intuition about which channels appear to 
    contaminate which others. Here, channel 0 is bleeding into channel 1, 
@@ -212,7 +212,7 @@ The most influential settings are:
    :figwidth: 100%
 
    Results of the MATLAB-N blind unmixing workflow. The composite view (top) shows 
-   the unmixed channels in cyan (center) and yellow (bottom). The MATLAB-N workflow 
+   the unmixed channels in cyan (center) and magenta (bottom). The MATLAB-N workflow 
    is a direct generalization of the original PICASSO Matlab-3c logic. It is
    often a good starting point for blind unmixing and does not require the user to define 
    a source-sink graph explicitly.
@@ -340,7 +340,7 @@ source.
    :figwidth: 100%
 
    Results of the source-sink-N blind unmixing workflow. The composite view (top) shows the
-   unmixed channels in cyan (center) and yellow (bottom). The source-sink-N workflow is
+   unmixed channels in cyan (center) and magenta (bottom). The source-sink-N workflow is
    often the easiest PICASSO-family mode to reason about biologically, because the user
    can explicitly define which channels are allowed to act as sources and which
    channels are allowed to act as sinks.

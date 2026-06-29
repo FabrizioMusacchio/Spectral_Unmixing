@@ -431,8 +431,10 @@ can be moved into ``neutral_channels``.
    :align: center
    :figwidth: 100%
 
-   This time, cross-talk was only successfully removed from the declared sink channel (channel 1). 
-   The other two channels were left untouched, as requested. This is the expected behavior of the 
-   source-sink-N formulation. The source-sink-N implementation is often the best choice when 
-   you want one or more dedicated sink channels to be cleaned, leaving other channels untouched, while
-   applying PICASSO-family blind unmixing logic to estimate the cross-talk coefficients.
+   By setting the sink-channel equal to all channels, the source-sink-N implementation has 
+   successfully removed most of the cross-talk. This is just because we, by doing so, have allowed 
+   the algorithm to model all possible pairwise relations. The results are very similar to the 
+   MATLAB-N and MATLAB-3C runs above. However, the power of the source-sink-N implementation is 
+   its ability to restrict the modeled relations to only those that are biologically relevant.
+   For highly multiplexed experiments, allowing all-to-all relations here may lead to
+   less satisfactory results and other methods such as ``matlab_n`` should be preferred. 
