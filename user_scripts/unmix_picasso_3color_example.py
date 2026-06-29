@@ -23,6 +23,8 @@ automatically generated in a subfolder of the input file's parent directory.
 # define the input path to the example dataset:
 INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "3_color_data.tif")
 #INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "m1_e0_GFAPgreenDRAQmagenta.tif")
+#INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "picasso_mouse_spinalcord_small.tif")
+#INPUT_PATH = (PROJECT_ROOT / "example_data" / "PICASSO_examples" / "GFAP_sink_LMNB1_source.tif")
 INPUT_NAME = INPUT_PATH.stem
 
 OUTPUT_DIR = INPUT_PATH.parent / "unmixed"
@@ -217,7 +219,7 @@ For this specific 3-channel example we use the targeted configuration in which
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / f"{INPUT_NAME}_picasso_source_sink.tif"
 
 sink_channels = [1]
-neutral_channels = []
+neutral_channels = [2]
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution
 # and model only the clearly suspected ``channel 0 -> channel 1`` case, make
@@ -237,13 +239,13 @@ picasso_source_sink_output = unmix_picasso(
     neutral_channels=neutral_channels,
     # source_sink_matrix=[[1, 0, 0], [-1, 1, -1], [0, 0, 1]],
     background_percentile=1.0,
-    # preprocess_alpha_inputs=True,  # recorded for compatibility
+    #preprocess_alpha_inputs=True,  # recorded for compatibility
     mi_bins=64,
     alpha_max=1.0,
     max_iter=50,
     tolerance=1e-4,
     max_alpha_voxels=250_000,
-    random_state=42,
+    random_state=0,
     clip_negative=True,
     output_dtype="float32",
     verbose=True,
