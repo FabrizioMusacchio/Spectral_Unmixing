@@ -33,6 +33,10 @@ from .picasso_impl import (
     DEFAULT_PICASSO_NEGATIVITY_THRESHOLD,
     DEFAULT_PICASSO_QN,
     DEFAULT_PICASSO_STEP_SIZE,
+    DEFAULT_SOURCE_SINK_JOINT_OPTIMIZATION,
+    DEFAULT_SOURCE_SINK_MAX_BACKGROUND,
+    DEFAULT_SOURCE_SINK_N_RESTARTS,
+    DEFAULT_SOURCE_SINK_OPTIMIZE_BACKGROUND,
     default_source_sink_matrix,
     apply_source_sink_parameters,
     run_picasso_matlab_like,
@@ -1052,6 +1056,10 @@ def unmix_picasso(
     alpha_clip=DEFAULT_PICASSO_ALPHA_CLIP,
     negativity_threshold=DEFAULT_PICASSO_NEGATIVITY_THRESHOLD,
     clip_every_n_iterations=DEFAULT_PICASSO_CLIP_EVERY_N_ITERATIONS,
+    source_sink_optimize_background=DEFAULT_SOURCE_SINK_OPTIMIZE_BACKGROUND,
+    source_sink_max_background=DEFAULT_SOURCE_SINK_MAX_BACKGROUND,
+    source_sink_n_restarts=DEFAULT_SOURCE_SINK_N_RESTARTS,
+    source_sink_joint_optimization=DEFAULT_SOURCE_SINK_JOINT_OPTIMIZATION,
     clip_negative=True,
     output_dtype="float32",
     verbose=True,
@@ -1146,6 +1154,22 @@ def unmix_picasso(
         divided by ten.
     clip_every_n_iterations : int, optional
         Frequency of positivity enforcement during the MATLAB-style iterations.
+    source_sink_optimize_background : bool, optional
+        If ``True``, ``implementation="source_sink_n"`` jointly optimizes one
+        background parameter ``beta`` per modeled source-to-sink relation,
+        following the source-sink formulation used by the napari PICASSO
+        plugin.
+    source_sink_max_background : float, optional
+        Upper bound for the optimized source-background parameters in the
+        source-sink implementation. The values operate on globally normalized
+        intensities in the interval ``[0, 1]``.
+    source_sink_n_restarts : int, optional
+        Number of multi-start optimizer initializations used by the
+        source-sink implementation for each sink.
+    source_sink_joint_optimization : bool, optional
+        If ``True`` (default), all modeled sources contributing to a given sink
+        are optimized jointly. If ``False``, the package falls back to the
+        older greedy pairwise update strategy.
     clip_negative : bool, optional
         If ``True``, clip negative unmixed intensities to zero before writing.
     output_dtype : str or numpy.dtype, optional
@@ -1306,6 +1330,12 @@ def unmix_picasso(
                 alpha_max=float(alpha_max),
                 max_alpha_voxels=max_alpha_voxels,
                 random_state=int(random_state),
+                max_iter=int(max_iter),
+                tolerance=float(tolerance),
+                optimize_background=bool(source_sink_optimize_background),
+                max_background=float(source_sink_max_background),
+                n_restarts=int(source_sink_n_restarts),
+                joint_optimization=bool(source_sink_joint_optimization),
             )
             transformed_selected[int(alpha_reference_t)] = np.moveaxis(reference_unmixed, 0, 1)
             matrix = np.asarray(matrix_details["alpha_parameters"], dtype=np.float64)
@@ -1319,6 +1349,7 @@ def unmix_picasso(
                     source_sink_matrix=source_sink_matrix,
                     alpha_parameters=matrix_details["alpha_parameters"],
                     background_values=matrix_details["background_values"],
+                    background_parameters=matrix_details["background_parameters"],
                 )
                 transformed_selected[t] = np.moveaxis(transformed_t, 0, 1)
                 application_details_by_t.append({"t": int(t), "mode": "applied"})
@@ -1355,6 +1386,12 @@ def unmix_picasso(
                     alpha_max=float(alpha_max),
                     max_alpha_voxels=max_alpha_voxels,
                     random_state=int(random_state) + int(t),
+                    max_iter=int(max_iter),
+                    tolerance=float(tolerance),
+                    optimize_background=bool(source_sink_optimize_background),
+                    max_background=float(source_sink_max_background),
+                    n_restarts=int(source_sink_n_restarts),
+                    joint_optimization=bool(source_sink_joint_optimization),
                 )
                 matrices_by_t[t] = np.asarray(details_t["alpha_parameters"], dtype=np.float64)
 
@@ -1403,6 +1440,10 @@ def unmix_picasso(
         "alpha_clip": float(alpha_clip),
         "negativity_threshold": float(negativity_threshold),
         "clip_every_n_iterations": int(clip_every_n_iterations),
+        "source_sink_optimize_background": bool(source_sink_optimize_background),
+        "source_sink_max_background": float(source_sink_max_background),
+        "source_sink_n_restarts": int(source_sink_n_restarts),
+        "source_sink_joint_optimization": bool(source_sink_joint_optimization),
         "clip_negative": bool(clip_negative),
         "unmixing_matrix": None if matrix is None else matrix.tolist(),
         "unmixing_matrix_by_t": None

@@ -32,6 +32,10 @@ DEFAULT_PICASSO_BIN_FACTOR = 16
 DEFAULT_PICASSO_ALPHA_CLIP = 0.5
 DEFAULT_PICASSO_NEGATIVITY_THRESHOLD = 0.9e-3
 DEFAULT_PICASSO_CLIP_EVERY_N_ITERATIONS = 50
+DEFAULT_SOURCE_SINK_OPTIMIZE_BACKGROUND = True
+DEFAULT_SOURCE_SINK_MAX_BACKGROUND = 0.2
+DEFAULT_SOURCE_SINK_N_RESTARTS = 4
+DEFAULT_SOURCE_SINK_JOINT_OPTIMIZATION = True
 
 EPSILON = 1e-12
 
@@ -567,42 +571,207 @@ def _subsample_pair(
     return source_vector[indices], sink_vector[indices]
 
 
-def _estimate_source_sink_alpha(
-    source_prepared: np.ndarray,
-    sink_current: np.ndarray,
+def _subsample_source_sink_problem(
+    source_volumes: np.ndarray,
+    sink_volume: np.ndarray,
     *,
-    mi_bins: int,
-    alpha_max: float,
     max_alpha_voxels: int | None,
     random_state: int,
-) -> tuple[float, dict]:
-    """Estimate one plugin-like source-to-sink coefficient by mutual-information minimization."""
+) -> tuple[np.ndarray, np.ndarray]:
+    """Subsample a full source-sink optimization problem consistently across sources."""
 
-    source_vector, sink_vector = _subsample_pair(
-        source_prepared,
-        sink_current,
+    source_matrix = np.asarray(source_volumes, dtype=np.float64).reshape(int(source_volumes.shape[0]), -1)
+    sink_vector = np.asarray(sink_volume, dtype=np.float64).ravel()
+    if source_matrix.shape[1] != sink_vector.size:
+        raise ValueError(
+            "All source volumes and the sink volume must contain the same number of voxels. "
+            f"Got {source_matrix.shape[1]!r} and {sink_vector.size!r}."
+        )
+    if max_alpha_voxels is None or sink_vector.size <= int(max_alpha_voxels):
+        return source_matrix, sink_vector
+
+    max_alpha_voxels = _normalize_positive_int("max_alpha_voxels", max_alpha_voxels, minimum=1)
+    rng = np.random.default_rng(int(random_state))
+    indices = rng.choice(sink_vector.size, size=max_alpha_voxels, replace=False)
+    return source_matrix[:, indices], sink_vector[indices]
+
+
+def _build_source_sink_corrected_signal(
+    sink_vector: np.ndarray,
+    source_matrix: np.ndarray,
+    alphas: np.ndarray,
+    betas: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Build the corrected sink signal for one sink from all allowed sources.
+
+    Returns the corrected sink and the background-corrected source matrix used
+    for subtraction.
+    """
+
+    prepared_sources = np.maximum(source_matrix - betas[:, None], 0.0)
+    corrected = sink_vector - np.sum(alphas[:, None] * prepared_sources, axis=0)
+    corrected = np.clip(corrected, 0.0, 1.0)
+    return corrected, prepared_sources
+
+
+def _joint_source_sink_objective(
+    parameter_vector: np.ndarray,
+    *,
+    source_matrix: np.ndarray,
+    sink_vector: np.ndarray,
+    mi_bins: int,
+    optimize_background: bool,
+) -> float:
+    """Objective for joint source-sink optimization using histogram-based mutual information."""
+
+    source_count = int(source_matrix.shape[0])
+    alphas = np.asarray(parameter_vector[:source_count], dtype=np.float64)
+    if optimize_background:
+        betas = np.asarray(parameter_vector[source_count:], dtype=np.float64)
+    else:
+        betas = np.zeros((source_count,), dtype=np.float64)
+
+    corrected, _ = _build_source_sink_corrected_signal(
+        sink_vector,
+        source_matrix,
+        alphas,
+        betas,
+    )
+    total_mi = 0.0
+    for source_index in range(source_count):
+        total_mi += mutual_information_1d(source_matrix[source_index], corrected, bins=mi_bins)
+    return float(total_mi)
+
+
+def _estimate_joint_source_sink_parameters(
+    source_volumes: np.ndarray,
+    sink_volume: np.ndarray,
+    *,
+    initial_backgrounds: np.ndarray,
+    mi_bins: int,
+    alpha_max: float,
+    max_background: float,
+    max_alpha_voxels: int | None,
+    random_state: int,
+    optimize_background: bool,
+    max_iter: int,
+    tolerance: float,
+    n_restarts: int,
+) -> tuple[np.ndarray, np.ndarray, dict]:
+    """Jointly estimate all source-to-sink coefficients for one sink."""
+
+    source_matrix, sink_vector = _subsample_source_sink_problem(
+        source_volumes,
+        sink_volume,
         max_alpha_voxels=max_alpha_voxels,
         random_state=random_state,
     )
-    if source_vector.size == 0 or np.max(source_vector) <= EPSILON:
-        return 0.0, {"optimization_success": True, "optimization_nfev": 0}
+    source_count = int(source_matrix.shape[0])
+    if source_count == 0:
+        return (
+            np.zeros((0,), dtype=np.float64),
+            np.zeros((0,), dtype=np.float64),
+            {"optimization_success": True, "optimization_nfev": 0, "optimization_nit": 0},
+        )
+    if source_matrix.size == 0 or np.max(source_matrix) <= EPSILON:
+        return (
+            np.zeros((source_count,), dtype=np.float64),
+            np.zeros((source_count,), dtype=np.float64),
+            {"optimization_success": True, "optimization_nfev": 0, "optimization_nit": 0},
+        )
 
-    def objective(alpha_value: np.ndarray) -> float:
-        corrected = sink_vector - float(alpha_value[0]) * source_vector
-        return mutual_information_1d(source_vector, corrected, bins=mi_bins)
+    initial_backgrounds = np.asarray(initial_backgrounds, dtype=np.float64)
+    initial_backgrounds = np.clip(initial_backgrounds, 0.0, max_background)
+    rng = np.random.default_rng(int(random_state))
 
-    result = minimize(
-        objective,
-        np.array([0.1], dtype=np.float64),
-        method="Nelder-Mead",
-        options={"maxiter": 200, "xatol": 1e-4, "fatol": 1e-4},
-    )
-    alpha = float(result.x[0]) if np.isfinite(result.x[0]) else 0.0
-    alpha = float(np.clip(alpha, 0.0, alpha_max))
-    return alpha, {
-        "optimization_success": bool(result.success),
-        "optimization_nit": int(getattr(result, "nit", -1)),
-        "optimization_nfev": int(getattr(result, "nfev", -1)),
+    heuristic_alphas = []
+    for source_index in range(source_count):
+        source_vector = source_matrix[source_index]
+        prepared_source = np.maximum(source_vector - initial_backgrounds[source_index], 0.0)
+        numerator = float(np.dot(sink_vector, prepared_source))
+        denominator = float(np.dot(prepared_source, prepared_source))
+        if denominator <= EPSILON:
+            heuristic_alpha = 0.0
+        else:
+            heuristic_alpha = np.clip(numerator / denominator, 0.0, alpha_max)
+        heuristic_alphas.append(float(heuristic_alpha))
+    heuristic_alphas = np.asarray(heuristic_alphas, dtype=np.float64)
+
+    bounds = [(0.0, float(alpha_max)) for _ in range(source_count)]
+    if optimize_background:
+        bounds.extend((0.0, float(max_background)) for _ in range(source_count))
+
+    starting_points: list[np.ndarray] = []
+    alpha_zero = np.zeros((source_count,), dtype=np.float64)
+    alpha_small = np.full((source_count,), min(0.1, float(alpha_max)), dtype=np.float64)
+    beta_zero = np.zeros((source_count,), dtype=np.float64)
+
+    if optimize_background:
+        starting_points.append(np.concatenate([heuristic_alphas, initial_backgrounds]))
+        starting_points.append(np.concatenate([alpha_small, initial_backgrounds]))
+        starting_points.append(np.concatenate([alpha_zero, beta_zero]))
+    else:
+        starting_points.append(heuristic_alphas)
+        starting_points.append(alpha_small)
+        starting_points.append(alpha_zero)
+
+    for _ in range(max(0, int(n_restarts) - len(starting_points))):
+        alpha_random = rng.uniform(0.0, float(alpha_max), size=source_count)
+        if optimize_background:
+            beta_random = rng.uniform(0.0, float(max_background), size=source_count)
+            starting_points.append(np.concatenate([alpha_random, beta_random]))
+        else:
+            starting_points.append(alpha_random)
+
+    best_result = None
+    best_value = np.inf
+    for start in starting_points:
+        def objective(parameter_vector: np.ndarray) -> float:
+            return _joint_source_sink_objective(
+                parameter_vector,
+                source_matrix=source_matrix,
+                sink_vector=sink_vector,
+                mi_bins=int(mi_bins),
+                optimize_background=bool(optimize_background),
+            )
+
+        result = minimize(
+            objective,
+            x0=np.asarray(start, dtype=np.float64),
+            method="Powell",
+            bounds=bounds,
+            options={"maxiter": int(max_iter), "xtol": float(tolerance), "ftol": float(tolerance)},
+        )
+        if np.isfinite(result.fun) and float(result.fun) < best_value:
+            best_result = result
+            best_value = float(result.fun)
+
+    if best_result is None:
+        return (
+            np.zeros((source_count,), dtype=np.float64),
+            np.zeros((source_count,), dtype=np.float64),
+            {
+                "optimization_success": False,
+                "optimization_nfev": 0,
+                "optimization_nit": 0,
+                "objective_value": None,
+            },
+        )
+
+    best_parameters = np.asarray(best_result.x, dtype=np.float64)
+    alphas = np.clip(best_parameters[:source_count], 0.0, float(alpha_max))
+    if optimize_background:
+        betas = np.clip(best_parameters[source_count:], 0.0, float(max_background))
+    else:
+        betas = np.zeros((source_count,), dtype=np.float64)
+
+    return alphas, betas, {
+        "optimization_success": bool(best_result.success),
+        "optimization_nit": int(getattr(best_result, "nit", -1)),
+        "optimization_nfev": int(getattr(best_result, "nfev", -1)),
+        "objective_value": None if not np.isfinite(best_result.fun) else float(best_result.fun),
+        "restart_count": int(len(starting_points)),
     }
 
 
@@ -615,8 +784,24 @@ def run_source_sink_unmixing(
     alpha_max: float,
     max_alpha_voxels: int | None,
     random_state: int,
+    max_iter: int = 200,
+    tolerance: float = 1e-4,
+    optimize_background: bool = DEFAULT_SOURCE_SINK_OPTIMIZE_BACKGROUND,
+    max_background: float = DEFAULT_SOURCE_SINK_MAX_BACKGROUND,
+    n_restarts: int = DEFAULT_SOURCE_SINK_N_RESTARTS,
+    joint_optimization: bool = DEFAULT_SOURCE_SINK_JOINT_OPTIMIZATION,
 ) -> tuple[np.ndarray, dict]:
-    """Run a napari-plugin-inspired source-sink multi-channel unmixing step."""
+    """
+    Run a napari-plugin-inspired source-sink multi-channel unmixing step.
+
+    Notes
+    -----
+    This routine remains histogram-MI-based and does not use the neural MINE
+    estimator from the napari PICASSO plugin. However, it follows the same
+    source-sink model more closely by optionally optimizing a background term
+    ``beta`` and, by default, jointly optimizing all sources contributing to a
+    given sink.
+    """
 
     normalized, backgrounds, global_max = _prepare_source_sink_channels(
         np.asarray(channel_volumes, dtype=np.float32),
@@ -626,48 +811,145 @@ def run_source_sink_unmixing(
     source_sink_matrix = validate_source_sink_matrix(source_sink_matrix, n_channels=n_channels)
     mi_bins = _normalize_positive_int("mi_bins", mi_bins, minimum=2)
     alpha_max = _normalize_positive_float("alpha_max", alpha_max)
+    max_background = _normalize_positive_float("max_background", max_background)
+    max_iter = _normalize_positive_int("max_iter", max_iter, minimum=1)
+    tolerance = float(tolerance)
+    if tolerance <= 0.0:
+        raise ValueError(f"tolerance must be > 0. Got {tolerance!r}.")
+    n_restarts = _normalize_positive_int("n_restarts", n_restarts, minimum=1)
 
     corrected = normalized.copy()
     alpha_parameters = np.zeros((n_channels, n_channels), dtype=np.float64)
     background_parameters = np.zeros((n_channels, n_channels), dtype=np.float64)
     np.fill_diagonal(alpha_parameters, 1.0)
-    pairwise_details: list[dict] = []
-
-    prepared_sources = np.empty_like(normalized, dtype=np.float32)
-    for source_index in range(n_channels):
-        prepared_sources[source_index] = np.maximum(
-            normalized[source_index] - backgrounds[source_index],
-            0.0,
-        )
+    sink_optimization_details: list[dict] = []
 
     for sink_index in range(n_channels):
         sink_current = normalized[sink_index].copy()
-        for source_index in range(n_channels):
-            if source_index == sink_index:
-                continue
-            if source_sink_matrix[source_index, sink_index] != -1:
-                continue
-            alpha, details = _estimate_source_sink_alpha(
-                prepared_sources[source_index],
+        source_indices = [
+            source_index
+            for source_index in range(n_channels)
+            if source_index != sink_index and source_sink_matrix[source_index, sink_index] == -1
+        ]
+        if not source_indices:
+            corrected[sink_index] = np.maximum(sink_current, 0.0)
+            continue
+
+        source_volumes = normalized[source_indices]
+        initial_backgrounds = np.asarray([backgrounds[source_index] for source_index in source_indices], dtype=np.float64)
+
+        if joint_optimization:
+            alphas, betas, details = _estimate_joint_source_sink_parameters(
+                source_volumes,
                 sink_current,
+                initial_backgrounds=initial_backgrounds,
                 mi_bins=mi_bins,
                 alpha_max=alpha_max,
                 max_alpha_voxels=max_alpha_voxels,
+                random_state=random_state + sink_index * 1000,
+                optimize_background=bool(optimize_background),
+                max_background=float(max_background),
+                max_iter=int(max_iter),
+                tolerance=float(tolerance),
+                n_restarts=int(n_restarts),
+            )
+            corrected_sink, _ = _build_source_sink_corrected_signal(
+                sink_current.reshape(-1),
+                source_volumes.reshape(len(source_indices), -1),
+                alphas,
+                betas,
+            )
+            corrected[sink_index] = corrected_sink.reshape(sink_current.shape).astype(np.float32, copy=False)
+            per_source_details = []
+            for local_index, source_index in enumerate(source_indices):
+                alpha_parameters[source_index, sink_index] = float(alphas[local_index])
+                background_parameters[source_index, sink_index] = float(betas[local_index])
+                per_source_details.append(
+                    {
+                        "sink_index": int(sink_index),
+                        "source_index": int(source_index),
+                        "alpha": float(alphas[local_index]),
+                        "background": float(betas[local_index]),
+                        "background_initial": float(initial_backgrounds[local_index]),
+                    }
+                )
+            sink_optimization_details.append(
+                {
+                    "sink_index": int(sink_index),
+                    "source_indices": [int(item) for item in source_indices],
+                    "joint_optimization": True,
+                    "optimize_background": bool(optimize_background),
+                    "source_parameter_details": per_source_details,
+                    **details,
+                }
+            )
+            continue
+
+        prepared_sources = np.empty_like(source_volumes, dtype=np.float32)
+        for local_index in range(len(source_indices)):
+            prepared_sources[local_index] = np.maximum(
+                source_volumes[local_index] - initial_backgrounds[local_index],
+                0.0,
+            )
+        per_source_details = []
+        for local_index, source_index in enumerate(source_indices):
+            source_vector, sink_vector = _subsample_pair(
+                prepared_sources[local_index],
+                sink_current,
+                max_alpha_voxels=max_alpha_voxels,
                 random_state=random_state + source_index * 1000 + sink_index,
             )
-            sink_current = sink_current - alpha * prepared_sources[source_index]
+            if source_vector.size == 0 or np.max(source_vector) <= EPSILON:
+                alpha = 0.0
+                details = {"optimization_success": True, "optimization_nfev": 0, "optimization_nit": 0}
+            else:
+                def objective(alpha_value: np.ndarray) -> float:
+                    corrected_vector = np.clip(
+                        sink_vector - float(alpha_value[0]) * source_vector,
+                        0.0,
+                        1.0,
+                    )
+                    return mutual_information_1d(source_vector, corrected_vector, bins=mi_bins)
+
+                result = minimize(
+                    objective,
+                    np.array([0.1], dtype=np.float64),
+                    method="Nelder-Mead",
+                    options={"maxiter": int(max_iter), "xatol": float(tolerance), "fatol": float(tolerance)},
+                )
+                alpha = float(np.clip(result.x[0], 0.0, alpha_max)) if np.isfinite(result.x[0]) else 0.0
+                details = {
+                    "optimization_success": bool(result.success),
+                    "optimization_nit": int(getattr(result, "nit", -1)),
+                    "optimization_nfev": int(getattr(result, "nfev", -1)),
+                }
+
+            sink_current = np.clip(
+                sink_current - alpha * prepared_sources[local_index],
+                0.0,
+                1.0,
+            )
             alpha_parameters[source_index, sink_index] = float(alpha)
-            background_parameters[source_index, sink_index] = float(backgrounds[source_index])
-            pairwise_details.append(
+            background_parameters[source_index, sink_index] = float(initial_backgrounds[local_index])
+            per_source_details.append(
                 {
                     "sink_index": int(sink_index),
                     "source_index": int(source_index),
                     "alpha": float(alpha),
-                    "background": float(backgrounds[source_index]),
+                    "background": float(initial_backgrounds[local_index]),
                     **details,
                 }
             )
         corrected[sink_index] = np.maximum(sink_current, 0.0)
+        sink_optimization_details.append(
+            {
+                "sink_index": int(sink_index),
+                "source_indices": [int(item) for item in source_indices],
+                "joint_optimization": False,
+                "optimize_background": False,
+                "source_parameter_details": per_source_details,
+            }
+        )
 
     if global_max > 0.0:
         corrected = corrected * global_max
@@ -678,12 +960,18 @@ def run_source_sink_unmixing(
         "background_values": [float(value) for value in backgrounds],
         "mi_bins": int(mi_bins),
         "alpha_max": float(alpha_max),
+        "max_background": float(max_background),
+        "optimize_background": bool(optimize_background),
+        "joint_optimization": bool(joint_optimization),
+        "n_restarts": int(n_restarts),
+        "max_iter": int(max_iter),
+        "tolerance": float(tolerance),
         "max_alpha_voxels": None if max_alpha_voxels is None else int(max_alpha_voxels),
         "random_state": int(random_state),
         "source_sink_matrix": source_sink_matrix.astype(int).tolist(),
         "alpha_parameters": alpha_parameters.tolist(),
         "background_parameters": background_parameters.tolist(),
-        "pairwise_alpha_details": pairwise_details,
+        "pairwise_alpha_details": sink_optimization_details,
     }
     return corrected.astype(np.float32, copy=False), details
 
@@ -693,7 +981,8 @@ def apply_source_sink_parameters(
     *,
     source_sink_matrix: np.ndarray,
     alpha_parameters,
-    background_values,
+    background_values=None,
+    background_parameters=None,
 ) -> np.ndarray:
     """Apply previously learned source-sink parameters to a new multi-channel volume."""
 
@@ -703,20 +992,21 @@ def apply_source_sink_parameters(
         n_channels=int(channel_volumes.shape[0]),
     )
     alpha_parameters = np.asarray(alpha_parameters, dtype=np.float64)
-    background_values = np.asarray(background_values, dtype=np.float64)
+    if background_parameters is not None:
+        background_parameters = np.asarray(background_parameters, dtype=np.float64)
+    elif background_values is not None:
+        background_values = np.asarray(background_values, dtype=np.float64)
+        background_parameters = np.zeros_like(alpha_parameters, dtype=np.float64)
+        for source_index in range(background_parameters.shape[0]):
+            background_parameters[source_index, :] = float(background_values[source_index])
+    else:
+        background_parameters = np.zeros_like(alpha_parameters, dtype=np.float64)
 
     global_max = float(np.max(channel_volumes))
     if global_max > 0.0:
         normalized = channel_volumes / global_max
     else:
         normalized = channel_volumes.copy()
-
-    prepared_sources = np.empty_like(normalized, dtype=np.float32)
-    for source_index in range(normalized.shape[0]):
-        prepared_sources[source_index] = np.maximum(
-            normalized[source_index] - float(background_values[source_index]),
-            0.0,
-        )
 
     corrected = normalized.copy()
     for sink_index in range(normalized.shape[0]):
@@ -726,7 +1016,15 @@ def apply_source_sink_parameters(
                 continue
             if source_sink_matrix[source_index, sink_index] != -1:
                 continue
-            sink_current = sink_current - float(alpha_parameters[source_index, sink_index]) * prepared_sources[source_index]
+            prepared_source = np.maximum(
+                normalized[source_index] - float(background_parameters[source_index, sink_index]),
+                0.0,
+            )
+            sink_current = np.clip(
+                sink_current - float(alpha_parameters[source_index, sink_index]) * prepared_source,
+                0.0,
+                1.0,
+            )
         corrected[sink_index] = np.maximum(sink_current, 0.0)
 
     if global_max > 0.0:
