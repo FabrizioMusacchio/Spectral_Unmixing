@@ -9,6 +9,39 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ---
 
+## 🚀 spectral-unmixing v0.0.4
+
+June 29, 2026
+
+PICASSO source-sink refinement release for **spectral-unmixing**.
+
+This release provides:
+
+### PICASSO source-sink-N improvements
+
+- Refined the `source_sink_n` blind-unmixing implementation to follow the PICASSO napari plugin's source-sink formulation more closely while remaining free of `torch` and neural-MINE dependencies.
+- Changed the default source-sink optimization strategy from greedy pairwise fitting to joint optimization of all modeled sources contributing to a given sink.
+- Added optional optimization of one small background-offset parameter per modeled source-sink relation.
+- Added multi-start optimization for the source-sink workflow to improve robustness against poor local minima.
+- Preserved the older greedy strategy as an explicit fallback via configuration.
+
+### API and reproducibility
+
+- Extended `unmix_picasso(...)` with new `source_sink_n` options:
+  - `source_sink_optimize_background`
+  - `source_sink_max_background`
+  - `source_sink_n_restarts`
+  - `source_sink_joint_optimization`
+- Extended the PICASSO JSON sidecar reports to record the learned source-sink background parameters and the new optimization settings.
+
+### Scripts and documentation
+
+- Updated the public 2-color, 3-color, and 5-color PICASSO example scripts so their `source_sink_n` example cells expose the new optimization options directly.
+- Updated the README, overview page, and PICASSO tutorials to describe the refined `source_sink_n` formulation mathematically and operationally.
+- Clarified in the documentation that the current `source_sink_n` implementation is histogram-MI-based and napari-plugin-inspired, but not a neural or MINE-based reimplementation of the plugin.
+
+---
+
 ## 🚀 spectral-unmixing v0.0.3
 
 June 28, 2026

@@ -7,7 +7,6 @@ Date: June 2026
 # %% IMPORTS
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -188,6 +187,11 @@ Method summary:
   ``neutral_channels``
 - each allowed source-to-sink coefficient is estimated by minimizing mutual
   information between the source image and the corrected sink image
+- by default, all sources contributing to a given sink are optimized jointly
+  instead of one after another
+- the current implementation can optionally estimate a small background offset
+  ``beta`` for each modeled source-to-sink relation, bringing the workflow
+  closer to the source-sink formulation used by the napari PICASSO plugin
 
 What can be adjusted:
 
@@ -205,6 +209,18 @@ What can be adjusted:
   Histogram bin count used by the mutual-information objective.
 - ``max_alpha_voxels``:
   Optional voxel cap for faster coefficient estimation on larger stacks.
+- ``source_sink_optimize_background``:
+  If ``True``, optimize a small per-source background offset ``beta`` in
+  addition to the spillover coefficients.
+- ``source_sink_max_background``:
+  Upper bound for these optimized background offsets in normalized intensity
+  units.
+- ``source_sink_joint_optimization``:
+  If ``True``, optimize all sources contributing to a sink together instead of
+  greedily one after another.
+- ``source_sink_n_restarts``:
+  Number of multi-start optimizer initializations used for each sink. Larger
+  values are slower but often more robust.
 
 This mode is not the original MATLAB PICASSO algorithm. It is a more direct
 source-sink formulation that is often easier to reason about when explicit
@@ -219,7 +235,7 @@ For this specific 3-channel example we use the targeted configuration in which
 OUTPUT_PICASSO_SOURCE_SINK = OUTPUT_DIR / f"{INPUT_NAME}_picasso_source_sink.tif"
 
 sink_channels = [1]
-neutral_channels = [2]
+neutral_channels = []
 
 # If you want to ignore the possible ``channel 2 -> channel 1`` contribution
 # and model only the clearly suspected ``channel 0 -> channel 1`` case, make
@@ -245,6 +261,10 @@ picasso_source_sink_output = unmix_picasso(
     max_iter=50,
     tolerance=1e-4,
     max_alpha_voxels=250_000,
+    source_sink_optimize_background=True,
+    source_sink_max_background=0.2,
+    source_sink_n_restarts=6,
+    source_sink_joint_optimization=True,
     random_state=0,
     clip_negative=True,
     output_dtype="float32",

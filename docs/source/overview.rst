@@ -367,7 +367,7 @@ channel :math:`j`, the corrected sink is modeled as:
 
 .. math::
 
-   \tilde{I}_j = I_j - \sum_{i \in \mathcal{S}_j} \alpha_{ij} S_i
+   \tilde{I}_j = I_j - \sum_{i \in \mathcal{S}_j} \alpha_{ij} \hat{S}_i
 
 where:
 
@@ -375,7 +375,16 @@ where:
   sink :math:`j`
 - the allowed source-sink relations are encoded in
   ``source_sink_matrix``
-- :math:`S_i` is a prepared source image for channel :math:`i`
+- :math:`\hat{S}_i` is a prepared source image for channel :math:`i`
+
+When background optimization is enabled, the prepared source image becomes:
+
+.. math::
+
+   \hat{S}_i = \max(I_i - \beta_{ij}, 0)
+
+with one optional background offset :math:`\beta_{ij}` per modeled
+source-sink relation.
 
 For users who do not want to write the full matrix manually, the same relation
 graph can be built more readably from channel-role lists:
@@ -389,17 +398,44 @@ graph can be built more readably from channel-role lists:
 In that convenience mode, all selected non-neutral channels are allowed to
 bleed into all specified sink channels except into themselves.
 
-Each coefficient is estimated by minimizing mutual information:
+The current implementation optimizes all sources contributing to one sink
+jointly by default. For a sink channel :math:`j`, the optimization problem is:
 
 .. math::
 
-   \alpha_{ij}
+   \left(\alpha_{ij}, \beta_{ij}\right)_{i \in \mathcal{S}_j}
    =
-   \arg\min_{0 \le \alpha \le \alpha_{\max}}
-   \mathrm{MI}\!\left(S_i,\; I_j - \alpha S_i\right)
+   \arg\min
+   \sum_{i \in \mathcal{S}_j}
+   \mathrm{MI}\!\left(I_i,\; \tilde{I}_j\right)
+
+subject to
+
+.. math::
+
+   0 \le \alpha_{ij} \le \alpha_{\max}
+
+and, if background optimization is enabled,
+
+.. math::
+
+   0 \le \beta_{ij} \le \beta_{\max}
+
+This joint formulation is controlled by:
+
+- ``source_sink_joint_optimization=True``:
+  optimize all sources contributing to one sink together
+- ``source_sink_optimize_background=True``:
+  estimate one small background offset per source-sink relation
+- ``source_sink_max_background``:
+  upper bound for these background offsets on normalized intensities
+- ``source_sink_n_restarts``:
+  number of multi-start optimizer initializations used for each sink
 
 This mode is inspired by the napari plugin's source-sink viewpoint, but it is
-not a neural or MINE-based reimplementation of that plugin.
+not a neural or MINE-based reimplementation of that plugin. Instead, it uses a
+histogram-based mutual-information objective together with bounded numerical
+optimization.
 
 
 Optional helper modules

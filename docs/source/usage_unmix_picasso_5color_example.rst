@@ -295,6 +295,13 @@ model yourself.
 
 This method uses the more explicit source-sink formulation.
 
+In the current implementation, all sources contributing to one sink are
+optimized jointly by default, and the workflow can additionally estimate a
+small background offset for each modeled source-sink relation. This brings the
+method closer to the source-sink formulation used by the napari PICASSO plugin,
+while still relying on histogram-based mutual information rather than the
+plugin's neural MINE estimator.
+
 The most important settings are:
 
 - ``channels``:
@@ -320,11 +327,21 @@ The most important settings are:
   now actively used as the histogram resolution for the mutual-information
   objective.
 - ``max_iter``:
-  as above, controls the maximum number of update passes.
+  controls the maximum number of optimizer iterations for each sink.
 - ``tolerance``:
-  as above, controls convergence of the iterative update sequence.
+  stopping tolerance for the numerical optimizer.
 - ``max_alpha_voxels``:
   same optional voxel cap as above.
+- ``source_sink_optimize_background``:
+  if enabled, estimate one small background offset ``beta`` per modeled
+  source-sink relation before subtracting the source contribution.
+- ``source_sink_max_background``:
+  upper bound for these optimized background offsets on normalized intensities.
+- ``source_sink_joint_optimization``:
+  if enabled, optimize all sources contributing to the same sink together
+  instead of fitting them greedily one after another.
+- ``source_sink_n_restarts``:
+  number of multi-start optimizer initializations used for each sink.
 - ``random_state``:
   same random seed used for optional voxel subsampling.
 - ``clip_negative``:
@@ -339,6 +356,9 @@ The most important settings are:
 For real five-channel data this mode is often attractive because it lets you
 move from a broad first-pass model to a more selective graph once you have a
 better idea which channels are plausible sinks and which should remain neutral.
+The example script therefore starts with a broad all-to-all non-neutral model,
+but it also shows how to restrict the sink list or declare selected channels
+neutral once prior knowledge about the cross-talk graph becomes available.
 
 
 .. raw:: html

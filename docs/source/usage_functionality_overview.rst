@@ -121,7 +121,9 @@ Currently available implementations are:
 - ``source_sink_n``:
   explicit source-sink multi-channel correction with either a full
   ``source_sink_matrix`` or the higher-level ``sink_channels`` /
-  ``neutral_channels`` interface
+  ``neutral_channels`` interface; all sources contributing to one sink are
+  optimized jointly by default, with optional background-offset estimation per
+  modeled source-sink relation
 
 PICASSO-family workflows still rely on linear channel-mixing assumptions. The
 blind component lies in estimating those relations from the data.

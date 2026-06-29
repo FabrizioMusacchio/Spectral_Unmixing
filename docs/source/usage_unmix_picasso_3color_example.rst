@@ -325,6 +325,13 @@ The main settings remain the MATLAB-style iteration parameters:
 This variant uses an explicit source-sink description of the expected bleed-
 through graph.
 
+In the current implementation, all sources contributing to one sink are
+optimized jointly by default, and the workflow can additionally estimate a
+small background offset for each modeled source-sink relation. This brings the
+method closer to the source-sink formulation used by the napari PICASSO plugin,
+while still relying on histogram-based mutual information rather than the
+plugin's neural MINE estimator.
+
 The most relevant settings are:
 
 - ``channels``:
@@ -349,11 +356,21 @@ The most relevant settings are:
   now actively used as the histogram resolution for the mutual-information
   objective.
 - ``max_iter``:
-  as above, controls the maximum number of update passes.
+  controls the maximum number of optimizer iterations for each sink.
 - ``tolerance``:
-  as above, controls convergence of the iterative update sequence.
+  stopping tolerance for the numerical optimizer.
 - ``max_alpha_voxels``:
   same optional voxel cap as above.
+- ``source_sink_optimize_background``:
+  if enabled, estimate one small background offset ``beta`` per modeled
+  source-sink relation before subtracting the source contribution.
+- ``source_sink_max_background``:
+  upper bound for these optimized background offsets on normalized intensities.
+- ``source_sink_joint_optimization``:
+  if enabled, optimize all sources contributing to the same sink together
+  instead of fitting them greedily one after another.
+- ``source_sink_n_restarts``:
+  number of multi-start optimizer initializations used for each sink.
 - ``random_state``:
   same random seed used for optional voxel subsampling.
 - ``clip_negative``:
@@ -367,7 +384,11 @@ The most relevant settings are:
 
 This is often the easiest mode to reason about biologically, because the user
 can describe which channels should actually be cleaned and which channels
-should remain untouched or act only as sources.
+should remain untouched or act only as sources. In the specific example script,
+``channel 1`` is treated as the sink, while ``channel 0`` and ``channel 2``
+are allowed to act as sources by default. If only the
+``channel 0 \rightarrow channel 1`` relation should be modeled, ``channel 2``
+can be moved into ``neutral_channels``.
 
 
 .. raw:: html
@@ -415,4 +436,3 @@ should remain untouched or act only as sources.
    source-sink-N formulation. The source-sink-N implementation is often the best choice when 
    you want one or more dedicated sink channels to be cleaned, leaving other channels untouched, while
    applying PICASSO-family blind unmixing logic to estimate the cross-talk coefficients.
-

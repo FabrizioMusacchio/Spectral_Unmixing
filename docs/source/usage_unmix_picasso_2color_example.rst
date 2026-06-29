@@ -246,6 +246,13 @@ are:
 This variant uses a more explicit source-sink description of the expected
 cross-talk graph.
 
+In the current implementation, all sources contributing to one sink are
+optimized jointly by default, and the workflow can additionally estimate a
+small background offset for each modeled source-sink relation. This brings the
+method closer to the source-sink formulation used by the napari PICASSO plugin,
+while still relying on histogram-based mutual information rather than the
+plugin's neural MINE estimator.
+
 The most relevant settings are:
 
 - ``channels``:
@@ -260,13 +267,6 @@ The most relevant settings are:
   participants in the inferred source-sink graph.
 - optional ``source_sink_matrix``:
   gives full manual control over the allowed source-to-sink relations.
-
-
-Many of the other parameters are shared with the MATLAB-N workflow and have the 
-same meaning. The main differences are that the source-sink-N workflow uses
-``alpha_max`` and ``mi_bins`` actively, whereas the MATLAB-N workflow does not. Here is
-a summary of all remaining parameters that are relevant for the source-sink-N workflow:
-
 - ``background_percentile``:
   same role as above, but now used in the source-sink coefficient estimation.
 - ``preprocess_alpha_inputs``:
@@ -277,11 +277,21 @@ a summary of all remaining parameters that are relevant for the source-sink-N wo
   now actively used as the histogram resolution for the mutual-information
   objective.
 - ``max_iter``:
-  as above, controls the maximum number of update passes.
+  controls the maximum number of optimizer iterations for each sink.
 - ``tolerance``:
-  as above, controls convergence of the iterative update sequence.
+  stopping tolerance for the numerical optimizer.
 - ``max_alpha_voxels``:
   same optional voxel cap as above.
+- ``source_sink_optimize_background``:
+  if enabled, estimate one small background offset ``beta`` per modeled
+  source-sink relation before subtracting the source contribution.
+- ``source_sink_max_background``:
+  upper bound for these optimized background offsets on normalized intensities.
+- ``source_sink_joint_optimization``:
+  if enabled, optimize all sources contributing to the same sink together
+  instead of fitting them greedily one after another.
+- ``source_sink_n_restarts``:
+  number of multi-start optimizer initializations used for each sink.
 - ``random_state``:
   same random seed used for optional voxel subsampling.
 - ``clip_negative``:
@@ -295,7 +305,9 @@ a summary of all remaining parameters that are relevant for the source-sink-N wo
 
 For two-channel data this is often the easier PICASSO-family mode to reason
 about, because one can state very directly which channel should be treated
-as the sink and which one is allowed to act as the source.
+as the sink and which one is allowed to act as the source. In the specific
+example script, ``channel 1`` is treated as the sink and ``channel 0`` as the
+source.
 
 
 .. raw:: html
