@@ -63,6 +63,9 @@ What can be adjusted:
   Quantization parameter for the MATLAB mutual-information calculation.
 - ``pixel_bin_size``:
   Two-dimensional binning factor applied before mutual-information estimation.
+  For this particular 5-color simulation, a slightly smaller value such as
+  ``8`` can preserve more channel-specific structure than the coarser default
+  ``16``.
 - ``alpha_clip``:
   Hard bound applied to each pairwise coefficient before update.
 - ``alpha_mode="reference_t"`` can be set in case of, e.g., multi-time point stacks. 
@@ -91,7 +94,7 @@ picasso_matlab_n_output = unmix_picasso(
     max_alpha_voxels=250_000,
     step_size=0.2,
     qn=100,
-    pixel_bin_size=16,
+    pixel_bin_size=8,
     alpha_clip=0.5,
     # negativity_threshold=0.0009,
     # clip_every_n_iterations=50,
