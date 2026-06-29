@@ -509,9 +509,7 @@ Here:
 - $s$ is the user-controlled `step_size`
 - $A^{(k)}$ is a matrix of pairwise subtraction coefficients
 
-For each ordered channel pair $(i, j)$, the MATLAB-style routine estimates a
-scalar $\alpha_{ij}$ by minimizing histogram-based mutual information after
-subtracting one channel from the other:
+For each ordered channel pair $(i, j)$, the MATLAB-style routine estimates a scalar $\alpha_{ij}$ by minimizing histogram-based mutual information after subtracting one channel from the other:
 
 $$\alpha_{ij}= \arg\min_{\alpha} \mathrm{MI}\!\left(v_i - \alpha v_j,\; v_j\right).$$
 
