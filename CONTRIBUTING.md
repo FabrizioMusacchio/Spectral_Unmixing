@@ -1,43 +1,67 @@
 # How to Contribute
 
-Thank you for your interest in contributing to Spectral Unmixing. This project welcomes improvements to the code, documentation, tests, and overall usability. The goal of Spectral Unmixing is to provide a robust, transparent, and reproducible interface for reading, standardizing, and converting microscopy image data, with a strong focus on OME-compatible metadata handling and downstream interoperability.
+Thank you for your interest in contributing to Spectral Unmixing. This project
+welcomes improvements to the code, documentation, tests, tutorials, and overall
+usability.
+
+Spectral Unmixing is a Python package for reproducible spectral bleed-through
+correction in multidimensional microscopy stacks. Its core focus is directed
+two-channel unmixing, optional bidirectional two-channel correction, and
+PICASSO-family blind unmixing, with additional helper modules for filtering,
+projection, registration, viewing, and OMIO-based image I/O.
 
 ## Before you start
-Please check the GitHub issue tracker to see whether your idea, bug report, or enhancement has already been discussed:
 
-[https://github.com/FabrizioMusacchio/spectral_unmixing/issues](https://github.com/FabrizioMusacchio/spectral_unmixing/issues)
+Please check the GitHub issue tracker to see whether your idea, bug report, or
+enhancement has already been discussed:
 
-* If a related issue exists, comment there to indicate your interest or to add relevant technical details.
-* If no issue exists, open a new one with a short description of:
-  * what you would like to change or add
-  * why it is useful in the context of Spectral Unmixing
-  * any thoughts on implementation, edge cases, or testing
+[https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues](https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues)
 
-For small fixes such as typos or minor documentation improvements, opening a pull request directly is fine.
+If a related issue exists, comment there to indicate your interest or to add
+relevant technical details. If no issue exists, open a new one with a short
+description of:
 
-## Development environment
-Spectral Unmixing requires **Python 3.12 or newer** and builds on standard scientific Python packages commonly used in microscopy workflows, including NumPy, tifffile, zarr, and related libraries for metadata handling.
+- what you would like to change or add;
+- why it is useful in the context of spectral unmixing or microscopy workflows;
+- any thoughts on implementation, edge cases, or testing.
+
+For small fixes such as typos, broken links, or minor documentation
+improvements, opening a pull request directly is fine.
+
+## Development Environment
+
+Spectral Unmixing requires Python 3.12 or newer. It builds on standard
+scientific Python packages used in bioimage analysis, including NumPy, SciPy,
+scikit-image, pystackreg, and OMIO for microscopy image I/O.
 
 A typical development setup using `conda` looks like this:
 
 ```sh
-git clone https://github.com/FabrizioMusacchio/spectral_unmixing.git
-cd spectral_unmixing
+git clone https://github.com/FabrizioMusacchio/Spectral_Unmixing.git
+cd Spectral_Unmixing
 
 conda create -n spectral-unmixing-dev -c conda-forge python=3.12
 conda activate spectral-unmixing-dev
 
 pip install -e .
-````
+```
 
-To install optional development dependencies such as testing and linting tools:
+To install optional development dependencies such as testing and coverage tools:
 
 ```sh
 pip install -e ".[dev]"
 ```
 
-## Making changes and opening pull requests
-All code contributions should be submitted as pull requests (PRs) against the `main` branch of the repository.
+Documentation dependencies can be installed with:
+
+```sh
+pip install -e ".[docs]"
+```
+
+## Making Changes and Opening Pull Requests
+
+All code contributions should be submitted as pull requests against the `main`
+branch of the repository.
 
 A recommended workflow:
 
@@ -47,114 +71,181 @@ A recommended workflow:
    git checkout -b feature/my-feature
    ```
 
-2. Implement your changes. New functions or modules should include clear docstrings explaining:
-   * their purpose
-   * expected inputs and outputs
-   * any assumptions or limitations
-3. Add tests for new functionality or bug fixes where appropriate.
-4. Push your branch and open a pull request that includes:
-   * a concise and descriptive title
-   * a brief explanation of what was changed and why
-   * references to related issues (for example “Closes #12”)
+2. Implement your changes. New public functions or modules should include clear
+   NumPy-style docstrings explaining purpose, inputs, outputs, assumptions, and
+   limitations.
+
+3. Add or update tests where appropriate.
+
+4. Push your branch and open a pull request with a concise title, a short
+   explanation of what changed and why, and references to related issues.
 
 Draft pull requests are welcome if you would like feedback during development.
 
-## Commit conventions
-Clear and consistent commit messages help keep the project history readable. Prefixes inspired by Conventional Commits are encouraged:
+## Commit Conventions
 
-* `feat:` new functionality
-* `fix:` bug fixes
-* `docs:` documentation changes
-* `refactor:` internal code restructuring without behavior changes
-* `test:` adding or modifying tests
-* `chore:` maintenance tasks or tooling updates
+Clear and consistent commit messages help keep the project history readable.
+Prefixes inspired by Conventional Commits are encouraged:
+
+- `feat:` new functionality
+- `fix:` bug fixes
+- `docs:` documentation changes
+- `refactor:` internal code restructuring without behavior changes
+- `test:` adding or modifying tests
+- `chore:` maintenance tasks or tooling updates
 
 Example:
-`fix: handle paginated TIFF files with mixed photometric interpretations`
+
+```text
+fix: preserve target dtype metadata in unmixing report
+```
 
 ## Testing
-Spectral Unmixing uses `pytest` for automated testing. To run the full test suite locally:
+
+Spectral Unmixing uses `pytest` for automated testing. To run the full test
+suite locally:
 
 ```sh
 pytest
 ```
 
-If you add new features or fix bugs, please extend the test suite accordingly.
+If you add new functionality or fix a bug, please extend the test suite where
+the behavior can be tested reliably.
 
-Tests should remain small and self-contained. Large microscopy datasets should not be added to the repository. Whenever possible, use synthetic arrays or minimal example files generated during the test run.
+Good tests for this project usually use synthetic arrays rather than large
+microscopy files. This is especially useful for:
 
+- known bleed-through coefficients;
+- known bidirectional mixing matrices;
+- expected alpha-estimation behavior;
+- expected output shapes for `T=1`, `Z=1`, and full `TZCYX` stacks;
+- registration or filtering behavior on small synthetic images.
 
-## Notes for JOSS-related contributions  *(new)*
-Spectral Unmixing is developed with the requirements of the *Journal of Open Source Software (JOSS)* in mind. Contributions should therefore respect the following principles, which are routinely evaluated during JOSS review:
+Large microscopy datasets should not be added to the repository. If a real
+example is necessary to reproduce a bug, provide the smallest cropped or
+anonymized file that still demonstrates the issue, preferably via a public or
+temporary external link.
 
-* **Reproducibility**
-  Behavior should be deterministic given identical inputs and parameters. Any non-deterministic behavior must be explicitly documented.
-* **Test coverage**
-  New functionality should be accompanied by tests that fail without the change and pass with it. Tests should target observable behavior rather than internal implementation details.
-* **Documentation consistency**
-  Public-facing functions must be documented in a way that is consistent with their actual behavior. Silent assumptions or undocumented side effects are discouraged.
-* **Minimal scope changes**
-  Pull requests should focus on a well-defined change. Large refactors or conceptual redesigns should be discussed in an issue before implementation.
-* **Explicit limitations**
-  Known limitations or unsupported cases should be documented rather than implicitly ignored.
+## Reproducibility and Scientific Contribution Guidelines
 
-Following these guidelines helps ensure that Spectral Unmixing remains reviewable, maintainable, and suitable for long-term archival publication.
+Spectral Unmixing is intended to support reproducible scientific image analysis.
+Contributions should therefore respect the following principles:
 
+- **Deterministic behavior:** Given identical inputs and parameters, results
+  should be deterministic whenever possible. Randomized algorithms should expose
+  a `random_state` or equivalent parameter.
 
-## OME policy decisions and design constraints
-Spectral Unmixing makes a number of explicit policy decisions when reading and converting microscopy data to OME-compatible representations. These decisions are intentional and are meant to favor robustness and downstream interoperability over implicit heuristics.
+- **Transparent parameter handling:** Defaults, fallback behavior, clipping,
+  masking, normalization, and background handling should be explicit and
+  documented.
 
-Key principles include:
+- **Sidecar-report consistency:** User-facing processing functions that write
+  output data should also preserve enough processing information for the result
+  to be audited later.
 
-* **Canonical axis normalization**
-  Spectral Unmixing internally normalizes image data to the canonical OME axis order `TZCYX`. Missing axes may be inserted with length 1, but ambiguous or non-OME axis labels are not silently reinterpreted.
-* **Single-series default behavior**
-  For multi-series TIFF files, Spectral Unmixing currently processes only the first series by default. This behavior is recorded in the output metadata and is considered a policy decision rather than a technical limitation.
-* **Metadata preservation over inference**
-  Existing OME-XML and ImageJ metadata are preserved wherever possible. Spectral Unmixing avoids inventing or guessing metadata fields that are not present in the source file.
-* **Explicit handling of unsupported metadata**
-  Metadata fields that are detected but not yet supported are reported explicitly rather than silently ignored. This is intended to make limitations visible and reproducible.
+- **Documented limitations:** Known limitations or unsupported cases should be
+  documented rather than silently ignored.
 
-Contributions that alter or extend these policy decisions should be discussed in an issue before implementation, as such changes may affect reproducibility, compatibility with downstream tools, or consistency with existing datasets.
+- **Minimal scope changes:** Pull requests should focus on a well-defined
+  improvement. Large conceptual changes should be discussed in an issue before
+  implementation.
 
+These guidelines help keep the package reviewable, maintainable, and suitable
+for long-term archival publication.
 
-## Reporting bugs
+## Spectral-Unmixing Design Constraints
+
+Spectral Unmixing makes several explicit design choices. Contributions that
+change these choices should be discussed in an issue before implementation,
+because they affect reproducibility and user expectations.
+
+- **Canonical stack model:** Core image-processing functions operate on
+  canonical `TZCYX` stacks. Simpler inputs such as `T=1` or `Z=1` should remain
+  supported, but ambiguous axis handling should not be hidden inside numerical
+  algorithms.
+
+- **Separation of alpha mode and alpha method:** `alpha_mode` controls where an
+  alpha value is obtained from, while `method` controls how alpha is estimated.
+  New alpha-estimation routines should preserve this separation.
+
+- **Original data correction:** Background subtraction, masking, and
+  preprocessing may be used for alpha estimation, but the final correction
+  should remain mathematically explicit and documented.
+
+- **Conservative blind-unmixing claims:** PICASSO-family workflows should be
+  described carefully. New blind-unmixing methods should document assumptions,
+  optimization criteria, ambiguity handling, and expected failure modes.
+
+- **OMIO as I/O layer:** File-format support is delegated to OMIO. Spectral
+  Unmixing should not grow its own independent microscopy file readers unless
+  there is a strong, discussed reason.
+
+## Reporting Bugs
+
 Please report bugs via the GitHub issue tracker:
 
-[https://github.com/FabrizioMusacchio/spectral_unmixing/issues](https://github.com/FabrizioMusacchio/spectral_unmixing/issues)
+[https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues](https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues)
 
 Include the following information if possible:
 
-* Spectral Unmixing version (`pip show spectral-unmixing`)
-* Python version
-* Operating system
-* Minimal steps or code snippet to reproduce the issue
-* If applicable, a small synthetic or cropped example file illustrating the problem
+- Spectral Unmixing version, for example from `pip show spectral-unmixing`;
+- Python version;
+- operating system;
+- installation method, such as PyPI install, editable install, or local checkout;
+- minimal code snippet or steps to reproduce the issue;
+- full traceback or warning output;
+- input stack shape and expected axis order;
+- alpha mode, alpha method, source channel, target channel, and other relevant
+  parameters;
+- if applicable, the generated JSON sidecar report;
+- if applicable, a small synthetic or cropped example file illustrating the
+  problem.
 
-## Requests for new file formats and reader extensions
-In addition to direct code contributions via pull requests, users are encouraged to request support for additional microscopy file formats or format variants that are not yet covered by Spectral Unmixing.
+If the bug appears to be caused by reading or writing a specific microscopy file
+format, please include the OMIO version and, if possible, a minimal example file.
+Format-reader bugs may ultimately need to be reported upstream to OMIO, but an
+issue in Spectral Unmixing is still useful if the problem appears inside an
+unmixing workflow.
 
-Such requests should be submitted via the GitHub issue tracker and include:
+## Requests for New Methods and Workflow Extensions
 
-* a clear description of the file format or variant in question
-* how the file differs from formats already supported by Spectral Unmixing
-* which part of the reader pipeline fails or behaves unexpectedly
-* if available, relevant Spectral Unmixing output such as warnings, parsed metadata, or axis interpretations
+Users are encouraged to request or contribute new spectral-unmixing methods,
+alpha estimators, blind-unmixing variants, or pre- and post-processing helpers.
 
-Support for new formats or variants can only be added if a **representative example file** is made available. This is essential to ensure correct parsing, reproducibility, and long-term test coverage.
+Useful feature requests include:
 
-Example files can be shared via:
-* temporary download links (for example institutional web shares or cloud storage)
-* publicly accessible repositories or archives
-* other means that allow the developers to locally inspect and test the data
+- a short description of the method or workflow;
+- the scientific use case it addresses;
+- whether it applies to directed two-channel, bidirectional, or multi-channel
+  blind unmixing;
+- expected input and output shapes;
+- key parameters and reasonable defaults;
+- references to papers, algorithms, or existing implementations;
+- ideas for synthetic tests or example data.
 
-Without access to an example file, reader extensions are generally not feasible, as Spectral Unmixing deliberately avoids speculative or heuristic-based format inference.
+For new alpha-estimation methods, please describe how alpha is estimated, which
+mask or preprocessing assumptions are required, and how failure cases should be
+reported. For new PICASSO-family or blind-unmixing methods, please describe the
+optimization objective and how channel permutation or scale ambiguity should be
+handled.
 
-If sharing full datasets is not possible, users are encouraged to provide the smallest possible cropped or anonymized file that still reproduces the issue.
+## Documentation and Tutorials
 
+Documentation changes are very welcome. Good documentation contributions include:
 
-## License and contributions
-By submitting a pull request, you agree that your contributions will be released under the project’s license as specified in the repository.
+- fixing outdated parameter descriptions;
+- adding short conceptual explanations for methods;
+- improving tutorial text or comments in `user_scripts`;
+- adding examples for edge cases such as `T=1`, `Z=1`, or per-time-point alpha;
+- clarifying how JSON sidecar reports support reproducibility.
 
-If you are unsure how to begin or would like to discuss a potential contribution, feel free to open an issue to start a conversation.
+When updating tutorials, please keep examples reproducible and avoid relying on
+private datasets.
 
+## License and Contributions
+
+By submitting a pull request, you agree that your contributions will be released
+under the project's license as specified in the repository.
+
+If you are unsure how to begin or would like to discuss a potential
+contribution, open an issue to start a conversation.
