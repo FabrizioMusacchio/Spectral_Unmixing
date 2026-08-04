@@ -505,7 +505,16 @@ for the full license text.
 Citation
 --------
 
-If you use *Spectral Unmixing* in scientific work, please cite:
+If you use *Spectral Unmixing* in scientific work, please cite the bioRxiv
+preprint:
+
+   Musacchio, F., & Fuhrmann, M. (2026). *Spectral Unmixing: A modular and
+   reproducible Python package for directed and blind spectral unmixing in
+   multidimensional microscopy stacks*. bioRxiv.
+   https://doi.org/10.64898/2026.07.06.736825
+
+For reproducibility, please also cite the Zenodo software archive corresponding
+to the package version you used:
 
    Musacchio, F. (2026). *Spectral Unmixing: A Python package for linear
    spectral unmixing in microscopy images*. Zenodo.

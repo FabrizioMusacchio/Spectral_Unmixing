@@ -1,8 +1,8 @@
 cff-version: 1.2.0
-message: "If you use Spectral Unmixing in your research, please cite it using the metadata below."
+message: "If you use Spectral Unmixing in your research, please cite the preferred citation below and, for reproducibility, also cite the Zenodo archive for the software version used."
 title: "Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images"
-version: 0.0.2
-date-released: 2026-06-26
+version: 0.0.4
+date-released: 2026-07-01
 doi: 10.5281/zenodo.20933784
 url: https://doi.org/10.5281/zenodo.20933784
 
@@ -11,17 +11,19 @@ authors:
     given-names: Fabrizio
     orcid: https://orcid.org/0000-0002-9043-3349
 
-repository-code: https://github.com/FabrizioMusacchio/spectral-unmixing
+repository-code: https://github.com/FabrizioMusacchio/Spectral_Unmixing
 license: GPL-3.0-or-later
 preferred-citation:
-  type: software
+  type: article
   authors:
     - family-names: Musacchio
       given-names: Fabrizio
       orcid: https://orcid.org/0000-0002-9043-3349
-  title: "Spectral Unmixing: A Python package for linear spectral unmixing in microscopy images"
-  version: 0.0.2
-  date-released: 2026-06-26
-  doi: 10.5281/zenodo.20933784
-  url: https://doi.org/10.5281/zenodo.20933784
-  publisher: Zenodo
+    - family-names: Fuhrmann
+      given-names: Martin
+  title: "Spectral Unmixing: A modular and reproducible Python package for directed and blind spectral unmixing in multidimensional microscopy stacks"
+  year: 2026
+  doi: 10.64898/2026.07.06.736825
+  url: https://www.biorxiv.org/content/early/2026/07/10/2026.07.06.736825
+  journal: bioRxiv
+  publisher: Cold Spring Harbor Laboratory
