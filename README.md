@@ -1,4 +1,4 @@
-# Spectral unmixing for microscopy image stacks
+# Spectral Unmixing: A Python package for reproducible directed and blind bleed-through correction in multidimensional microscopy images
 
 ![spectral-unmixing logo](figures/spectral_unmixing_logo.png)
 

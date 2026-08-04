@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "spectral-unmixing"
 version = "0.0.4"
-description = "Spectral bleed-through correction utilities for TZCYX microscopy stacks."
+description = "Reproducible directed and blind bleed-through correction for multidimensional microscopy images."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
