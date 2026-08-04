@@ -67,7 +67,7 @@ multi-dimensional microscopy stacks. It supports:
 
 
 
-.. figure:: _static/spectra_unmixing_example.jpg
+.. figure:: _static/spectral_unmixing_example.jpg
    :alt: Example of spectral unmixing in a two-channel fluorescence image
    :align: center
    :figwidth: 100%

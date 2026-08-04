@@ -97,4 +97,4 @@ copybutton_selector = "div.highlight pre"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_static_path = ['_static']
-html_logo = "_static/spectra_unmixing_logo_transparent.png"
+html_logo = "_static/spectral_unmixing_logo_transparent.png"

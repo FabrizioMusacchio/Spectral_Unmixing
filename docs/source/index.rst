@@ -1,7 +1,7 @@
 Spectral Unmixing Documentation
 ===============================
 
-.. figure:: _static/spectra_unmixing_logo.png
+.. figure:: _static/spectral_unmixing_logo_transparent.png
    :alt: Spectral Unmixing logo
    :align: center
    :figwidth: 55%
