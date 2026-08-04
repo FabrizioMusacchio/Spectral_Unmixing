@@ -68,6 +68,10 @@ Spectral Unmixing Documentation
    :target: https://doi.org/10.5281/zenodo.20933784
    :alt: Zenodo Archive
 
+.. image:: https://img.shields.io/badge/bioRxiv-10.64898%2F2026.07.06.736825-red
+   :target: https://doi.org/10.64898/2026.07.06.736825
+   :alt: bioRxiv preprint
+
 
 
 `spectral-unmixing <https://github.com/FabrizioMusacchio/Spectral_Unmixing>`_
