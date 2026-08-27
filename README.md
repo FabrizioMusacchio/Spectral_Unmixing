@@ -573,11 +573,7 @@ The current implementation optimizes all sources contributing to one sink
 jointly by default. For a sink channel $j$, the optimization problem is:
 
 $$
-\left(\alpha_{ij}, \beta_{ij}\right)_{i \in \mathcal{S}_j}
-=
-\arg\min
-\sum_{i \in \mathcal{S}_j}
-\mathrm{MI}\!\left(I_i,\; \tilde{I}_j\right),
+\left(\alpha_{ij}, \beta_{ij}\right)_{i \in \mathcal{S}_j} = \arg\min \sum_{i \in \mathcal{S}_j} \mathrm{MI}\!\left(I_i,\; \tilde{I}_j\right),
 $$
 
 subject to
@@ -661,7 +657,7 @@ The full documentation is available on Read the Docs: <https://spectral-unmixing
 
 The repository folder `user_scripts` contains example scripts that demonstrate how to use the package in practice: 
 
-* [user_scripts/unmix_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_example.py):  
+* [user_scripts/unmix_example.py](user_scripts/unmix_example.py):  
   A simple two-channel unmixing example with a fixed alpha value. You can start with this script to get a feel for the basic workflow.
 * [user_scripts/unmix_bidirectional_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_bidirectional_example.py):  
   A two-channel unmixing example with bidirectional correction.
