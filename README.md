@@ -59,7 +59,9 @@ Main runtime dependencies include:
 ## What is bleed-through and why is it a problem?
 In fluorescence microscopy, bleed-through (also called crosstalk or spectral spillover) occurs when signal from one fluorophore is detected in the measurement channel of another fluorophore. A common reason is spectral overlap between fluorophore emission and the selected detection windows, but the the problem also depends on the optical filters, detector settings, and the overall imaging setup.
 
-![Schematic illustration of spectral bleed-through in fluorescence imaging setups.](figures/blead_throug_1600px.png)
+<p align="center">
+  <img src="figures/figures/blead_throug_1600px.png" width="70%" />
+</p>
 ***Schematic illustration of spectral bleed-through in fluorescence imaging setups**. Shown are four different fluorophores (blue, green, yellow, red) and their respective emission spectra as a function of wavelength. Bleed-through occurs when the emission of one fluorophore is also detected in another channel, for example when green emission is partially recorded in the yellow channel. This can happen if detection windows are not cleanly separated, if the selected detection range is too broad, or if the emission peaks of two fluorophores lie too close together. Source: [fabriziomusacchio.com](https://www.fabriziomusacchio.com/teaching/teaching_bioimage_analysis/09_napari_bleach_correction) (license: CC BY-NC-SA 4.0)*
 
 Biologically and analytically, this is a problem because it can create false-positive signal, inflate apparent [colocalization](https://cellcoloc.readthedocs.io/en/latest/), distort intensity measurements, and ultimately bias the interpretation of cellular structures or dynamics. In practice, one may incorrectly conclude that a structure is present in a given channel even though part of the observed signal actually originates from another fluorophore.
@@ -669,6 +671,13 @@ The repository folder [`user_scripts`](user_scripts) contains example scripts th
   An example of a more fine-tuned filtering and registering of a microscopy stack after unmixing.
 
 These scripts are also linked from the Read the Docs documentation. Each script is designed to be run interactively, i.e., cell-by-cell e.g. in VS Code's interactive window mode. Additionally, each script is also available as a Jupyter notebook (`.ipynb`) version in the subfolder [`user_scripts/notebooks`](user_scripts/notebooks). Both, Python scripts and notebooks can be used as templates for your own workflows. 
+
+We used the following two scripts to generate the figures in preprint:
+
+* [preprint_benchmarks.py](additional_scripts/preprint_benchmarks.py)
+* [preprint_figures.py](additional_scripts/preprint_figures.py)
+
+Both scripts are stored in the repository's [`additional_scripts`](additional_scripts) folder. They can be used to reproduce the figures in the preprint, but they are not meant as general-purpose user scripts.
 
 ## Example datasets
 We provide a dedicated example dataset on Zenodo so that users can replay the tutorial scripts used throughout the documentation:
