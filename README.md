@@ -62,6 +62,7 @@ In fluorescence microscopy, bleed-through (also called crosstalk or spectral spi
 <p align="center">
   <img src="figures/figures/blead_throug_1600px.png" width="70%" />
 </p>
+
 ***Schematic illustration of spectral bleed-through in fluorescence imaging setups**. Shown are four different fluorophores (blue, green, yellow, red) and their respective emission spectra as a function of wavelength. Bleed-through occurs when the emission of one fluorophore is also detected in another channel, for example when green emission is partially recorded in the yellow channel. This can happen if detection windows are not cleanly separated, if the selected detection range is too broad, or if the emission peaks of two fluorophores lie too close together. Source: [fabriziomusacchio.com](https://www.fabriziomusacchio.com/teaching/teaching_bioimage_analysis/09_napari_bleach_correction) (license: CC BY-NC-SA 4.0)*
 
 Biologically and analytically, this is a problem because it can create false-positive signal, inflate apparent [colocalization](https://cellcoloc.readthedocs.io/en/latest/), distort intensity measurements, and ultimately bias the interpretation of cellular structures or dynamics. In practice, one may incorrectly conclude that a structure is present in a given channel even though part of the observed signal actually originates from another fluorophore.
