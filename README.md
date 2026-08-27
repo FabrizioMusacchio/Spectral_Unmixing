@@ -196,8 +196,7 @@ output_path = unmix(
     alpha_reference_t=0,
     source_channel=0,
     target_channel=1,
-    signal_percentile=99.0,
-)
+    signal_percentile=99.0)
 ```
 
 `unmix(...)` performs the following steps:
@@ -634,7 +633,7 @@ source and target channels, axis order, and output dtype.
 Terminal progress output is enabled by default and can be disabled with
 `verbose=False`.
 
-### Scientific Note
+### Scientific note
 A fixed `alpha` measured from a proper single-label control recording is scientifically preferable.
 
 Estimating `alpha` from the mixed experimental stack is available as a pragmatic first-pass workflow, but it can be biased when source and target biology overlap spatially.
@@ -655,7 +654,33 @@ functions for:
 
 These helper modules are meant to support follow-up image processing after unmixing. They are not the primary focus of the project, and their full documentation will be expanded later in Read the Docs.
 
-For now, see the tutorial-style user scripts provided in the `user_scripts` folder for practical examples of how to use these add-ons.
+See the user scripts provided in the `user_scripts` folder for practical examples of how to use these add-ons.
+
+## Tutorials and documentation
+The full documentation is available on Read the Docs: <https://spectral-unmixing.readthedocs.io>.
+
+The repository folder `user_scripts` contains example scripts that demonstrate how to use the package in practice: 
+
+* [user_scripts/unmix_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_example.py):  
+  A simple two-channel unmixing example with a fixed alpha value. You can start with this script to get a feel for the basic workflow.
+* [user_scripts/unmix_bidirectional_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_bidirectional_example.py):  
+  A two-channel unmixing example with bidirectional correction.
+* [user_scripts/unmix_full_TZCYX_synthetic_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_full_TZCYX_synthetic_example.py):  
+  A full `TZCYX` synthetic example with time-lapse and z-slices, demonstrating how to use the package on a more complex dataset.
+* [user_scripts/unmix_picasso_2color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_2color_example.py):  
+  A two-channel example using the PICASSO blind unmixing workflow.
+* [user_scripts/unmix_picasso_3color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_3color_example.py):  
+  A three-channel example using the PICASSO blind unmixing workflow.
+* [user_scripts/unmix_picasso_5color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_example.py):  
+  A five-channel example using the PICASSO blind unmixing workflow.
+* [user_scripts/filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_register_stack.py):  
+  A simple example of filtering and registering a microscopy stack after unmixing.
+* [user_scripts/fine_filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/fine_filter_and_register_stack.py):  
+  A more detailed example of filtering and registering a microscopy stack after unmixing.
+
+
+
+These scripts are also linked from the Read the Docs documentation. Each script is designed to be run interactively, i.e., cell-by-cell e.g. in VS Code's interactive window mode. Additionally, each script is also available as a Jupyter notebook (`.ipynb`) version in the subfolder `user_scripts/notebooks`. Both, Python scripts and notebooks can be used as templates for your own workflows. 
 
 ## Example datasets
 We provide a dedicated example dataset on Zenodo so that users can replay the tutorial scripts used throughout the documentation:
