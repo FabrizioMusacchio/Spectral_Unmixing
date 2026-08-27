@@ -60,7 +60,7 @@ Main runtime dependencies include:
 In fluorescence microscopy, bleed-through (also called crosstalk or spectral spillover) occurs when signal from one fluorophore is detected in the measurement channel of another fluorophore. A common reason is spectral overlap between fluorophore emission and the selected detection windows, but the the problem also depends on the optical filters, detector settings, and the overall imaging setup.
 
 <p align="center">
-  <img src="figures/figures/blead_throug_1600px.png" width="70%" />
+  <img src="figures/blead_throug_1600px.png" width="70%" />
 </p>
 
 ***Schematic illustration of spectral bleed-through in fluorescence imaging setups**. Shown are four different fluorophores (blue, green, yellow, red) and their respective emission spectra as a function of wavelength. Bleed-through occurs when the emission of one fluorophore is also detected in another channel, for example when green emission is partially recorded in the yellow channel. This can happen if detection windows are not cleanly separated, if the selected detection range is too broad, or if the emission peaks of two fluorophores lie too close together. Source: [fabriziomusacchio.com](https://www.fabriziomusacchio.com/teaching/teaching_bioimage_analysis/09_napari_bleach_correction) (license: CC BY-NC-SA 4.0)*
