@@ -658,7 +658,7 @@ See the user scripts provided in the [`user_scripts`](user_scripts) folder for p
 ## Tutorials and documentation
 The full documentation is available on Read the Docs: <https://spectral-unmixing.readthedocs.io>.
 
-The repository folder `user_scripts` contains example scripts that demonstrate how to use the package in practice: 
+The repository folder [`user_scripts`](user_scripts) contains example scripts that demonstrate how to use the package in practice: 
 
 * [unmix_example.py](user_scripts/unmix_example.py):  
   A simple two-channel unmixing example with a fixed alpha value. You can start with this script to get a feel for the basic workflow.
@@ -676,8 +676,6 @@ The repository folder `user_scripts` contains example scripts that demonstrate h
   A simple example of filtering and registering a microscopy stack after unmixing.
 * [fine_filter_and_register_stack.py](user_scripts/fine_filter_and_register_stack.py):  
   An example of a more fine-tuned filtering and registering of a microscopy stack after unmixing.
-
-
 
 These scripts are also linked from the Read the Docs documentation. Each script is designed to be run interactively, i.e., cell-by-cell e.g. in VS Code's interactive window mode. Additionally, each script is also available as a Jupyter notebook (`.ipynb`) version in the subfolder `user_scripts/notebooks`. Both, Python scripts and notebooks can be used as templates for your own workflows. 
 
