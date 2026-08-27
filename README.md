@@ -1,6 +1,9 @@
 # Spectral Unmixing: A Python package for reproducible directed and blind bleed-through correction in multidimensional microscopy images
 
-![spectral-unmixing logo](figures/spectral_unmixing_logo.png)
+
+<p align="center">
+  <img src="figures/spectral_unmixing_logo.png" width="70%" />
+</p>
 
 ![GitHub Release](https://img.shields.io/github/v/release/FabrizioMusacchio/Spectral_Unmixing) [![PyPI version](https://img.shields.io/pypi/v/spectral-unmixing.svg)](https://pypi.org/project/spectral-unmixing/) [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-green.svg)](https://spectral-unmixing.readthedocs.io/en/latest/overview.html#license) ![Tests](https://github.com/FabrizioMusacchio/Spectral_Unmixing/actions/workflows/spectral_unmixing_tests.yml/badge.svg) [![GitHub last commit](https://img.shields.io/github/last-commit/FabrizioMusacchio/Spectral_Unmixing)](https://github.com/FabrizioMusacchio/Spectral_Unmixing/commits/main/)  [![codecov](https://img.shields.io/codecov/c/github/FabrizioMusacchio/Spectral_Unmixing?logo=codecov)](https://codecov.io/gh/fabriziomusacchio/Spectral_Unmixing)  [![GitHub Issues Open](https://img.shields.io/github/issues/FabrizioMusacchio/Spectral_Unmixing)](https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues) [![GitHub Issues Closed](https://img.shields.io/github/issues-closed/FabrizioMusacchio/Spectral_Unmixing?color=53c92e)](https://github.com/FabrizioMusacchio/Spectral_Unmixing/issues?q=is%3Aissue%20state%3Aclosed) [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/FabrizioMusacchio/Spectral_Unmixing)](https://github.com/FabrizioMusacchio/Spectral_Unmixing/pulls)  [![Documentation Status](https://readthedocs.org/projects/spectral-unmixing/badge/?version=latest)](https://spectral-unmixing.readthedocs.io/en/latest/?badge=latest) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/fabriziomusacchio/Spectral_Unmixing) [![PyPI - Downloads](https://img.shields.io/pypi/dm/spectral-unmixing?logo=pypy&label=PiPY%20downloads&color=blue)](https://pypistats.org/packages/spectral-unmixing) [![PyPI Total Downloads](https://static.pepy.tech/personalized-badge/spectral-unmixing?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=BLUE&left_text=PiPY+total+downloads)](https://pepy.tech/projects/spectral-unmixing)  [![Example Datasets on Zenodo](https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20984021-blue)](https://doi.org/10.5281/zenodo.20984021) [![Read the docs](https://badgen.net/badge/rtd/Documentation)](https://spectral-unmixing.readthedocs.io)  [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20933784-blue)](https://doi.org/10.5281/zenodo.20933784)  [![preprint on bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.07.06.736825-red)](https://doi.org/10.64898/2026.07.06.736825) 
 
@@ -612,7 +615,7 @@ or update sequence are estimated from:
 
 For practical examples, see:
 
-- [user_scripts/unmix_picasso_5color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_example.py)
+- [user_scripts/unmix_picasso_5color_example.py](user_scripts/unmix_picasso_5color_example.py)
 
 ### Output and reproducibility
 Each unmixing run writes a JSON sidecar report next to the output stack, for
@@ -650,29 +653,29 @@ functions for:
 
 These helper modules are meant to support follow-up image processing after unmixing. They are not the primary focus of the project, and their full documentation will be expanded later in Read the Docs.
 
-See the user scripts provided in the `user_scripts` folder for practical examples of how to use these add-ons.
+See the user scripts provided in the [`user_scripts`](user_scripts) folder for practical examples of how to use these add-ons.
 
 ## Tutorials and documentation
 The full documentation is available on Read the Docs: <https://spectral-unmixing.readthedocs.io>.
 
 The repository folder `user_scripts` contains example scripts that demonstrate how to use the package in practice: 
 
-* [user_scripts/unmix_example.py](user_scripts/unmix_example.py):  
+* [unmix_example.py](user_scripts/unmix_example.py):  
   A simple two-channel unmixing example with a fixed alpha value. You can start with this script to get a feel for the basic workflow.
-* [user_scripts/unmix_bidirectional_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_bidirectional_example.py):  
+* [unmix_bidirectional_example.py](user_scripts/unmix_bidirectional_example.py):  
   A two-channel unmixing example with bidirectional correction.
-* [user_scripts/unmix_full_TZCYX_synthetic_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_full_TZCYX_synthetic_example.py):  
+* [unmix_full_TZCYX_synthetic_example.py](user_scripts/unmix_full_TZCYX_synthetic_example.py):  
   A full `TZCYX` synthetic example with time-lapse and z-slices, demonstrating how to use the package on a more complex dataset.
-* [user_scripts/unmix_picasso_2color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_2color_example.py):  
+* [unmix_picasso_2color_example.py](user_scripts/unmix_picasso_2color_example.py):  
   A two-channel example using the PICASSO blind unmixing workflow.
-* [user_scripts/unmix_picasso_3color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_3color_example.py):  
+* [unmix_picasso_3color_example.py](user_scripts/unmix_picasso_3color_example.py):  
   A three-channel example using the PICASSO blind unmixing workflow.
-* [user_scripts/unmix_picasso_5color_example.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/unmix_picasso_5color_example.py):  
+* [unmix_picasso_5color_example.py](user_scripts/unmix_picasso_5color_example.py):  
   A five-channel example using the PICASSO blind unmixing workflow.
-* [user_scripts/filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/filter_and_register_stack.py):  
+* [filter_and_register_stack.py](user_scripts/filter_and_register_stack.py):  
   A simple example of filtering and registering a microscopy stack after unmixing.
-* [user_scripts/fine_filter_and_register_stack.py](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/user_scripts/fine_filter_and_register_stack.py):  
-  A more detailed example of filtering and registering a microscopy stack after unmixing.
+* [fine_filter_and_register_stack.py](user_scripts/fine_filter_and_register_stack.py):  
+  An example of a more fine-tuned filtering and registering of a microscopy stack after unmixing.
 
 
 
@@ -691,7 +694,7 @@ It includes:
 
 For details on provenance, tutorial mapping, and licenses, please refer to the documentation page:
 
-- [docs/source/usage_example_datasets.rst](/Users/husker/Science/Python/Projekte/Spectral%20Unmixing/docs/source/usage_example_datasets.rst)
+- [docs/source/usage_example_datasets.rst](docs/source/usage_example_datasets.rst)
 
 ## Modularity and contributions
 `spectral-unmixing` is intentionally organized as a modular package. The core two-channel unmixing routines, PICASSO-family blind-unmixing workflows, filtering helpers, registration helpers, projection helpers, viewer helpers, and I/O helpers are kept in separate reusable modules so that the package can be extended without having to restructure the whole pipeline. This is deliberate: It should be straightforward to add further spectral unmixing methods, additional alpha-estimation strategies, and new pre- or post-processing filters as the project evolves.
