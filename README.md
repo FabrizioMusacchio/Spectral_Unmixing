@@ -632,15 +632,6 @@ source and target channels, axis order, and output dtype.
 Terminal progress output is enabled by default and can be disabled with
 `verbose=False`.
 
-### Scientific note
-A fixed `alpha` measured from a proper single-label control recording is scientifically preferable.
-
-Estimating `alpha` from the mixed experimental stack is available as a pragmatic first-pass workflow, but it can be biased when source and target biology overlap spatially.
-
-`alpha_mode="reference_t"` assumes that the bleed-through factor is stable across time.
-
-`alpha_mode="per_t"` can compensate for slow intensity changes, but may also introduce time-dependent artifacts when biology changes over time.
-
 ## Add-ons: Filtering, registration, and projection
 In addition to spectral unmixing, the package also includes optional helper
 functions for:
@@ -677,7 +668,7 @@ The repository folder [`user_scripts`](user_scripts) contains example scripts th
 * [fine_filter_and_register_stack.py](user_scripts/fine_filter_and_register_stack.py):  
   An example of a more fine-tuned filtering and registering of a microscopy stack after unmixing.
 
-These scripts are also linked from the Read the Docs documentation. Each script is designed to be run interactively, i.e., cell-by-cell e.g. in VS Code's interactive window mode. Additionally, each script is also available as a Jupyter notebook (`.ipynb`) version in the subfolder `user_scripts/notebooks`. Both, Python scripts and notebooks can be used as templates for your own workflows. 
+These scripts are also linked from the Read the Docs documentation. Each script is designed to be run interactively, i.e., cell-by-cell e.g. in VS Code's interactive window mode. Additionally, each script is also available as a Jupyter notebook (`.ipynb`) version in the subfolder [`user_scripts/notebooks`](user_scripts/notebooks). Both, Python scripts and notebooks can be used as templates for your own workflows. 
 
 ## Example datasets
 We provide a dedicated example dataset on Zenodo so that users can replay the tutorial scripts used throughout the documentation:
@@ -690,9 +681,7 @@ It includes:
 - synthetic `TZCYX` bleed-through data generated within this repository (`CC BY 4.0`)
 - a cropped helper-workflow stack derived from the MotilA example dataset (`CC BY-SA 4.0`)
 
-For details on provenance, tutorial mapping, and licenses, please refer to the documentation page:
-
-- [docs/source/usage_example_datasets.rst](docs/source/usage_example_datasets.rst)
+For details on provenance, tutorial mapping, and licenses, please refer to the [documentation page](https://spectral-unmixing.readthedocs.io/en/latest/usage_example_datasets.html).
 
 ## Modularity and contributions
 `spectral-unmixing` is intentionally organized as a modular package. The core two-channel unmixing routines, PICASSO-family blind-unmixing workflows, filtering helpers, registration helpers, projection helpers, viewer helpers, and I/O helpers are kept in separate reusable modules so that the package can be extended without having to restructure the whole pipeline. This is deliberate: It should be straightforward to add further spectral unmixing methods, additional alpha-estimation strategies, and new pre- or post-processing filters as the project evolves.
